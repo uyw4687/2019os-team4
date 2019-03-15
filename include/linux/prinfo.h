@@ -7,5 +7,3 @@ struct prinfo {
     int64_t uid;
     char    comm[64];
 };
-
-int ptree(struct prinfo *buf, int *nr);

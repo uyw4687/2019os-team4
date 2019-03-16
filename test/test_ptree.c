@@ -47,9 +47,9 @@ int main(int argc, char *argv[]) {
 
 		printf("%d", errno);
 
-		if(errno == EINVAL)
+		if(errno == -EINVAL)
 			perror("Invalid argument");
-		else if(errno == EFAULT)
+		else if(errno == -EFAULT)
  			perror("Bad address");
 
 		return -1;

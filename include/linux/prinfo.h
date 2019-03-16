@@ -1,7 +1,7 @@
-#include <include/uapi/asm-generic/errno-base.h>
-#include <include/asm/uaccess.h>
-#include <include/linux/sched.h>
-#include <include/linux/list.h>
+#include <uapi/asm-generic/errno-base.h>
+#include <asm/uaccess.h>
+#include <linux/sched.h>
+#include <linux/list.h>
 #include <linux/sched/task.h>
 #include <linux/slab.h>
 

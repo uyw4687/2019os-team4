@@ -1,5 +1,6 @@
 #include <arch/arm64/include/asm/unistd.h>
 #include <include/linux/ptree.h>
+#include <include/linux/kernel.h>
 
 int sys_ptree(struct prinfo *buf, int *nr) {
     

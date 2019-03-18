@@ -43,15 +43,14 @@ int main(int argc, char *argv[]) {
 
 	printf("%d", result);
 
-	if(result != 0) {
+	if(result == -EINVAL) {
 
-		printf("%d", errno);
+		perror("Invalid argument");
+        return -1;
 
-		if(errno == -EINVAL)
-			perror("Invalid argument");
-		else if(errno == -EFAULT)
- 			perror("Bad address");
+	} else if (result == -EFAULT) {
 
+ 		perror("Bad address");
 		return -1;
 	}
 	

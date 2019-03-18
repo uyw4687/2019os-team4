@@ -1,30 +1,31 @@
 #include <arch/arm64/include/asm/unistd.h>
 #include <linux/ptree.h>
 #include <linux/sched.h>
+#include <linux/kernel.h>
 
 int sys_ptree(struct prinfo *buf, int *nr) {
     
     if (buf == NULL || nr == NULL) {
-        errno = -EINVAL;
-        return -1;
+        errno = EINVAL;
+        return -errno;
     }
 
     if (!access_ok(VERIFY_WRITE, nr, sizeof(int))) {
-        errno = -EFAULT;
-        return -1;
+        errno = EFAULT;
+        return -errno;
     }
 
     int n;  // the number of entries that actually copied into buf
     copy_from_user(&n, nr, sizeof(int));
 
     if (n < 1) {
-        errno = -EINVAL;
-        return -1;
+        errno = EINVAL;
+        return errno;
     }
 
     if (!access_ok(VERIFY_READ, buf, sizeof(struct prinfo) * n)) {
-        errno = -EFAULT;
-        return -1;
+        errno = EFAULT;
+        return -errno;
     }
 
 	struct task_struct *task;

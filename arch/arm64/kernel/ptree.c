@@ -1,6 +1,7 @@
 #include <arch/arm64/include/asm/unistd.h>
-#include <include/linux/ptree.h>
-#include <include/linux/kernel.h>
+#include <linux/ptree.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
 
 int sys_ptree(struct prinfo *buf, int *nr) {
     
@@ -27,6 +28,9 @@ int sys_ptree(struct prinfo *buf, int *nr) {
         return -errno;
     }
 
+	struct task_struct *task;
+	int count=0;	
+
     struct prinfo *buf2;
     buf2 = (struct prinfo *)kmalloc(sizeof(struct prinfo) * n, GFP_KERNEL);
 
@@ -37,6 +41,19 @@ int sys_ptree(struct prinfo *buf, int *nr) {
      * discourage to use recursive function
      * DO NOT USE sleep, kmalloc, copy_to_user, copy_from_user!
      */
+
+	for_each_process(task){
+		if(count >= n)break;
+		buf2[count].comm = task->comm;
+		buf2[count].state = (int64_t)task->state;
+		buf2[count].pid = (pid_t)task->pid;
+		buf2[count].parent_pid = (pid_t)task->&p_pptr;
+		buf2[count].first_child_pid = (pid_t)task->&p_cptr;
+		buf2[count].next_sibling_pid = (pid_t)task->&p_osptr;
+		buf2[count].uid = (int64_t)task->uid;
+		count++;
+	}
+	if(count<n)n=count;
 
     /*
     LIST_HEAD(TODO);

@@ -7,7 +7,7 @@
 #include <linux/string.h>
 #include <linux/cred.h>
 
-int sys_ptree(struct prinfo *buf, int *nr) {
+long sys_ptree(struct prinfo *buf, int *nr) {
 	
     int errno;
     

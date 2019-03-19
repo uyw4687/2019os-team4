@@ -3,6 +3,6 @@
 
 #include <linux/prinfo.h>
 
-extern int sys_ptree(struct prinfo *buf, int *nr);
+extern long sys_ptree(struct prinfo *buf, int *nr);
 
 #endif

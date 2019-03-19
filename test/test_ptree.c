@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include </home/ubuntu1604/os-team4/include/linux/prinfo.h> // change this before use
+#include <linux/prinfo.h> // change this before use
 
-#define SYS_ptree 398
+#define sys_ptree 398
 
 int main(int argc, char *argv[]) {
 
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
 	errno = 0;
 
-	result = syscall(SYS_ptree, buf, nr);
+	result = syscall(sys_ptree, buf, nr);
 
 	printf("%d", result);
 

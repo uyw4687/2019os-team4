@@ -1,7 +1,7 @@
-#include "../include/asm/unistd.h"
-#include <../../../include/linux/ptree.h>
-#include <../../../include/linux/sched.h>
-#include <../../../include/linux/kernel.h>
+#include "../arch/arm64/include/asm/unistd.h"
+#include <linux/ptree.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
 #include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/string.h>

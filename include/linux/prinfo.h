@@ -1,9 +1,10 @@
-#include <uapi/asm-generic/errno-base.h>
-#include <asm/uaccess.h>
-#include <linux/sched.h>
-#include <linux/list.h>
-#include <linux/sched/task.h>
-#include <linux/slab.h>
+#ifdef __KERNEL__
+#include<linux/sched.h>
+#include<asm/uaccess.h>
+#include<linux/sched/task.h>
+#include<linux/list.h>
+#include<linux/slab.h>
+#endif
 
 struct prinfo {
     int64_t state;

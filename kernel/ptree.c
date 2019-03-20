@@ -23,10 +23,10 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int &n
     LIST_HEAD(p);
     p = task->children;
     list_for_each_entry(p, struct task_struct, children);
-    (task -> children)
+    (task -> children) //TODO
 
-if(count<n)n=count;
-if(count>n)break;
+if(count<n)n=count; //TODO
+if(count>n)break; //TODO
 }
 void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     strncpy(buf2[count].comm, 64);

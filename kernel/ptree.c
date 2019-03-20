@@ -7,6 +7,16 @@
 #include <linux/string.h>
 #include <linux/cred.h>
 
+struct stack {
+    struct prinfo data[100];
+    int top;
+};
+
+void init(struct stack *st);
+struct prinfo pop(struct stack *st);
+void push(struct stack *st, struct prinfo p);
+struct prinfo peek(struct stack st);
+
 long sys_ptree(struct prinfo *buf, int *nr) {
 	
     int errno;
@@ -42,6 +52,8 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     struct list_head *list;
 
     buf2 = (struct prinfo *)kmalloc(sizeof(struct prinfo) * n, GFP_KERNEL);
+    struct stack st;
+    init(&st);
 
     read_lock(&tasklist_lock);
 
@@ -78,4 +90,25 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     kfree(buf2);
 
     return 0;
+}
+
+void init(struct stack *st) {
+    st->top = -1;
+}
+
+void push(struct stack *st, struct prinfo p) {
+    if (st->top >= 99) return;  // stack is full!
+    st->top++;
+    st->data[st->top] = p;
+}
+
+struct prinfo pop(struct stack *st) {
+    if (st->top < 0) return NULL;  // stack is empty!
+    st->top--;
+    return st->data[st->top + 1];
+}
+
+struct prinfo peek(struct stack st) {
+    if (st.top < 0) return NULL;  // stack is empty!
+    return st.data[st.top];
 }

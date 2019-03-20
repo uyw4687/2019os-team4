@@ -23,29 +23,34 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int *n
     
 //    struct stack st;
     struct list_head *list;
+    struct task_struct *task2;
 //    init(&st);    
     
     if(*count > *n)
         return;
 
     assign_value(task, count, buf2); 
-
+    
+    if((task->chidren).next == &(task->children))
+        return;
     list_for_each(list, &task->children) {
-        task = list_entry(list, struct task_struct, sibling);
-        if (task->pid == 0)
-            return;
-        get_value(task, count, buf2, n);
+        task2 = list_entry(list, struct task_struct, sibling);
+        get_value(task2, count, buf2, n);
     }
+    return;
 }
 
 void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
-    strncpy(buf2[count].comm, task->comm, 64);
-    buf2[count].state = (int64_t)(task->state);
-    buf2[count].pid = (pid_t)task->pid;
-    buf2[count].parent_pid = (pid_t)task->parent->pid;
-    //buf2[count].first_child_pid = (pid_t)(list_entry(list_for_each(task->children.next, struct task_struct, children).pid);
-    //buf2[count].next_sibling_pid = (pid_t)task->&p_osptr;
-    buf2[count].uid = (int64_t)(task->cred->uid.val);
+    strncpy(buf2[*count].comm, task->comm, 64);
+    buf2[*count].state = (int64_t)(task->state);
+    buf2[*count].pid = (pid_t)task->pid;
+    buf2[*count].parent_pid = (pid_t)task->parent->pid;
+    if((task->chidren).next == &(task->children))
+        buf2[*count].first_child_pid = 0;
+    else
+        buf2[*count].first_child_pid = (pid_t)(list_entry((task->children).next, struct task_struct, sibling)->pid);
+    buf2[*count].next_sibling_pid = (pid_t)(list_entry((task->sibling).next, struct task_struct, sibling)task->pid);
+    buf2[*count].uid = (int64_t)(task->cred->uid.val);
     *count = *count + 1;
 }
 

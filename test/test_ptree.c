@@ -9,6 +9,15 @@
 
 #define sys_ptree 398
 
+
+struct stack {
+	struct prinfo data[100];
+	int top;
+};
+struct prinfo pop(struct stack *st);
+void push(struct stack *st, struct prinfo p);
+struct prinfo peek(struct stack st);
+
 int main(int argc, char *argv[]) {
 
 	int result;
@@ -17,9 +26,8 @@ int main(int argc, char *argv[]) {
 	int *nr;
 	
 	struct prinfo p;
-	
 	int i;
-
+	
 	if (argc < 2) {
 		printf("nr needed");
 		return -1;
@@ -53,11 +61,19 @@ int main(int argc, char *argv[]) {
  		perror("Bad address");
 		return -1;
 	}
+
+
+	//print ptree
+	struct stack st;
 	
 	for(i = 0 ; i < *nr ; i++) {
 		
-		p = buf[i];	
+		p = buf[i];
 		
+		if(peek(st).pid == p.next_sibling_pid) pop(&st);
+		else if(p.first_child_pid != 0) push(&st, p);
+		
+		for(int i=0 ; i < st.top ; i++) printf("	");
 		printf("%s,%d,%lld,%d,%d,%d,%lld\n", p.comm, p.pid, p.state, p.parent_pid, p.first_child_pid, p.next_sibling_pid, p.uid);
 
 	}
@@ -65,4 +81,18 @@ int main(int argc, char *argv[]) {
 	free(nr);
 	free(buf);
 
+}
+
+void push(struct stack *st, struct prinfo p){
+	st->top++;
+	st->data[st->top] = p;
+}
+
+struct prinfo pop(struct stack *st){
+	return st->data[st->top];
+	st->top--;
+}
+
+struct prinfo peek(struct stack st){
+	return st.data[st.top];
 }

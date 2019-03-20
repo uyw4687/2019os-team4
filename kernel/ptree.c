@@ -23,7 +23,6 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int *n
     
 //    struct stack st;
     struct list_head *list;
-    
 //    init(&st);    
     
     if(*count > *n)

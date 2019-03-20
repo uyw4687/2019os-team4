@@ -25,8 +25,8 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int &n
     list_for_each_entry(p, struct task_struct, children);
     (task -> children) //TODO
 
-if(count<n)n=count; //TODO
-if(count>n)break; //TODO
+    if(count<n)n=count; //TODO
+    if(count>n)break; //TODO
 }
 void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     strncpy(buf2[count].comm, 64);
@@ -44,7 +44,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     
     int errno;
     int n;  // the number of entries that actually copied into buf
-        struct task_struct *task;
+    struct task_struct *task;
     int count=0;
     struct prinfo *buf2;
     struct list_head *list;

@@ -19,36 +19,36 @@ void push(struct stack *st, struct prinfo p);
 struct prinfo peek(struct stack st);
 
 void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int &n){
-	assign_value(task, count, buf2);
-	LIST_HEAD(p);
-	p = task->children;
-	list_for_each_entry(p, struct task_struct, children);
-	(task -> children)
+    assign_value(task, count, buf2);
+    LIST_HEAD(p);
+    p = task->children;
+    list_for_each_entry(p, struct task_struct, children);
+    (task -> children)
 
 if(count<n)n=count;
 if(count>n)break;
 }
 void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
-		strncpy(buf2[count].comm, 64);
-		buf2[count].state = (int64_t)(task->state);
-		buf2[count].pid = (pid_t)task->pid;
-		buf2[count].parent_pid = (pid_t)task->parent->pid;
-		//buf2[count].first_child_pid = (pid_t)(list_entry(list_for_each(task->children.next, struct task_struct, children).pid);
-		//buf2[count].next_sibling_pid = (pid_t)task->&p_osptr;
-		buf2[count].uid = (int64_t)(task->cred->uid.val);
-		count++;
-	
+    strncpy(buf2[count].comm, 64);
+    buf2[count].state = (int64_t)(task->state);
+    buf2[count].pid = (pid_t)task->pid;
+    buf2[count].parent_pid = (pid_t)task->parent->pid;
+    //buf2[count].first_child_pid = (pid_t)(list_entry(list_for_each(task->children.next, struct task_struct, children).pid);
+    //buf2[count].next_sibling_pid = (pid_t)task->&p_osptr;
+    buf2[count].uid = (int64_t)(task->cred->uid.val);
+    count++;
+    
 }
 
 long sys_ptree(struct prinfo *buf, int *nr) {
-	
-	int errno;
-	int n;  // the number of entries that actually copied into buf
+    
+    int errno;
+    int n;  // the number of entries that actually copied into buf
         struct task_struct *task;
-	int count=0;
-	struct prinfo *buf2;
-	struct list_head *list;
-	struct stack st;
+    int count=0;
+    struct prinfo *buf2;
+    struct list_head *list;
+    struct stack st;
 
     if (buf == NULL || nr == NULL) {
         errno = EINVAL;
@@ -72,15 +72,15 @@ long sys_ptree(struct prinfo *buf, int *nr) {
         return -errno;
     }
 
-    task = init_task;
+    task = &init_task;
 
     buf2 = (struct prinfo *)kmalloc(sizeof(struct prinfo) * n, GFP_KERNEL);
 
     while(1) {
-	if(task.pid == 0)
-		break;
-	else
-		task = task -> parent;
+    if(task.pid == 0)
+        break;
+    else
+        task = task -> parent;
     }
 
     init(&st);

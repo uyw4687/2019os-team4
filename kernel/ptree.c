@@ -49,7 +49,7 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
         buf2[*count].first_child_pid = 0;
     else
         buf2[*count].first_child_pid = (pid_t)(list_entry((task->children).next, struct task_struct, sibling)->pid);
-    buf2[*count].next_sibling_pid = (pid_t)(list_entry((task->sibling).next, struct task_struct, sibling)task->pid);
+    //buf2[*count].next_sibling_pid = (pid_t)(list_entry((task->sibling).next, struct task_struct, sibling)task->pid);
     buf2[*count].uid = (int64_t)(task->cred->uid.val);
     *count = *count + 1;
 }

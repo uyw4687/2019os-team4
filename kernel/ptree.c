@@ -13,6 +13,10 @@ struct stack {
     int top;
 };
 
+struct prinfo empty = {
+    .pid = -1
+};
+
 void init(struct stack *st);
 struct prinfo pop(struct stack *st);
 void push(struct stack *st, struct prinfo p);
@@ -23,12 +27,19 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     buf2[*count].state = (int64_t)(task->state);
     buf2[*count].pid = (pid_t)task->pid;
     buf2[*count].parent_pid = (pid_t)task->parent->pid;
-    if((task->children).next == &(task->children))
+    
+    if ((task->children).next == &(task->children))
         buf2[*count].first_child_pid = 0;
     else
         buf2[*count].first_child_pid = (pid_t)(list_entry((task->children).next, struct task_struct, sibling)->pid);
-    buf2[*count].next_sibling_pid = 0;
-    //buf2[*count].next_sibling_pid = (pid_t)(list_entry((task->sibling).next, struct task_struct, sibling)task->pid);
+
+    if ((task->parent->children).next == (task->sibling).next) {
+        buf2[*count].next_sibling_pid = 0;
+    }
+    else {
+        buf2[*count].next_sibling_pid = (pid_t)(list_entry((task->sibling).next, struct task_struct, sibling)->pid);
+    }
+
     buf2[*count].uid = (int64_t)(task->cred->uid.val);
     *count = *count + 1;
 }
@@ -48,6 +59,7 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int *n
     
     if((task->children).next == &(task->children))
         return;
+
     list_for_each(list, &task->children) {
         task2 = list_entry(list, struct task_struct, sibling);
         get_value(task2, count, buf2, n);
@@ -60,7 +72,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     int errno;
     int n;  // the number of entries that actually copied into buf
     struct task_struct *task;
-    int count=0;
+    int count = 0;
     struct prinfo *buf2;
 
     if (buf == NULL || nr == NULL) {
@@ -131,12 +143,12 @@ void push(struct stack *st, struct prinfo p) {
 }
 
 struct prinfo pop(struct stack *st) {
-    if (st->top < 0) return NULL;  // stack is empty!
+    if (st->top < 0) return empty;  // stack is empty!
     st->top--;
     return st->data[st->top + 1];
 }
 
 struct prinfo peek(struct stack st) {
-    if (st.top < 0) return NULL;  // stack is empty!
+    if (st.top < 0) return empty;  // stack is empty!
     return st.data[st.top];
 }

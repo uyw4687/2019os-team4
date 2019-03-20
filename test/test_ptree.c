@@ -15,6 +15,10 @@ struct stack {
     int top;
 };
 
+struct prinfo empty = {
+    .pid = -1
+};
+
 void init(struct stack *st);
 struct prinfo pop(struct stack *st);
 void push(struct stack *st, struct prinfo p);
@@ -97,12 +101,12 @@ void push(struct stack *st, struct prinfo p) {
 }
 
 struct prinfo pop(struct stack *st) {
-    if (st->top < 0) return NULL;  // stack is empty!
+    if (st->top < 0) return empty;  // stack is empty!
     st->top--;
     return st->data[st->top + 1];
 }
 
 struct prinfo peek(struct stack st) {
-    if (st.top < 0) return NULL;  // stack is empty!
+    if (st.top < 0) return empty;  // stack is empty!
     return st.data[st.top];
 }

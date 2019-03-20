@@ -8,11 +8,25 @@
 #include <linux/cred.h>
 #include <linux/list.h>
 
-void get_value(struct task_struct *task, int *count){
-	struct list_head *p;
-	p = task -> children
-	list_entry(p, struct task_struct, children);
+struct stack {
+    struct prinfo data[100];
+    int top;
+};
+
+void init(struct stack *st);
+struct prinfo pop(struct stack *st);
+void push(struct stack *st, struct prinfo p);
+struct prinfo peek(struct stack st);
+
+void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int &n){
+	assign_value(task, count, buf2);
+	LIST_HEAD(p);
+	p = task->children;
+	list_for_each_entry(p, struct task_struct, children);
 	(task -> children)
+
+if(count<n)n=count;
+if(count>n)break;
 }
 void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
 		strncpy(buf2[count].comm, 64);
@@ -26,16 +40,6 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
 	
 }
 
-struct stack {
-    struct prinfo data[100];
-    int top;
-};
-
-void init(struct stack *st);
-struct prinfo pop(struct stack *st);
-void push(struct stack *st, struct prinfo p);
-struct prinfo peek(struct stack st);
-
 long sys_ptree(struct prinfo *buf, int *nr) {
 	
 	int errno;
@@ -44,6 +48,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
 	int count=0;
 	struct prinfo *buf2;
 	struct list_head *list;
+	struct stack st;
 
     if (buf == NULL || nr == NULL) {
         errno = EINVAL;
@@ -67,25 +72,23 @@ long sys_ptree(struct prinfo *buf, int *nr) {
         return -errno;
     }
 
+    task = init_task;
+
     buf2 = (struct prinfo *)kmalloc(sizeof(struct prinfo) * n, GFP_KERNEL);
-    struct stack st;
+
+    while(1) {
+	if(task.pid == 0)
+		break;
+	else
+		task = task -> parent;
+    }
+
     init(&st);
 
     read_lock(&tasklist_lock);
 
    //  * DO NOT USE sleep, kmalloc, copy_to_user, copy_from_user!
-
-	for_each_process(task){
-		if(count >= n)break;
-}
-	if(count<n)n=count;
-
-    /*
-    LIST_HEAD(TODO);
-    list_for_each_entry(pos, head, member) {
-        TODO
-    }
-    */
+    get_value(task, &count, &n, buf2);
 
     read_unlock(&tasklist_lock);
     

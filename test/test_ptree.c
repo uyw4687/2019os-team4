@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     int i;
     
     if (argc < 2) {
-        printf("nr needed");
+        printf("nr needed\n");
         return -1;
     }
     
@@ -57,8 +57,6 @@ int main(int argc, char *argv[]) {
     errno = 0;
 
     result = syscall(sys_ptree, buf, nr);
-
-    printf("%d", result);
 
     if (result == -EINVAL) {
 

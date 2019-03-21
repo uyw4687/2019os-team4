@@ -69,14 +69,21 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    else if(result < 0){
+        perror("error");
+        return -1;
+    }
+
 
 	//print ptree
 	struct stack st;
 	init(&st);
-
-	p=buf[0];
-	push(&st,p);
-	print(p,st.top);
+    
+    if(nr>0){
+	    p=buf[0];
+	    push(&st,p);
+	    print(p,st.top);
+    }
     
     int j;
 	for(j = 1 ; j < *nr ; j++) {

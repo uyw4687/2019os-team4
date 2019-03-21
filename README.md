@@ -19,12 +19,14 @@ buf, nr에 VERIFY_WRITE에 대해서도 access_ok로 확인한 후 문제가 있
 buf, nr에 직접 접근할 수 없으므로, buf2, n을 사용합니다.
 buf2에 값을 할당해 준 후 나중에 처리가 다 되면 buf에 넣어줍니다.
 nr의 경우에도 실제로 할당된 값을 count로 센 후 nr값을 받았던 n과 비교하여 count가 더 작으면 `*nr`에 count값을 넣어줍니다.
-#### 
+#### DFS
+먼저 &init_task를 `struct task_struct *task`에 할당해 줍니다.
+그리고 난 후 swapper로 DFS를 시작하기 위해 task pid=0인 task_struct를 가리키도록 while loop을 돌려줍니다.
+현재 pid가 0이 아니면 parent로 가서 swapper를 찾습니다.
+
 read_lock(&tasklist_lock);
 read_unlock(&tasklist_lock);
-사이에서 task_struct 정보를 buf2에 넣어주는 작업을 합니다.
-
-
+사이에서 task_struct 정보를 buf2에 넣어주는 작업을 합니다.(get_value)
 
 ### Process tree investigation
 

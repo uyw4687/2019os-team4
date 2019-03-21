@@ -44,7 +44,6 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     }
 
     buf2[*count].uid = (int64_t)(task->cred->uid.val);
-    *count = *count + 1;
 }
 
 /* recursive version */
@@ -53,10 +52,10 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int n)
     struct list_head *list;
     struct task_struct *task2;
     
-    if (*count >= n)
-        return;
-
-    assign_value(task, count, buf2); 
+    if (*count < n)
+        assign_value(task, count, buf2); 
+    
+    *count = *count + 1;
     
     if ((task->children).next == &(task->children))
         return;
@@ -73,7 +72,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     int err, errno;
     int n;  // the number of entries that actually copied into buf
     struct task_struct *task;
-    int count = 0;
+    int count = 0;  // the total number of entries
     struct prinfo *buf2;
 
     if (buf == NULL || nr == NULL) {
@@ -143,7 +142,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
 
     kfree(buf2);
 
-    return 0;
+    return count;
 }
 
 /*

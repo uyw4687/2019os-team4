@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
 	//print ptree
 	struct stack st;
-	st.top = -1;
+	init(&st);
     
     int j;
 	for(j = 0 ; j < *nr ; j++) {
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
         }
         else if(p.first_child_pid != 0) {
             push(&st,p);
-            print(p,st.top+1);
+            print(p,st.top);
         }
         else if(peek(st).pid == p.parent_pid){
             print(p,st.top+1);

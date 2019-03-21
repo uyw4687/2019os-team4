@@ -31,15 +31,15 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     buf2[*count].pid = (pid_t)task->pid;
     buf2[*count].parent_pid = (pid_t)task->parent->pid;
     
-    if ((task->children).next == &(task->children))
+    if ((task->children).next == &(task->children)) {
         buf2[*count].first_child_pid = 0;
-    else
+    } else {
         buf2[*count].first_child_pid = (pid_t)(list_entry((task->children).next, struct task_struct, sibling)->pid);
+    }
 
     if ((task->parent->children).next == (task->sibling).next) {
         buf2[*count].next_sibling_pid = 0;
-    }
-    else {
+    } else {
         buf2[*count].next_sibling_pid = (pid_t)(list_entry((task->sibling).next, struct task_struct, sibling)->pid);
     }
 
@@ -105,6 +105,11 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     task = &init_task;
 
     buf2 = (struct prinfo *)kmalloc(sizeof(struct prinfo) * n, GFP_KERNEL);
+
+    if (!buf2) {
+        errno = EFAULT;
+        return -errno;
+    }
 
     // find swapper process
     while (1) {

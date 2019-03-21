@@ -8,6 +8,7 @@
 #include <linux/cred.h>
 #include <linux/list.h>
 
+/*
 struct stack {
     struct prinfo data[100];
     int top;
@@ -21,6 +22,7 @@ void init(struct stack *st);
 struct prinfo pop(struct stack *st);
 void push(struct stack *st, struct prinfo p);
 struct prinfo peek(struct stack st);
+*/
 
 void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     strncpy(buf2[*count].comm, task->comm, 64);
@@ -44,20 +46,18 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     *count = *count + 1;
 }
 
-//recursive
+/* recursive version */
 void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int *n) {
     
-//    struct stack st;
     struct list_head *list;
     struct task_struct *task2;
-//    init(&st);    
     
-    if(*count > *n)
+    if (*count > *n)
         return;
 
     assign_value(task, count, buf2); 
     
-    if((task->children).next == &(task->children))
+    if ((task->children).next == &(task->children))
         return;
 
     list_for_each(list, &task->children) {
@@ -69,7 +69,7 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int *n
 
 long sys_ptree(struct prinfo *buf, int *nr) {
     
-    int errno;
+    int err, errno;
     int n;  // the number of entries that actually copied into buf
     struct task_struct *task;
     int count = 0;
@@ -85,13 +85,15 @@ long sys_ptree(struct prinfo *buf, int *nr) {
         return -errno;
     }
 
-    errno = copy_from_user(&n, nr, sizeof(int));
-    if(errno != 0)
-        return -EINVAL;
+    err = copy_from_user(&n, nr, sizeof(int));
+    if (err != 0) {
+        errno = EINVAL;
+        return -errno;
+    }
 
     if (n < 1) {
         errno = EINVAL;
-        return errno;
+        return -errno;
     }
 
     if (!access_ok(VERIFY_READ, buf, sizeof(struct prinfo) * n)) {
@@ -103,11 +105,12 @@ long sys_ptree(struct prinfo *buf, int *nr) {
 
     buf2 = (struct prinfo *)kmalloc(sizeof(struct prinfo) * n, GFP_KERNEL);
 
-    while(1) {
-        if(task->pid == 0)
+    // find swapper process
+    while (1) {
+        if (task->pid == 0)
             break;
         else
-            task = task -> parent;
+            task = task->parent;
     }
 
     read_lock(&tasklist_lock);
@@ -117,21 +120,27 @@ long sys_ptree(struct prinfo *buf, int *nr) {
 
     read_unlock(&tasklist_lock);
     
-    if(count < n)
+    if (count < n)
         n = count;
 
-    errno = copy_to_user(nr, &n, sizeof(int));
-    if(errno != 0)
-        return -EINVAL;
-    errno = copy_to_user(buf, buf2, sizeof(struct prinfo) * n);
-    if(errno != 0)
-        return -EINVAL;
+    err = copy_to_user(nr, &n, sizeof(int));
+    if (err != 0) {
+        errno = EINVAL;
+        return -errno;
+    }
+
+    err = copy_to_user(buf, buf2, sizeof(struct prinfo) * n);
+    if (err != 0) {
+        errno = EINVAL;
+        return -errno;
+    }
 
     kfree(buf2);
 
     return 0;
 }
 
+/*
 void init(struct stack *st) {
     st->top = -1;
 }
@@ -152,3 +161,4 @@ struct prinfo peek(struct stack st) {
     if (st.top < 0) return empty;  // stack is empty!
     return st.data[st.top];
 }
+*/

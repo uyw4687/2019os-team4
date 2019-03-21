@@ -56,6 +56,8 @@ int main(int argc, char *argv[]) {
     
     buf = (struct prinfo *)malloc(sizeof(struct prinfo)*(*nr));
 
+    for( i = 0 ; i < *nr ; i++ ) buf[i].pid = i;
+
     if(!buf)
         return -1;
 
@@ -83,10 +85,9 @@ int main(int argc, char *argv[]) {
 	    print(p,st.top);
     }
     
-    int j;
-	for(j = 1 ; j < *nr ; j++) {
+	for(i = 1 ; i < *nr ; i++) {
 		
-		p = buf[j];
+		p = buf[i];
 		
         while(peek(st).pid != p.parent_pid) pop(&st);
         if(p.first_child_pid != 0) {
@@ -100,6 +101,8 @@ int main(int argc, char *argv[]) {
             print(p,st.top+1);
         }
 	}
+    
+    printf("system call return %d\ntotal number is %d\n", result, *nr);
 
     free(nr);
     free(buf);

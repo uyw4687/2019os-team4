@@ -17,6 +17,9 @@ struct stack {
 struct prinfo pop(struct stack *st);
 void push(struct stack *st, struct prinfo p);
 struct prinfo peek(struct stack st);
+//define stack, stack function
+void print(struct prinfo p, int top);
+//define print function
 
 int main(int argc, char *argv[]) {
 
@@ -65,17 +68,27 @@ int main(int argc, char *argv[]) {
 
 	//print ptree
 	struct stack st;
-	
+	st.top = -1;
+
 	for(i = 0 ; i < *nr ; i++) {
 		
 		p = buf[i];
 		
-		if(peek(st).pid == p.next_sibling_pid) pop(&st);
-		else if(p.first_child_pid != 0) push(&st, p);
-		
-		for(int i=0 ; i < st.top ; i++) printf("	");
-		printf("%s,%d,%lld,%d,%d,%d,%lld\n", p.comm, p.pid, p.state, p.parent_pid, p.first_child_pid, p.next_sibling_pid, p.uid);
-
+        if(st.top == -1) {
+            push(&st,p);
+            print(p,st.top);
+        }
+        else if(p.first_child_pid != 0) {
+            push(&st,p);
+            print(p,st.top);
+        }
+        else if(peek(st).pid == p.parent_pid){
+            print(p,st.top+1);
+        }//case sibling
+        else{
+            while(peek(st).pid != p.parent_pid) pop(&st);
+            print(p,st.top+1);
+        }
 	}
 
 	free(nr);
@@ -84,15 +97,20 @@ int main(int argc, char *argv[]) {
 }
 
 void push(struct stack *st, struct prinfo p){
-	st->top++;
-	st->data[st->top] = p;
+    st->top++;
+    st->data[st->top] = p;
 }
 
 struct prinfo pop(struct stack *st){
-	return st->data[st->top];
-	st->top--;
+    return st->data[st->top];
+    st->top--;
 }
 
 struct prinfo peek(struct stack st){
 	return st.data[st.top];
+}
+
+void print(struct prinfo p,int t){
+    for(t ; t > 0; t--)printf("    ");
+    printf("%s,%d,%lld,%d,%d,%d,%lld\n", p.comm, p.pid, p.state, p.parent_pid, p.first_child_pid, p.next_sibling_pid, p.uid);
 }

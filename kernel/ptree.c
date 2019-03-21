@@ -97,7 +97,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
         return -errno;
     }
 
-    if (!access_ok(VERIFY_READ, buf, sizeof(struct prinfo) * n)) {
+    if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * n)) {
         errno = EFAULT;
         return -errno;
     }

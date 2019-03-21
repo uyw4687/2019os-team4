@@ -47,14 +47,17 @@ int main(int argc, char *argv[]) {
     if(nr != NULL)
         *nr = atoi(argv[1]);    
     else
-        return 1;
+        return -1;
+
+    if(*nr < 0){
+        perror("invalid argument");
+        return -1;
+    }
     
     buf = (struct prinfo *)malloc(sizeof(struct prinfo)*(*nr));
 
     if(!buf)
-        return 1;        
-
-    errno = 0;
+        return -1;
 
     result = syscall(sys_ptree, buf, nr);
 
@@ -65,12 +68,7 @@ int main(int argc, char *argv[]) {
 
     } else if (result == -EFAULT) {
 
-         perror("Bad address");
-        return -1;
-    }
-
-    else if(result < 0){
-        perror("error");
+        perror("Bad address");
         return -1;
     }
 

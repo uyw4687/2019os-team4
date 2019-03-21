@@ -87,11 +87,11 @@ int main(int argc, char *argv[]) {
         }
         else if(p.first_child_pid != 0) {
             push(&st,p);
-            print(p,st.top);
+            print(p,st.top+1);
         }
         else if(peek(st).pid == p.parent_pid){
             print(p,st.top+1);
-        }//case sibling
+        }
         else{
             while(peek(st).pid != p.parent_pid) pop(&st);
             print(p,st.top+1);

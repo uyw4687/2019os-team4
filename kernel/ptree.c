@@ -25,6 +25,7 @@ struct prinfo peek(struct stack st);
 */
 
 void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
+
     strncpy(buf2[*count].comm, task->comm, 64);
     buf2[*count].state = (int64_t)(task->state);
     buf2[*count].pid = (pid_t)task->pid;
@@ -47,12 +48,12 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
 }
 
 /* recursive version */
-void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int *n) {
+void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int n) {
     
     struct list_head *list;
     struct task_struct *task2;
     
-    if (*count > *n)
+    if (*count >= n)
         return;
 
     assign_value(task, count, buf2); 
@@ -116,7 +117,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     read_lock(&tasklist_lock);
 
     // DO NOT USE sleep, kmalloc, copy_to_user, copy_from_user!
-    get_value(task, &count, buf2, &n);
+    get_value(task, &count, buf2, n);
 
     read_unlock(&tasklist_lock);
     

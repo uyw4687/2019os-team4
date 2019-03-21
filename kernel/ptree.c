@@ -77,28 +77,28 @@ long sys_ptree(struct prinfo *buf, int *nr) {
 
     if (buf == NULL || nr == NULL) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     if (!access_ok(VERIFY_WRITE, nr, sizeof(int))) {
         errno = EFAULT;
-        return -errno;
+        return -EFAULT;
     }
 
     err = copy_from_user(&n, nr, sizeof(int));
     if (err != 0) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     if (n < 1) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * n)) {
         errno = EFAULT;
-        return -errno;
+        return -EFAULT;
     }
 
     task = &init_task;
@@ -107,7 +107,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
 
     if (!buf2) {
         errno = EFAULT;
-        return -errno;
+        return -EFAULT;
     }
 
     // find swapper process
@@ -131,13 +131,13 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     err = copy_to_user(nr, &n, sizeof(int));
     if (err != 0) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     err = copy_to_user(buf, buf2, sizeof(struct prinfo) * n);
     if (err != 0) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     kfree(buf2);

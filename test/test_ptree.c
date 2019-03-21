@@ -49,10 +49,6 @@ int main(int argc, char *argv[]) {
     else
         return -1;
 
-    if(*nr < 0){
-        perror("invalid argument");
-        return -1;
-    }
     
     buf = (struct prinfo *)malloc(sizeof(struct prinfo)*(*nr));
 
@@ -63,18 +59,24 @@ int main(int argc, char *argv[]) {
 
     result = syscall(sys_ptree, buf, nr);
 
-    if (result == -EINVAL) {
+    if (result == -1) {
+        if(errno == -EINVAL){
+            error("Invalid argument");
+            eturn -1;
+        }
 
-        perror("Invalid argument");
-        return -1;
+         else if (errno == -EFAULT) {
 
-    } else if (result == -EFAULT) {
+            perror("Bad addresi");
+            return -1;
+        }
+        
+        else {
+            perror("Another error");
+            return -1;
+        }
 
-        perror("Bad address");
-        return -1;
     }
-
-
 	//print ptree
 	struct stack st;
 	init(&st);

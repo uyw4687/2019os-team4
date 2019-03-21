@@ -75,17 +75,18 @@ int main(int argc, char *argv[]) {
 	//print ptree
 	struct stack st;
 	init(&st);
+
+	p=buf[0];
+	push(&st,p);
+	print(p,st.top);
     
     int j;
-	for(j = 0 ; j < *nr ; j++) {
+	for(j = 1 ; j < *nr ; j++) {
 		
 		p = buf[j];
 		
-        if(st.top == -1) {
-            push(&st,p);
-            print(p,st.top);
-        }
-        else if(p.first_child_pid != 0) {
+        while(peek(st).pid != p.parent_pid) pop(&st);
+        if(p.first_child_pid != 0) {
             push(&st,p);
             print(p,st.top);
         }
@@ -93,7 +94,6 @@ int main(int argc, char *argv[]) {
             print(p,st.top+1);
         }
         else{
-            while(peek(st).pid != p.parent_pid) pop(&st);
             print(p,st.top+1);
         }
 	}

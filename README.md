@@ -54,4 +54,7 @@ sibling 역시 sibling의 next가 parent의 children의 next인지 확인하고 
 ### Lessons learned
 먼저 가장 크게 와닿았던 부분은 리눅스 커널에서 프로세스 트리가 어떤 형태로 저장되어 있는지 알 수 있었다는 점입다.
 복잡하다면 복잡한 구조인 doubly linked list 구조로 되어있서 list_for_each, list_entry를 사용해야 하는 것도 새로웠습니다.
-그리고 이제껏 user level에서 programming을 해 왔었는데 kernel에서의 programming을 어떻게 하는지도 어느정도 알 수 있었습니다
+그리고 이제껏 user level에서 programming을 해 왔었는데 kernel에서의 programming을 어떻게 하는지도 어느정도 알 수 있었습니다.
+malloc대신 kmalloc을 써야한다는 것과 printf 대신 printk를 써야한다는 등의 제약 조건에 대해서 뿐만 아니라
+user memory에 대해 바로 접근해서는 안 된다는 것(copy_to_user, copy_from_user instead), read_lock의 개념 등에 대해서도 새롭게 알았습니다.
+이런 경험을 통해 리눅스 커널에서는 신기하고 재밌는 일이 일어나고 있다는 걸 깨달았고, 앞으로의 프로젝트를 통해 더욱 많은 것을 알아갈 생각에 기쁩니다.

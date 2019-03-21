@@ -44,7 +44,6 @@ void assign_value(struct task_struct *task, int *count, struct prinfo *buf2) {
     }
 
     buf2[*count].uid = (int64_t)(task->cred->uid.val);
-    *count = *count + 1;
 }
 
 /* recursive version */
@@ -53,10 +52,10 @@ void get_value(struct task_struct *task, int *count, struct prinfo *buf2, int n)
     struct list_head *list;
     struct task_struct *task2;
     
-    if (*count >= n)
-        return;
-
-    assign_value(task, count, buf2); 
+    if (*count < n)
+        assign_value(task, count, buf2); 
+    
+    *count = *count + 1;
     
     if ((task->children).next == &(task->children))
         return;
@@ -73,33 +72,33 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     int err, errno;
     int n;  // the number of entries that actually copied into buf
     struct task_struct *task;
-    int count = 0;
+    int count = 0;  // the total number of entries
     struct prinfo *buf2;
 
     if (buf == NULL || nr == NULL) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     if (!access_ok(VERIFY_WRITE, nr, sizeof(int))) {
         errno = EFAULT;
-        return -errno;
+        return -EFAULT;
     }
 
     err = copy_from_user(&n, nr, sizeof(int));
     if (err != 0) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     if (n < 1) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     if (!access_ok(VERIFY_WRITE, buf, sizeof(struct prinfo) * n)) {
         errno = EFAULT;
-        return -errno;
+        return -EFAULT;
     }
 
     task = &init_task;
@@ -108,7 +107,7 @@ long sys_ptree(struct prinfo *buf, int *nr) {
 
     if (!buf2) {
         errno = EFAULT;
-        return -errno;
+        return -EFAULT;
     }
 
     // find swapper process
@@ -132,18 +131,18 @@ long sys_ptree(struct prinfo *buf, int *nr) {
     err = copy_to_user(nr, &n, sizeof(int));
     if (err != 0) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     err = copy_to_user(buf, buf2, sizeof(struct prinfo) * n);
     if (err != 0) {
         errno = EINVAL;
-        return -errno;
+        return -EINVAL;
     }
 
     kfree(buf2);
 
-    return 0;
+    return count;
 }
 
 /*

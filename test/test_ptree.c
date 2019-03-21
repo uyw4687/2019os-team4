@@ -54,20 +54,22 @@ int main(int argc, char *argv[]) {
 
     for( i = 0 ; i < *nr ; i++ ) buf[i].pid = i;
 
-    if(!buf)
+    if(!buf){
+        perror("Malloc is failed");
         return -1;
+    }
 
     result = syscall(sys_ptree, buf, nr);
 
     if (result == -1) {
         if(errno == -EINVAL){
-            error("Invalid argument");
-            eturn -1;
+            perror("Invalid argument");
+            return -1;
         }
 
          else if (errno == -EFAULT) {
 
-            perror("Bad addresi");
+            perror("Bad address");
             return -1;
         }
         
@@ -104,7 +106,7 @@ int main(int argc, char *argv[]) {
         }
 	}
     
-    printf("system call return %d\ntotal number is %d\n", result, *nr);
+    printf("system call returns %d\nnr is %d\n", result, *nr);
 
     free(nr);
     free(buf);

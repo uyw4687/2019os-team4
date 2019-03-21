@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <linux/prinfo.h> // change this before use
+#include <linux/prinfo.h>
 
 #define sys_ptree 398
 
@@ -23,6 +23,9 @@ void init(struct stack *st);
 struct prinfo pop(struct stack *st);
 void push(struct stack *st, struct prinfo p);
 struct prinfo peek(struct stack st);
+//define stack, stack function
+void print(struct prinfo p, int top);
+//define print function
 
 int main(int argc, char *argv[]) {
 
@@ -69,21 +72,31 @@ int main(int argc, char *argv[]) {
     }
 
 
-    //print ptree
-    struct stack st;
+	//print ptree
+	struct stack st;
+	init(&st);
+
+	p=buf[0];
+	push(&st,p);
+	print(p,st.top);
     
-    for (i = 0; i < *nr; i++) {
-        
-        p = buf[i];
-        
-        if (peek(st).pid == p.next_sibling_pid) pop(&st);
-        else if (p.first_child_pid != 0) push(&st, p);
-
-        int j;
-        for (j = 0; j < st.top; j++) printf("\t");
-        printf("%s,%d,%lld,%d,%d,%d,%lld\n", p.comm, p.pid, p.state, p.parent_pid, p.first_child_pid, p.next_sibling_pid, p.uid);
-
-    }
+    int j;
+	for(j = 1 ; j < *nr ; j++) {
+		
+		p = buf[j];
+		
+        while(peek(st).pid != p.parent_pid) pop(&st);
+        if(p.first_child_pid != 0) {
+            push(&st,p);
+            print(p,st.top);
+        }
+        else if(peek(st).pid == p.parent_pid){
+            print(p,st.top+1);
+        }
+        else{
+            print(p,st.top+1);
+        }
+	}
 
     free(nr);
     free(buf);
@@ -94,11 +107,13 @@ void init(struct stack *st) {
     st->top = -1;
 }
 
+
 void push(struct stack *st, struct prinfo p) {
     if (st->top >= 99) return;  // stack is full!
     st->top++;
     st->data[st->top] = p;
 }
+
 
 struct prinfo pop(struct stack *st) {
     if (st->top < 0) return empty;  // stack is empty!
@@ -109,4 +124,9 @@ struct prinfo pop(struct stack *st) {
 struct prinfo peek(struct stack st) {
     if (st.top < 0) return empty;  // stack is empty!
     return st.data[st.top];
+}
+
+void print(struct prinfo p,int t){
+    for(t ; t > 0; t--)printf("    ");
+    printf("%s,%d,%lld,%d,%d,%d,%lld\n", p.comm, p.pid, p.state, p.parent_pid, p.first_child_pid, p.next_sibling_pid, p.uid);
 }

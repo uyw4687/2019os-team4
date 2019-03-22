@@ -36,7 +36,8 @@ int main(int argc, char *argv[]) {
     
     struct prinfo p;
     int i;
-    
+    int err;
+
     if (argc < 2) {
         printf("nr needed\n");
         return -1;
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]) {
     }
 
     result = syscall(sys_ptree, buf, nr);
+    err = errno;
 
     if (result == -1) {
         if(errno == -EINVAL){
@@ -72,7 +74,7 @@ int main(int argc, char *argv[]) {
         }
 
          else {
-             printf("errno is %d\n", errno);
+             printf("errno is %d\n", err);
              perror("undefined error happened!");
              return -1;
          }

@@ -61,15 +61,17 @@ int main(int argc, char *argv[]) {
 
     result = syscall(sys_ptree, buf, nr);
 
-    if (result == -EINVAL) {
+    if (result == -1) {
+        if (errno == -EINVAL) {
 
-        perror("Invalid argument");
-        return -1;
+            perror("Invalid argument");
+            return -1;
 
-    } else if (result == -EFAULT) {
+        } else if (errno == -EFAULT) {
 
-        perror("Bad address");
-        return -1;
+            perror("Bad address");
+            return -1;
+        }
     }
 
 

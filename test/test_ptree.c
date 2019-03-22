@@ -62,12 +62,12 @@ int main(int argc, char *argv[]) {
     err = errno;
 
     if (result == -1) {
-        if(errno == -EINVAL){
+       if(err == -EINVAL){
             perror("Invalid argument");
             return -1;
         }
 
-         else if (errno == -EFAULT) {
+       else if (err == -EFAULT) {
 
             perror("Bad address");
             return -1;

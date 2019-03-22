@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
         }
 
          else {
-             printf("errno is %d,errno");
-             perror("undifined error happened!");
+             printf("errno is %d\n", errno);
+             perror("undefined error happened!");
              return -1;
          }
     

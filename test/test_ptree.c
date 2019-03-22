@@ -52,8 +52,6 @@ int main(int argc, char *argv[]) {
     
     buf = (struct prinfo *)malloc(sizeof(struct prinfo)*(*nr));
 
-    for( i = 0 ; i < *nr ; i++ ) buf[i].pid = i;
-
     if(!buf){
         perror("Malloc is failed");
         return -1;
@@ -72,12 +70,13 @@ int main(int argc, char *argv[]) {
             perror("Bad address");
             return -1;
         }
-        
-        else {
-            perror("Another error");
-            return -1;
-        }
 
+         else {
+             printf("errno is %d,errno");
+             perror("undifined error happened!");
+             return -1;
+         }
+    
     }
 	//print ptree
 	struct stack st;

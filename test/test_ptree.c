@@ -49,32 +49,35 @@ int main(int argc, char *argv[]) {
     else
         return -1;
 
-    if(*nr < 0){
-        perror("invalid argument");
-        return -1;
-    }
     
     buf = (struct prinfo *)malloc(sizeof(struct prinfo)*(*nr));
 
-    if(!buf)
+    if(!buf){
+        perror("Malloc is failed");
         return -1;
+    }
 
     result = syscall(sys_ptree, buf, nr);
 
     if (result == -1) {
-        if (errno == -EINVAL) {
-
+        if(errno == -EINVAL){
             perror("Invalid argument");
             return -1;
+        }
 
-        } else if (errno == -EFAULT) {
+         else if (errno == -EFAULT) {
 
             perror("Bad address");
             return -1;
         }
+
+         else {
+             printf("errno is %d,errno");
+             perror("undifined error happened!");
+             return -1;
+         }
+    
     }
-
-
 	//print ptree
 	struct stack st;
 	init(&st);
@@ -85,10 +88,9 @@ int main(int argc, char *argv[]) {
 	    print(p,st.top);
     }
     
-    int j;
-	for(j = 1 ; j < *nr ; j++) {
+	for(i = 1 ; i < *nr ; i++) {
 		
-		p = buf[j];
+		p = buf[i];
 		
         while(peek(st).pid != p.parent_pid) pop(&st);
         if(p.first_child_pid != 0) {
@@ -102,6 +104,8 @@ int main(int argc, char *argv[]) {
             print(p,st.top+1);
         }
 	}
+    
+    printf("system call returns %d\nnr is %d\n", result, *nr);
 
     free(nr);
     free(buf);

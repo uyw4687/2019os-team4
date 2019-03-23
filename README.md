@@ -30,10 +30,11 @@ Project0의 순서로 build하시면 됩니다.
 * 먼저 &init_task를 `struct task_struct *task`에 할당해 줍니다.
 * 그리고 난 후 swapper에서 DFS를 시작하기 위해, task pid가 0인 task_struct를 가리키도록 while loop을 돌려줍니다.
   * 현재 pid가 0이 아니면 parent로 가서 swapper를 찾습니다.
+  * `get_value`를 호출하여
   <pre><code>read_lock(&tasklist_lock);
   read_unlock(&tasklist_lock);
   </code></pre>
-  사이에서 task_struct 정보를 buf2에 넣어주는 작업을 합니다. (`get_value`)
+  사이에서 task_struct 정보를 buf2에 넣어주는 작업을 합니다.
 ##### Function get_value
 * recursive version으로 짰기 때문에 매번 시작하자마자 `*count`가 n보다 작은지 확인합니다.
   * 그렇다면 바로 `assign_value`를 호출하여 task의 process 정보를 buf2에 넣어줍니다.

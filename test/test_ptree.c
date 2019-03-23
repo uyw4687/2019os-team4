@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
 
     if (!buf) {
         perror("Malloc is failed");
+        free(nr);
         return -1;
     }
 
@@ -68,17 +69,23 @@ int main(int argc, char *argv[]) {
     if (result == -1) {
         if (err == EINVAL){
             perror("Invalid argument");
+            free(nr);
+            free(buf);
             return -1;
         }
 
         else if (err == EFAULT) {
             perror("Bad address");
+            free(nr);
+            free(buf);
             return -1;
         }
 
         else {
             printf("errno is %d\n", err);
             perror("Undefined error happened!");
+            free(nr);
+            free(buf);
             return -1;
         }
     

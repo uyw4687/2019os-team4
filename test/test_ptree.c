@@ -19,13 +19,14 @@ struct prinfo empty = {
     .pid = -1
 };
 
+//define stack, stack function
 void init(struct stack *st);
 struct prinfo pop(struct stack *st);
 void push(struct stack *st, struct prinfo p);
 struct prinfo peek(struct stack st);
-//define stack, stack function
-void print(struct prinfo p, int top);
+
 //define print function
+void print(struct prinfo p, int top);
 
 int main(int argc, char *argv[]) {
 
@@ -45,15 +46,18 @@ int main(int argc, char *argv[]) {
     
     nr = (int*)malloc(sizeof(int));
 
-    if(nr != NULL)
-        *nr = atoi(argv[1]);    
-    else
+    if (nr != NULL) {
+        *nr = atoi(argv[1]);
+    }
+    else {
+        perror("Malloc is failed");
         return -1;
+    }
 
     
     buf = (struct prinfo *)malloc(sizeof(struct prinfo)*(*nr));
 
-    if(!buf){
+    if (!buf) {
         perror("Malloc is failed");
         return -1;
     }
@@ -62,47 +66,47 @@ int main(int argc, char *argv[]) {
     err = errno;
 
     if (result == -1) {
-       if(err == -EINVAL){
+        if (err == -EINVAL){
             perror("Invalid argument");
             return -1;
         }
 
-       else if (err == -EFAULT) {
-
+        else if (err == -EFAULT) {
             perror("Bad address");
             return -1;
         }
 
-         else {
-             printf("errno is %d\n", err);
-             perror("undefined error happened!");
-             return -1;
-         }
+        else {
+            printf("errno is %d\n", err);
+            perror("Undefined error happened!");
+            return -1;
+        }
     
     }
+
 	//print ptree
 	struct stack st;
 	init(&st);
     
-    if(nr>0){
-	    p=buf[0];
-	    push(&st,p);
-	    print(p,st.top);
+    if (nr > 0) {
+	    p = buf[0];
+	    push(&st, p);
+	    print(p, st.top);
     }
     
-	for(i = 1 ; i < *nr ; i++) {
+	for (i = 1; i < *nr; i++) {
 		
 		p = buf[i];
 		
-        while(peek(st).pid != p.parent_pid) pop(&st);
-        if(p.first_child_pid != 0) {
+        while (peek(st).pid != p.parent_pid) pop(&st);
+        if (p.first_child_pid != 0) {
             push(&st,p);
             print(p,st.top);
         }
-        else if(peek(st).pid == p.parent_pid){
+        else if (peek(st).pid == p.parent_pid){
             print(p,st.top+1);
         }
-        else{
+        else {
             print(p,st.top+1);
         }
 	}
@@ -138,6 +142,7 @@ struct prinfo peek(struct stack st) {
 }
 
 void print(struct prinfo p,int t){
-    for(t ; t > 0; t--)printf("    ");
+    for(; t > 0; t--)
+        printf("    ");
     printf("%s,%d,%lld,%d,%d,%d,%lld\n", p.comm, p.pid, p.state, p.parent_pid, p.first_child_pid, p.next_sibling_pid, p.uid);
 }

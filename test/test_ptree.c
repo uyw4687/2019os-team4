@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 
         else {
             printf("errno is %d\n", err);
-            perror("Undefined error happened!");
+            perror("Undefined error occurred!");
             free(nr);
             free(buf);
             return -1;

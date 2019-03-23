@@ -12,6 +12,11 @@ Project0의 순서로 build하시면 됩니다.
 * arch/arm64/include/asm/unistd32.h 에서 ptree 시스템 콜을 398번에 등록해 줍니다.
 * include/linux/syscalls.h 에서 sys_ptree의 prototype을 적어 줍니다.
 * kernel/Makefile에서 ptree.o를 추가해 줍니다.
+
+---
+
+다음은 kernel/ptree.c에 대한 설명입니다.
+
 #### Error checking process / After DFS
 * 먼저 user space memory인 buf, nr에 대해서 NULL값인지 확인해 줍니다. 만약 그렇다면 -EINVAL을 return합니다. 
 * 그리고 buf, nr의 값을 copy_from_user로 받을 때 또는 buf2, n의 값을 copy_to_user로 줄 때 오류가 발생하면 모두 -EINVAL을 return합니다.
@@ -49,18 +54,42 @@ read_unlock(&tasklist_lock);
   * 만약 그렇다면 다음 sibling이 존재하지 않으므로 0을 넣어줍니다.
   * 그렇지 않다면 sibling의 next에 대해 list_entry를 한 후 그 task struct의 pid를 넣어줍니다.
 
+---
+
+다음은 test/test_ptree.c에 대한 설명입니다.
+
 #### Test Program
 * test 디렉토리의 test를 실행합니다.
-  * command line의 인자로 nr값을 받습니다.
-  * 입력 예) ./test 50
+  * command line의 인자로 nr값을 받습니다. nr값을 반드시 입력해야 합니다.
+  * 실행 예) ./test 50
 * 변수 nr, buf에 각각 malloc으로 메모리를 할당합니다.
   * 만약 nr값이 음수이거나 메모리가 부족하여 malloc에 실패하면 오류를 출력하고 -1을 return합니다.
+  * 프로그램이 종료될 때 할당한 메모리를 모두 free합니다.
 * sys_ptree 시스템 콜을 호출합니다. 인자로 buf와 nr을 넘깁니다.
   * 시스템 콜의 return 값이 -1이면 오류를 처리합니다.
-  * errno의 값을 바로 저장했다가 오류 처리에 사용합니다.
-  * 예를 들어 nr값이 0이면 errno가 EINVAL이 되어, 
+  * 이때 errno의 값을 바로 저장했다가 오류 처리에 사용합니다.
+  * 예를 들어 nr값이 0이면 errno가 EINVAL이 되므로, "Invalid argument"를 출력하고 -1을 return합니다.
+* 시스템 콜을 호출하여 얻은 buf의 prinfo들을 가지고 프로세스 트리 모양을 복원하여 출력합니다.
+  * 직접 구현한 스택을 이용해서 DFS의 결과를 트리로 만듭니다. 출력 시 들여쓰는 정도가 스택의 원소 개수와 관련이 있습니다.
+  * 첫 번째 프로세스(swapper)를 스택에 넣고, 다음 프로세스부터 아래의 내용을 반복합니다.
+    * 스택의 가장 위에 있는 원소가 현재 프로세스의 parent와 같은 동안 스택을 계속 pop합니다.
+    * 만약 현재 프로세스의 child 프로세스가 존재하면 현재 프로세스를 스택에 push하고 출력합니다.
+    * 그렇지 않으면 그냥 현재 프로세스를 출력합니다.
+* 마지막으로, 시스템 콜에서 return된 총 프로세스 수와 변화한 nr값을 출력합니다.
+
+---
 
 ### Process tree investigation
+* swapper
+  * pid가 0이며, 모든 프로세스의 조상이 되는 프로세스입니다.
+  * sleep 상태가 된 프로세스들을 메모리에서 디스크로 swap in하고, 반대로 디스크에서 메모리로 swap out하기도 하면서 메모리를 관리합니다.
+* systemd
+  * pid가 1이며, swapper를 parent로 갖습니다.
+  * user space를 부트스트랩하고 user processes를 관리하는 init 시스템 프로세스입니다.
+  * systemd 외에도 여러 init 시스템이 있지만, 요즘 배포되는 Linux에서는 대부분 systemd를 채택합니다.
+* kthreadd
+  * pid가 2이며, swapper를 parent로 갖습니다.
+  * 최상위 커널 쓰레드로, 요청이 있을 때마다 새 커널 쓰레드를 만들어 줍니다.
 
 ### Lessons learned
 * 먼저 가장 크게 와닿았던 부분은 리눅스 커널에서 프로세스 트리가 어떤 형태로 저장되어 있는지 알 수 있었다는 점입니다.

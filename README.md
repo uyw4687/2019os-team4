@@ -4,6 +4,9 @@ OS Spring Team4
 
 ### How to build our kernel
 Project0의 순서로 build하시면 됩니다.
+thread를 제외하고 출력해야 한다는 조건을 너무 늦게 안 나머지 thread와 process 구분 없이 출력했습니다.
+thread를 제외하는 방법은 tgid와 pid가 같을 때만 유효한 process로 하고 
+count를 늘려나가는 방식으로 하면 되겠습니다.
 
 ### High-level design and implementation
 #### System call registration

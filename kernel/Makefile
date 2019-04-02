@@ -15,7 +15,7 @@ obj-y     = fork.o exec_domain.o panic.o \
 obj-$(CONFIG_MODULES) += kmod.o
 obj-$(CONFIG_MULTIUSER) += groups.o
 
-obj-y += set_rotation.o
+obj-y += set_rotation.o rotlock_read.o rotlock_write.o rotunlock_read.o rotunlock_write.o
 
 ifdef CONFIG_FUNCTION_TRACER
 # Do not trace internal ftrace files

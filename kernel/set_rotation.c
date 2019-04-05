@@ -3,10 +3,9 @@
 #include <linux/module.h>
 int rotation;
 EXPORT_SYMBOL(rotation);
-
-int queue[size];
-int frontq = 0, rearq = 0;
 int sizeq = 500;
+int queue[500];
+int frontq = 0, rearq = 0;
 EXPORT_SYMBOL(queue);
 EXPORT_SYMBOL(frontq);
 EXPORT_SYMBOL(rearq);
@@ -18,12 +17,12 @@ long sys_set_rotation(int degree) {
 }
 
 int putq(int val) {
-    if( ( rearq+1 ) % sizeq == front ) {
+    if( ( rearq+1 ) % sizeq == frontq ) {
         printk( KERN_ERR "Stack is full" );
         return -1;
     }
     queue[rearq] = val;
-    rear = ( rear + 1 ) % sizeq;
+    rearq = ( rearq + 1 ) % sizeq;
     return val;
 }
 EXPORT_SYMBOL(putq);
@@ -33,9 +32,9 @@ int getq(void) {
         printk( KERN_ERR "Stack is empty" );
         return -1;
     }
-    int result;
-    result = queue[frontq];
+    int a;
+    a = queue[frontq];
     frontq = ( frontq + 1 ) % sizeq;
-    return result;
+    return a;
 }
 EXPORT_SYMBOL(getq);

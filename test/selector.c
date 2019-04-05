@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
+#define SYS_ROTLOCK_WRITE 400
+#define SYS_ROTUNLOCK_WRITE 402
 int notFinished = 1;
 
 void term(int signum)
@@ -20,7 +24,7 @@ int main(int argc, char **argv)
 
 	if(argc != 2)
 	{
-		printf("starting number as the only argument");
+		printf("starting number as the only argument\n");
 		exit(1);
 	}
 	
@@ -33,17 +37,31 @@ int main(int argc, char **argv)
 
 	//writing integer input
 	//starting lock
-	rotlock_write(90, 90);
+	syscall(SYS_ROTLOCK_WRITE, 90, 90);
 
 	fp = fopen("integer", "w");
-	fprintf(fp, "%d", value);
+	fprintf(fp, "%d", value++);
 	
 	fclose(fp);
 
-	rotunlock_write(90, 90);
+	syscall(SYS_ROTUNLOCK_WRITE, 90, 90);
 	//lock ended
 
-	//writing 
-	printf("selector: %d\n", value);
+	while(1) {
+		//writing +1
+		//starting lock
+		syscall(SYS_ROTLOCK_WRITE, 90, 90);
+	
+		fp = fopen("integer", "w");
+		fprintf(fp, "%d", value++);
+		
+		fclose(fp);
+	
+		printf("selector: %d\n", value-1);
+
+		syscall(SYS_ROTUNLOCK_WRITE, 90, 90);
+		//lock ended
+	}
+
 	return 0;
 }

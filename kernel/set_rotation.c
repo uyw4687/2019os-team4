@@ -1,41 +1,45 @@
 #include "../arch/arm64/include/asm/unistd.h"
 #include <linux/kernel.h>
-#include <linux/module.h>
+
 int rotation;
-EXPORT_SYMBOL(rotation);
-
-int queue[size];
-int frontq = 0, rearq = 0;
-int sizeq = 500;
-EXPORT_SYMBOL(queue);
-EXPORT_SYMBOL(frontq);
-EXPORT_SYMBOL(rearq);
-EXPORT_SYMBOL(sizeq);
-
 long sys_set_rotation(int degree) {
+    if( degree < 0 || degree > 360) {
+        printk( KERN_ERR "Out of range" );
+        return -1;
+    }
     rotation = degree;
-    return rotation;
+    return 0;
 }
-
-int putq(int val) {
-    if( ( rearq+1 ) % sizeq == front ) {
+long sys_rotlock_read(int degree, int range){
+    return -1;
+}
+long sys_rotlock_write(int degree, int range){
+    return -1;
+}
+long sys_rotunlock_read(int degree, int range){
+    return -1;
+}
+long sys_rotunlock_write(int degree, int range){
+    return -1;
+}
+int lock_queue[500];
+int size;
+int front=0, rear=0, out;
+int put(int val) {
+    if( ( rear+1 ) % size == front ) {
         printk( KERN_ERR "Stack is full" );
         return -1;
     }
-    queue[rearq] = val;
-    rear = ( rear + 1 ) % sizeq;
+    lock_queue[rear] = val;
+    rear = ( rear + 1 ) % size;
     return val;
 }
-EXPORT_SYMBOL(putq);
-
-int getq(void) {
-    if( rearq == frontq ) {
+int get(void) {
+    if( rear == front ) {
         printk( KERN_ERR "Stack is empty" );
         return -1;
     }
-    int result;
-    result = queue[frontq];
-    frontq = ( frontq + 1 ) % sizeq;
-    return result;
+    out = lock_queue[front];
+    front = ( front + 1 ) % size;
+    return out;
 }
-EXPORT_SYMBOL(getq);

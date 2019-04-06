@@ -4,8 +4,12 @@
 int rotation;
 EXPORT_SYMBOL(rotation);
 long sys_set_rotation(int degree) {
+    if( degree < 0 || degree > 360) {
+        printk( KERN_ERR "Out of range" );
+        return -1;
+    }
     rotation = degree;
-    return rotation;
+    return 0;
 }
 int lock_queue[500];
 EXPORT_SYMBOL(lock_queue);

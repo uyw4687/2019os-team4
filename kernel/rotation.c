@@ -1,5 +1,7 @@
 #include "../arch/arm64/include/asm/unistd.h"
 #include <linux/kernel.h>
+
+#include <linux/sched.h>
 #include <linux/spinlock.h>
 #include <linux/spinlock_types.h>
 #include <linux/rwlock.h>
@@ -21,40 +23,51 @@ long sys_set_rotation(int degree) {
 }//TODO set queue stack that include rotation range.
 
 long sys_rotlock_read(int degree, int range){
+
+	//put in waiting list
+	//wait till getting the lock
+
     return -1;
 }
 
 long sys_rotlock_write(int degree, int range){
+
+	//put in waiting list
+	//wait till getting the lock
+
     return -1;
 }
 
 long sys_rotunlock_read(int degree, int range){
+
+	//find in current list using list_for_each_entry_safe
+	//then delete
     return -1;
 }
 
 long sys_rotunlock_write(int degree, int range){
+
+	//find in current list using list_for_each_entry_safe
+	//then delete
     return -1;
 }
-/*
-int lock_queue[500];
-int size;
-int front=0, rear=0, out;
-int put(int val) {
-    if( ( rear+1 ) % size == front ) {
-        printk( KERN_ERR "Stack is full" );
-        return -1;
-    }
-    lock_queue[rear] = val;
-    rear = ( rear + 1 ) % size;
-    return val;
+
+void exit_rotlock(struct task_struct *tsk){
+
+	pid_t pid = tsk->pid;
+
+	//remove_invalid_locks_and_requests(pid);
+	//called with every thread exiting? or every process exiting?
 }
-int get(void) {
-    if( rear == front ) {
-        printk( KERN_ERR "Stack is empty" );
-        return -1;
-    }
-    out = lock_queue[front];
-    front = ( front + 1 ) % size;
-    return out;
+/*
+**********pid or tgid what to use in lock struct
+void put_in_list
+void remove_invalid_locks_requests(pid_t pid){
+	
+	//find in current list using list_for_each_entry_safe
+	//then delete
+	//find and delete all matching entries throughout the loop
+
+	//do it also in waiting list
 }
 */

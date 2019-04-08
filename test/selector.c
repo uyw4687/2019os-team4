@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 {
 	if(argc != 2)
 	{
-		printf("starting number as the only argument\n");
+		printf("a starting number as the only argument\n");
 		exit(1);
 	}
 	

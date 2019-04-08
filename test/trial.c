@@ -3,49 +3,74 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#define SYS_ROTLOCK_WRITE 400
-#define SYS_ROTUNLOCK_WRITE 402
+#define SYS_ROTLOCK_READ 399
+#define SYS_ROTUNLOCK_READ 401
+
+void factorize(int value)
+{
+	int divisor;
+	int dividend = value;
+	int end;
+
+	for(divisor=2;divisor<=value;divisor++)
+	{
+		while(dividend % divisor == 0)
+		{
+			printf("%d", divisor);
+
+			dividend /= divisor;
+			
+			if(dividend != 1)
+				printf(" * ");
+			else
+				end = 1;
+		}
+		if(end == 1)
+		{
+			printf("\n");
+			break;
+		}
+	}
+}
 
 int main(int argc, char **argv)
 {
 	if(argc != 2)
 	{
-		printf("starting number as the only argument\n");
+		printf("an identifier integer as the only argument\n");
 		exit(1);
 	}
 	
+	//for strtol
 	char *end;
+	int identifier;
 	int value;
 	
-	value = strtol(argv[1], &end, 10);
+	identifier = strtol(argv[1], &end, 10);
 	
 	FILE *fp;
 
-	//writing integer input
-	//starting lock
-	syscall(SYS_ROTLOCK_WRITE, 90, 90);
-
-	fp = fopen("integer", "w");
-	fprintf(fp, "%d", value++);
-	
-	fclose(fp);
-
-	syscall(SYS_ROTUNLOCK_WRITE, 90, 90);
-	//lock ended
-
 	while(1) {
-		//writing +1
+		//read integer & get value
 		//starting lock
-		syscall(SYS_ROTLOCK_WRITE, 90, 90);
+		syscall(SYS_ROTLOCK_READ, 90, 90);
 	
-		fp = fopen("integer", "w");
-		fprintf(fp, "%d", value++);
+		fp = fopen("integer", "r");
+		if(!fp)
+		{
+			printf("null file pointer\n");
+			return 1;
+		}
+	
+		fscanf(fp, "%d", &value);
 		
-		fclose(fp);
-	
-		printf("selector: %d\n", value-1);
+		printf("trial-%d: %d = ", identifier, value);
+fflush(stdout);
+		factorize(value);
 
-		syscall(SYS_ROTUNLOCK_WRITE, 90, 90);
+		fclose(fp);
+
+		syscall(SYS_ROTUNLOCK_READ, 90, 90);
 		//lock ended
 	}
 

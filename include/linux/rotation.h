@@ -6,5 +6,6 @@ extern long sys_rotlock_read(int degree, int range);
 extern long sys_rotlock_write(int degree, int range);
 extern long sys_rotunlock_read(int degree, int range);
 extern long sys_rotunlock_write(int degree, int range);
+extern void exit_rotlock(struct task_struct *tsk);
 
 #endif

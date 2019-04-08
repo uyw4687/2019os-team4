@@ -18,6 +18,7 @@ struct rd {
 
 
 int rotation;
+rwlock_t rot_lock;
 
 struct list_head lock_queue;
 struct list_head wait_queue;
@@ -28,7 +29,7 @@ void initialize_list(void) {
     // TODO concurrency, call timing
     if (is_initialized == 0) {
         is_initialized = 1;
-        DEFINE_RWLOCK(rot_lock);
+        rwlock_init(&rot_lock);
         INIT_LIST_HEAD(&lock_queue);
         INIT_LIST_HEAD(&wait_queue);
     }
@@ -103,6 +104,7 @@ struct rd* pop(struct list_head queue) {
     list_del_init(queue.next);
     return out;
     // TODO must call kfree(out);
+}
 
 void exit_rotlock(struct task_struct *tsk){
 

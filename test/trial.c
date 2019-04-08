@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 		fscanf(fp, "%d", &value);
 		
 		printf("trial-%d: %d = ", identifier, value);
-fflush(stdout);
+
 		factorize(value);
 
 		fclose(fp);

@@ -1,7 +1,6 @@
 #include "../arch/arm64/include/asm/unistd.h"
 #include <linux/kernel.h>
 #include <linux/sched.h>
-#include <sys/types.h>
 
 int rotation;
 long sys_set_rotation(int degree) {

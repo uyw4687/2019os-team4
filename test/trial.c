@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 		//read integer & get value
 		//starting lock
 		syscall(SYS_ROTLOCK_READ, 90, 90);
-	
+
 		fp = fopen("integer", "r");
 		if(!fp)
 		{

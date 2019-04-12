@@ -140,12 +140,13 @@ struct rd* my_dequeue(struct list_head *queue, struct rd *target) {
         return lock_entry;
     }
     list_for_each_safe(head, next_head, queue) {
-        lock_entry = list_entry(queue, struct rd, list);
+        lock_entry = list_entry(head, struct rd, list);
         if(compare_rd(target, lock_entry)){
             list_del_init(head);
-            break;
+            //TODO have to kfree target??
         }
     }
+    lock_entry->pid = -1;//didn't find target
     return lock_entry;
     // TODO must call kfree(lock_entry);
 }

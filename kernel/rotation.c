@@ -12,6 +12,9 @@
 #define WRITE 1
 #define EMPTY 2
 
+#define WAIT 0
+#define HELD 1
+
 int rotation;
 
 rwlock_t rot_lock;
@@ -29,13 +32,17 @@ struct rd {
     pid_t pid;      /* process id of requested process */
     int range[2];   /* acquire lock only if range[0] <= rotation <= range[1] */
     int type;      /* READ or WRITE */
+	int held;		/* held_queue -> 1, wait_queue -> 0 */
     struct list_head list;
 };
+
+DECLARE_WAIT_QUEUE_HEAD(wait_queue_head);
 
 int compare_rd(struct rd *rd1, struct rd *rd2) {
 
     if ((rd1->pid == rd2->pid) && ((rd1->range)[0] == (rd2->range)[0]) &&
-            ((rd1->range)[1] == (rd2->range)[1]) && (rd1->type == rd2->type))
+            ((rd1->range)[1] == (rd2->range)[1]) && (rd1->type == rd2->type) &&
+            (rd1->held == rd2->held))
         return 1; //true : same
     else
         return 0; //false : different
@@ -67,6 +74,11 @@ int check_range(int rotation, struct rd* rd1){
     }
 }
 
+// if rd1 hold a lock, return 1; else return 0.
+int check_held(struct rd* rd1) {
+    // TODO
+}
+
 int my_enqueue(struct list_head *queue, struct rd* val) {
     if (val->pid == -1) {
         printk(KERN_ERR "invalid rd");
@@ -76,7 +88,24 @@ int my_enqueue(struct list_head *queue, struct rd* val) {
     return 0;
 }
 
-void delete_lock(struct list_head *queue, int degree, int range, int type) {
+struct rd* my_dequeue(struct list_head *queue) {
+
+    struct rd* out;
+    if (queue->next == queue) {
+        printk(KERN_ERR "queue is empty");
+
+        out = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+        out->pid = -1;  // empty rd
+        INIT_LIST_HEAD(&(out->list));
+        return out;
+    }
+    out = list_entry(queue->next, struct rd, list);
+    list_del_init(queue->next);
+    return out;
+    // TODO must call kfree(out);
+}
+
+void delete_lock(struct list_head *queue, int degree, int range, int type, int held) {
     struct list_head *head;
     struct list_head *next_head;
 
@@ -91,6 +120,7 @@ void delete_lock(struct list_head *queue, int degree, int range, int type) {
     compare.range[0] = lower;
     compare.range[1] = upper;
     compare.type = type;
+	compare.held = held;
     
     list_for_each_safe(head, next_head, queue) {
 
@@ -123,23 +153,6 @@ void remove_all(struct list_head *queue, pid_t pid) {
     }
 }
 
-struct rd* my_dequeue(struct list_head *queue) {
-
-    struct rd* out;
-    if (queue->next == queue) {
-        printk(KERN_ERR "queue is empty");
-
-        out = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
-        out->pid = -1;  // empty rd
-        INIT_LIST_HEAD(&(out->list));
-        return out;
-    }
-    out = list_entry(queue->next, struct rd, list);
-    list_del_init(queue->next);
-    return out;
-    // TODO must call kfree(out);
-}
-
 int check_input(int degree, int range) {
 
     if(degree < 0 || degree >= 360 || range <= 0 || range >=180) {
@@ -169,6 +182,7 @@ void set_lock(struct rd* newlock, int degree, int range, int type) {
     newlock->range[0]= lower;
     newlock->range[1]= upper;
     newlock->type = type;
+    newlock->held = WAIT;
 }
 
 // if locks in wait_queue can be acquired, acquire the locks.
@@ -267,15 +281,16 @@ long sys_set_rotation(int degree) {
     write_unlock(&rot_lock);
 
     return check_and_acquire_lock();
-
 }
 
 long sys_rotlock_read(int degree, int range){
 
-    if(check_input(degree, range) < 0)
+    if (check_input(degree, range) < 0)
         return -1;
 
     struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+
+	DEFINE_WAIT(wait);
     set_lock(newlock, degree, range, READ);
 
     write_lock(&wait_lock);
@@ -284,9 +299,17 @@ long sys_rotlock_read(int degree, int range){
 
     write_unlock(&wait_lock);
 
-    // TODO wait till getting the lock
-    //      ...
+	add_wait_queue(&wait_queue_head, &wait);
 
+	while ((newlock->held) == WAIT) {
+
+		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
+
+		if ((newlock->held) == WAIT)
+			schedule();
+	}
+
+	finish_wait(&wait_queue_head, &wait);
     check_and_acquire_lock();
 
     return 0;
@@ -294,10 +317,12 @@ long sys_rotlock_read(int degree, int range){
 
 long sys_rotlock_write(int degree, int range){
 
-    if(check_input(degree, range) < 0)
+    if (check_input(degree, range) < 0)
         return -1;
     
     struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+	
+    DEFINE_WAIT(wait);
     set_lock(newlock, degree, range, WRITE);
     
     write_lock(&wait_lock);
@@ -306,9 +331,17 @@ long sys_rotlock_write(int degree, int range){
 
     write_unlock(&wait_lock);
 
-    // TODO wait till getting the lock
-    //      ...
+	add_wait_queue(&wait_queue_head, &wait);
 
+	while ((newlock->held) == WAIT) {
+
+		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
+
+		if ((newlock->held) == WAIT)
+			schedule();
+	}
+
+	finish_wait(&wait_queue_head, &wait);
     check_and_acquire_lock();
 
     return 0;
@@ -316,26 +349,29 @@ long sys_rotlock_write(int degree, int range){
 
 long sys_rotunlock_read(int degree, int range){
 
-    if(check_input(degree, range) < 0)
+    if (check_input(degree, range) < 0)
         return -1;
 
     write_lock(&held_lock);
 
-    delete_lock(&lock_queue, degree, range, READ);    
+	delete_lock(&lock_queue, degree, range, READ, HELD);	
 
     write_unlock(&held_lock);
+
+	//check if other locks can come &
+	//wake_up
 
     return 0;
 }
 
 long sys_rotunlock_write(int degree, int range){
 
-    if(check_input(degree, range) < 0)
+    if (check_input(degree, range) < 0)
         return -1;
 
-    write_lock(&held_lock);
-    
-    delete_lock(&lock_queue, degree, range, WRITE);    
+	write_lock(&held_lock);
+	
+	delete_lock(&lock_queue, degree, range, WRITE, HELD);	
 
     write_unlock(&held_lock);
     

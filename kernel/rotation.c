@@ -52,6 +52,16 @@ void set_lower_upper(int degree, int range, int *lower, int *upper) {
 	
 }
 
+int check_range(int rotation, struct rd* rd1){
+    int lower = rd1->range[0];
+    int upper = rd1->range[1];
+    if(lower <= upper && lower <= rotation && rotation <= upper)
+        return 1;
+    else if(lower >= upper && (lower <= rotation || rotation <= upper))
+        return 1;
+    else return 0;
+}//return 1 is rotation include rd range, 0 is rotation not include range
+
 int my_enqueue(struct list_head *queue, struct rd* val) {
     if (val->pid == -1) {
         printk(KERN_ERR "invalid rd");

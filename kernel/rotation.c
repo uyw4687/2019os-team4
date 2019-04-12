@@ -13,15 +13,16 @@
 
 int rotation;
 
-rwlock_t rot_lock;
-rwlock_t held_lock;
-rwlock_t wait_lock;
+DEFINE_RWLOCK(rot_lock);
+DEFINE_RWLOCK(held_lock);
+DEFINE_RWLOCK(wait_lock);
 
 struct list_head lock_queue;
 struct list_head wait_queue;
 
 int front = 0, rear = 0;
-int is_initialized = 0; // if initialize() is called, set to 1
+int is_initialized1 = 0; // if initialize() is called, set to 1
+int is_initialized2 = 0;
 
 /* range descriptor */
 struct rd {
@@ -147,12 +148,15 @@ int check_input(int degree, int range) {
 }
 
 void initialize_list(void) {
-    // TODO concurrency, call timing
-    if (is_initialized == 0) {
-        is_initialized = 1;
-        rwlock_init(&rot_lock);
-        INIT_LIST_HEAD(&lock_queue);
-        INIT_LIST_HEAD(&wait_queue);
+    if (is_initialized1 == 0) {
+        write_lock(&rot_lock);
+        if (is_initialized2 == 0) {
+            is_initialized1 = 1;
+            is_initialized2 = 1;
+            INIT_LIST_HEAD(&lock_queue);
+            INIT_LIST_HEAD(&wait_queue);
+        }
+        write_unlock(&rot_lock);
     }
 }
 

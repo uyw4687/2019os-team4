@@ -12,7 +12,9 @@
 #define WRITE 1
 
 int rotation;
+
 rwlock_t rot_lock;
+rwlock_t held_lock;
 rwlock_t wait_lock;
 
 struct list_head lock_queue;
@@ -29,6 +31,27 @@ struct rd {
     struct list_head list;
 };
 
+int compare_rd(struct rd *rd1, struct rd *rd2) {
+
+	if((rd1->pid == rd2->pid) && ((rd1->range)[0] == (rd2->range)[0]) && ((rd1->range)[1] == (rd2->range)[1]) && (rd1->type == rd2->type))
+		return 1; //true : same
+	else
+		return 0; //false : different
+}
+
+void set_lower_upper(int degree, int range, int *lower, int *upper) {
+	
+	*lower= degree-range;
+	*upper = degree+range;
+
+	if(*lower < 0)
+		*lower = *lower + 360;
+	
+	if(*upper >= 360)
+		*upper = *upper - 360;
+	
+}
+
 int my_enqueue(struct list_head *queue, struct rd* val) {
     if (val->pid == -1) {
         printk(KERN_ERR "invalid rd");
@@ -38,14 +61,52 @@ int my_enqueue(struct list_head *queue, struct rd* val) {
     return 0;
 }
 
+void delete_lock(struct list_head *queue, int degree, int range, int type) {
+	struct list_head *head;
+	struct list_head *next_head;
+
+	struct rd *lock_entry;
+
+	int lower, upper;
+
+	struct rd compare;
+
+	set_lower_upper(degree, range, &lower, &upper);
+
+	compare.pid = task_pid_nr(current);
+	compare.range[0] = lower;
+	compare.range[1] = upper;
+	compare.type = type;
+	
+	list_for_each_safe(head, next_head, queue) {
+
+		lock_entry = list_entry(head, struct rd, list);
+
+		if(compare_rd(lock_entry, &compare)){
+
+			list_del(head);
+
+			kfree(lock_entry);
+
+			break;
+
+		}
+	}
+}
+
 void remove_all(struct list_head *queue, pid_t pid) {
 	
 	struct list_head *head;
+	struct list_head *next_head;
+
 	struct rd *lock_entry;
-	list_for_each(head, queue) {
+
+	list_for_each_safe(head, next_head, queue) {
 		lock_entry = list_entry(head, struct rd, list);
-		if(lock_entry->pid == pid)
-			;//delete
+		if(lock_entry->pid == pid) {
+			list_del(head);
+			kfree(lock_entry);
+		}
 	}
 }
 
@@ -105,15 +166,10 @@ long sys_set_rotation(int degree) {
 
 void set_lock(struct rd* newlock, int degree, int range, int type) {
 
-	int lower = degree-range;
-	int upper = degree+range;
+	int lower, upper; 
+
+	set_lower_upper(degree, range, &lower, &upper);
 	
-	if(lower < 0)
-		lower = lower + 360;
-	
-	if(upper >= 360)
-		upper = upper - 360;
-		
 	newlock->pid = task_pid_nr(current);
 	newlock->range[0]= lower;
 	newlock->range[1]= upper;
@@ -122,16 +178,16 @@ void set_lock(struct rd* newlock, int degree, int range, int type) {
 
 long sys_rotlock_read(int degree, int range){
 
-	struct rd newlock;
+	struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
 
 	if(check_input(degree, range) < 0)
 		return -1;
 
-	set_lock(&newlock, degree, range, READ);
+	set_lock(newlock, degree, range, READ);
 
     write_lock(&wait_lock);
 
-	my_enqueue(&wait_queue, &newlock);
+	my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
 
@@ -143,16 +199,16 @@ long sys_rotlock_read(int degree, int range){
 
 long sys_rotlock_write(int degree, int range){
 
-	struct rd newlock;
+	struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
 
 	if(check_input(degree, range) < 0)
 		return -1;
 	
-	set_lock(&newlock, degree, range, WRITE);
+	set_lock(newlock, degree, range, WRITE);
 	
     write_lock(&wait_lock);
 
-	my_enqueue(&wait_queue, &newlock);
+	my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
 
@@ -167,38 +223,40 @@ long sys_rotunlock_read(int degree, int range){
 	if(check_input(degree, range) < 0)
 		return -1;
 
-	//find in current list using list_for_each_entry_safe
-	//then delete
-    return -1;
+    write_lock(&held_lock);
+
+	delete_lock(&lock_queue, degree, range, READ);	
+
+    write_unlock(&held_lock);
+
+    return 0;
 }
 
 long sys_rotunlock_write(int degree, int range){
 
 	if(check_input(degree, range) < 0)
 		return -1;
+
+	write_lock(&held_lock);
 	
-	//find in current list using list_for_each_entry_safe
-	//then delete
-    return -1;
+	delete_lock(&lock_queue, degree, range, WRITE);	
+
+    write_unlock(&held_lock);
+	
+    return 0;
 }
 
 void exit_rotlock(struct task_struct *tsk){
 
+    write_lock(&held_lock);
 	remove_all(&lock_queue, tsk->pid);
+    write_unlock(&held_lock);
+
+    write_lock(&wait_lock);
 	remove_all(&wait_queue, tsk->pid);
-	//remove_invalid_locks_and_requests(pid);
+    write_lock(&wait_lock);
 	//called with every thread exiting? or every process exiting?
 }
 /*
 **********pid or tgid what to use in lock struct
-
-void remove_invalid_locks_requests(pid_t pid){
-	
-	//find in current list using list_for_each_entry_safe
-	//then delete
-	//find and delete all matching entries throughout the loop
-
-	//do it also in waiting list
-
-}
 */

@@ -128,29 +128,26 @@ void remove_all(struct list_head *queue, pid_t pid) {
 	}
 }
 
-struct rd* my_dequeue(struct list_head *queue, struct rd *out) {
+struct rd* my_dequeue(struct list_head *queue, struct rd *target) {
     struct list_head *head;
     struct list_head *next_head;
     struct rd *lock_entry;
+    lock_entry = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
     if (queue->next == queue) {
         printk(KERN_ERR "queue is empty");
-
-        out->pid = -1;  // empty rd
-        INIT_LIST_HEAD(&(out->list));
-        return out;
+        lock_entry->pid = -1;  // empty rd
+        INIT_LIST_HEAD(&(lock_entry->list));
+        return lock_entry;
     }
-    lock_entry = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
     list_for_each_safe(head, next_head, queue) {
         lock_entry = list_entry(queue, struct rd, list);
-        if(compare_rd(out, lock_entry)){
-        list_del_init(head);
-        kfree(lock_entry);
-        break;
+        if(compare_rd(target, lock_entry)){
+            list_del_init(head);
+            break;
         }
     }
-    kfree(lock_entry);
-    return out;
-    // TODO must call kfree(out);
+    return lock_entry;
+    // TODO must call kfree(lock_entry);
 }
 
 int check_input(int degree, int range) {

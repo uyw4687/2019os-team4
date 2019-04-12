@@ -12,9 +12,6 @@
 #define WRITE 1
 #define EMPTY 2
 
-#define WAIT 0
-#define HELD 1
-
 int rotation;
 
 rwlock_t rot_lock;
@@ -32,7 +29,6 @@ struct rd {
     pid_t pid;      /* process id of requested process */
     int range[2];   /* acquire lock only if range[0] <= rotation <= range[1] */
     int type;      /* READ or WRITE */
-	int held;		/* held_queue -> 1, wait_queue -> 0 */
     struct list_head list;
 };
 
@@ -41,8 +37,7 @@ DECLARE_WAIT_QUEUE_HEAD(wait_queue_head);
 int compare_rd(struct rd *rd1, struct rd *rd2) {
 
     if ((rd1->pid == rd2->pid) && ((rd1->range)[0] == (rd2->range)[0]) &&
-            ((rd1->range)[1] == (rd2->range)[1]) && (rd1->type == rd2->type) &&
-            (rd1->held == rd2->held))
+            ((rd1->range)[1] == (rd2->range)[1]) && (rd1->type == rd2->type))
         return 1; //true : same
     else
         return 0; //false : different
@@ -70,13 +65,31 @@ int check_range(int rotation, struct rd* rd1){
     } else if(lower >= upper && (lower <= rotation || rotation <= upper)) {
         return 1;   //Range include rotation
     } else {
-        return 0;  //Range don't include rotation
+        return 0;   //Range don't include rotation
     }
 }
 
-// if rd1 hold a lock, return 1; else return 0.
-int check_held(struct rd* rd1) {
-    // TODO
+// if rd1 is in wait_queue, return 1; else return 0.
+int check_waiting(struct rd* rd1) {
+    struct list_head *head_wait;
+    struct list_head *next_head_wait;
+    
+    struct rd *wait_entry;
+    
+    read_lock(&wait_lock);
+
+    list_for_each(head_wait, next_head_wait, wait_queue) {
+
+        wait_entry = list_entry(head_wait, struct rd, list);
+
+        if (compare_rd(rd1, wait_entry) == 1) {
+            read_unlock(&wait_lock);
+            return 1;   // rd1 is in wait_queue
+        }
+    }
+
+    read_unlock(&wait_lock);
+    return 0;           // rd1 is not in wait_queue
 }
 
 int my_enqueue(struct list_head *queue, struct rd* val) {
@@ -105,7 +118,7 @@ struct rd* my_dequeue(struct list_head *queue) {
     // TODO must call kfree(out);
 }
 
-void delete_lock(struct list_head *queue, int degree, int range, int type, int held) {
+void delete_lock(struct list_head *queue, int degree, int range, int type) {
     struct list_head *head;
     struct list_head *next_head;
 
@@ -120,7 +133,6 @@ void delete_lock(struct list_head *queue, int degree, int range, int type, int h
     compare.range[0] = lower;
     compare.range[1] = upper;
     compare.type = type;
-	compare.held = held;
     
     list_for_each_safe(head, next_head, queue) {
 
@@ -182,7 +194,6 @@ void set_lock(struct rd* newlock, int degree, int range, int type) {
     newlock->range[0]= lower;
     newlock->range[1]= upper;
     newlock->type = type;
-    newlock->held = WAIT;
 }
 
 // if locks in wait_queue can be acquired, acquire the locks.
@@ -301,11 +312,11 @@ long sys_rotlock_read(int degree, int range){
 
 	add_wait_queue(&wait_queue_head, &wait);
 
-	while ((newlock->held) == WAIT) {
+	while (check_waiting(newlock)) {
 
 		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
 
-		if ((newlock->held) == WAIT)
+		if (check_waiting(newlock))
 			schedule();
 	}
 
@@ -333,11 +344,11 @@ long sys_rotlock_write(int degree, int range){
 
 	add_wait_queue(&wait_queue_head, &wait);
 
-	while ((newlock->held) == WAIT) {
+	while (check_waiting(newlock)) {
 
 		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
 
-		if ((newlock->held) == WAIT)
+		if (check_waiting(newlock))
 			schedule();
 	}
 
@@ -354,7 +365,7 @@ long sys_rotunlock_read(int degree, int range){
 
     write_lock(&held_lock);
 
-	delete_lock(&lock_queue, degree, range, READ, HELD);	
+	delete_lock(&lock_queue, degree, range, READ);	
 
     write_unlock(&held_lock);
 
@@ -371,7 +382,7 @@ long sys_rotunlock_write(int degree, int range){
 
 	write_lock(&held_lock);
 	
-	delete_lock(&lock_queue, degree, range, WRITE, HELD);	
+	delete_lock(&lock_queue, degree, range, WRITE);	
 
     write_unlock(&held_lock);
     

@@ -315,7 +315,7 @@ long sys_set_rotation(int degree) {
         return -1;
     }
 
-    initialize_list();
+    //initialize_list();
 
     write_lock(&rot_lock);
 

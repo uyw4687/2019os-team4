@@ -14,15 +14,16 @@
 
 int rotation;
 
-rwlock_t rot_lock;
-rwlock_t held_lock;
-rwlock_t wait_lock;
+DEFINE_RWLOCK(rot_lock);
+DEFINE_RWLOCK(held_lock);
+DEFINE_RWLOCK(wait_lock);
 
 struct list_head lock_queue;
 struct list_head wait_queue;
 
 int front = 0, rear = 0;
-int is_initialized = 0; // if initialize() is called, set to 1
+int is_initialized1 = 0; // if initialize() is called, set to 1
+int is_initialized2 = 0;
 
 /* range descriptor */
 struct rd {
@@ -56,17 +57,16 @@ void set_lower_upper(int degree, int range, int *lower, int *upper) {
     
 }
 
-int check_range(int rotation, struct rd* rd1){
+int check_range(int rot, struct rd* rd1){
     int lower = rd1->range[0];
     int upper = rd1->range[1];
-
-    if (lower <= upper && lower <= rotation && rotation <= upper) {
+    if(lower <= upper && lower <= rot && rot <= upper)
         return 1;   //Range include rotation
-    } else if(lower >= upper && (lower <= rotation || rotation <= upper)) {
+    else if(lower >= upper && (lower <= rot || rot <= upper))
         return 1;   //Range include rotation
-    } else {
+    else 
         return 0;   //Range don't include rotation
-    }
+    
 }
 
 // if rd1 is in wait_queue, return 1; else return 0.
@@ -101,22 +101,6 @@ int my_enqueue(struct list_head *queue, struct rd* val) {
     return 0;
 }
 
-struct rd* my_dequeue(struct list_head *queue) {
-
-    struct rd* out;
-    if (queue->next == queue) {
-        printk(KERN_ERR "queue is empty");
-
-        out = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
-        out->pid = -1;  // empty rd
-        INIT_LIST_HEAD(&(out->list));
-        return out;
-    }
-    out = list_entry(queue->next, struct rd, list);
-    list_del_init(queue->next);
-    return out;
-    // TODO must call kfree(out);
-}
 
 void delete_lock(struct list_head *queue, int degree, int range, int type) {
     struct list_head *head;
@@ -154,15 +138,35 @@ void remove_all(struct list_head *queue, pid_t pid) {
 
     struct rd *lock_entry;
 
+	list_for_each_safe(head, next_head, queue) {
+
+		lock_entry = list_entry(head, struct rd, list);
+
+		if (lock_entry->pid == pid) {
+			list_del(head);
+			kfree(lock_entry);
+		}
+	}
+}
+
+int my_dequeue(struct list_head *queue, struct rd *target) {
+    struct list_head *head;
+    struct list_head *next_head;
+    struct rd *lock_entry;
+    if (queue->next == queue) {
+        printk(KERN_ERR "queue is empty");
+        return 0;   //dequeue fail.
+    }
     list_for_each_safe(head, next_head, queue) {
-
         lock_entry = list_entry(head, struct rd, list);
-
-        if (lock_entry->pid == pid) {
-            list_del(head);
-            kfree(lock_entry);
+        if(compare_rd(target, lock_entry)){
+            list_del_init(head);
+            //TODO have to kfree target??
+            return 1;   //dequeue success, can use target.
         }
     }
+    printk(KERN_ERR "can't find target");
+    return 0;   //dequeue fail.
 }
 
 int check_input(int degree, int range) {
@@ -174,13 +178,32 @@ int check_input(int degree, int range) {
     return 0;
 }
 
+void change_queue(struct rd* input){
+    struct list_head *head;
+    struct list_head *next_head;
+    struct rd *lock_entry;
+
+    list_for_each_safe(head, next_head, &wait_queue){
+        lock_entry = list_entry(head, struct rd, list);
+        if(compare_rd(lock_entry, input)) {
+            if(my_dequeue(&wait_queue, input)) {
+                my_enqueue(&lock_queue, input);
+                break;
+            }
+        }
+    }
+}
+
 void initialize_list(void) {
-    // TODO concurrency, call timing
-    if (is_initialized == 0) {
-        is_initialized = 1;
-        rwlock_init(&rot_lock);
-        INIT_LIST_HEAD(&lock_queue);
-        INIT_LIST_HEAD(&wait_queue);
+    if (is_initialized1 == 0) {
+        write_lock(&rot_lock);
+        if (is_initialized2 == 0) {
+            is_initialized1 = 1;
+            is_initialized2 = 1;
+            INIT_LIST_HEAD(&lock_queue);
+            INIT_LIST_HEAD(&wait_queue);
+        }
+        write_unlock(&rot_lock);
     }
 }
 
@@ -296,12 +319,14 @@ long sys_set_rotation(int degree) {
 
 long sys_rotlock_read(int degree, int range){
 
+    struct rd* newlock;
+	DEFINE_WAIT(wait);
+
     if (check_input(degree, range) < 0)
         return -1;
 
-    struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+    newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
 
-	DEFINE_WAIT(wait);
     set_lock(newlock, degree, range, READ);
 
     write_lock(&wait_lock);
@@ -328,12 +353,14 @@ long sys_rotlock_read(int degree, int range){
 
 long sys_rotlock_write(int degree, int range){
 
+    struct rd* newlock; 
+    DEFINE_WAIT(wait);
+
     if (check_input(degree, range) < 0)
         return -1;
     
-    struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+    newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
 	
-    DEFINE_WAIT(wait);
     set_lock(newlock, degree, range, WRITE);
     
     write_lock(&wait_lock);

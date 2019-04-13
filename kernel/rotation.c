@@ -429,7 +429,7 @@ long sys_rotunlock_write(int degree, int range){
     
     return 0;
 }
-
+/*
 void rechange_range(struct rd* target, int* outrange, int* outdegree){
 
     int range1 = target->range[0];
@@ -445,7 +445,7 @@ void rechange_range(struct rd* target, int* outrange, int* outdegree){
         *outrange = range2 - *outdegree;
     }
 }
-
+*/
 void exit_rotlock(struct task_struct *tsk){
     
     pid_t pid = tsk->pid;

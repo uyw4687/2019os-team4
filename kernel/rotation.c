@@ -465,10 +465,12 @@ void rechange_range(struct rd* target, int* outrange, int* outdegree){
 void exit_rotlock(struct task_struct *tsk){
     
     pid_t pid = tsk->pid;
+    /*
     int range, degree;
     struct rd* lock_entry;
     struct list_head *head;
     struct list_head *next_head;
+    */
 
     write_lock(&wait_lock);
     write_lock(&held_lock);

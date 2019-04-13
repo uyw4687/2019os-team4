@@ -10,17 +10,47 @@ count를 늘려나가는 방식으로 하면 되겠습니다.
 
 ### High-level design and implementation
 #### System call registration
-* kernel 디렉토리에 시스템 콜 함수를 구현합니다.
-* arch/arm64/include/asm/unistd.h 에서 시스템 콜 개수를 1 늘려줍니다.
-* arch/arm64/include/asm/unistd32.h 에서 ptree 시스템 콜을 398번에 등록해 줍니다.
-* include/linux/syscalls.h 에서 sys_ptree의 prototype을 적어 줍니다.
-* kernel/Makefile에서 ptree.o를 추가해 줍니다.
+* kernel/rotation.c 에 시스템 콜 함수를 구현합니다.
+* arch/arm64/include/asm/unistd.h 에서 시스템 콜 개수를 5 늘려줍니다. 398 -> 403
+* arch/arm64/include/asm/unistd32.h 에서 각 시스템 콜을 스펙에 등록해 줍니다.
+* include/linux/syscalls.h 에서 각 system call의 prototype을 적어 줍니다.
+* kernel/Makefile에서 rotation.o를 추가해 줍니다.
 
 ---
 
-> 다음은 kernel/ptree.c에 대한 설명입니다.
+> 다음은 kernel/rotation.c에 대한 설명입니다.
 
-#### Error checking process / After DFS
+#### global values
+
+int rotation                   // rotation값을 저장하는 변수입니다.
+
+DEFINE_RWLOCK(rot_lock);       // rotation값에 대한 접근을 제한하는 lock입니다.
+DEFINE_RWLOCK(held_lock);      // lock_queue에 대한 접근을 제한하는 lock입니다.
+DEFINE_RWLOCK(wait_lock);      // wait_queue에 대한 접근을 제한하는 lock입니다.
+
+int is_initialized1 = 0;       // initialization을 할 때 concurrency issue를 해결하기 위해 락을 잡기 전 체크하는 변수입니다.
+int is_initialized2 = 0;       // initialization을 할 때 concurrency issue를 해결하기 위해 락을 잡은 후 체크하는 변수입니다.
+
+struct rd{
+ pid_t pid;
+ int range[2];
+ int type;
+ struct list_head list;
+}
+
+각 lock을 표현하는 doubly linked list로 연결될 struct입니다.
+
+DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍니다.
+
+#### global values
+* 먼저 user space memory인 buf, nr에 대해서 NULL값인지 확인해 줍니다. 만약 그렇다면 -EINVAL을 return합니다.
+* 그리고 buf, nr의 값을 copy_from_user로 받을 때 또는 buf2, n의 값을 copy_to_user로 줄 때 오류가 발생하면 모두 -EINVAL을 return합니다.
+* buf, nr이 접근 가능한 영역인지 access_ok로 VERIFY_WRITE에 대해서 확인한 후 문제가 있으면 -EFAULT를 return합니다.
+* buf, nr에 직접 접근하면 문제가 생길 수 있으므로, 지역 변수인 buf2, n을 사용합니다.
+* buf2에 값을 할당해 준 후 나중에 처리가 다 되면 buf에 넣어줍니다.
+* nr의 경우에도 실제로 할당된 값을 count로 센 후 nr값을 받았던 n과 비교하여 count가 더 작으면 `*nr`에 count값을 넣어줍니다.
+* 앞의 처리 과정에서 문제가 없었다면, 총 프로세스 수인 count값을 return합니다.
+#### set_rotation
 * 먼저 user space memory인 buf, nr에 대해서 NULL값인지 확인해 줍니다. 만약 그렇다면 -EINVAL을 return합니다. 
 * 그리고 buf, nr의 값을 copy_from_user로 받을 때 또는 buf2, n의 값을 copy_to_user로 줄 때 오류가 발생하면 모두 -EINVAL을 return합니다.
 * buf, nr이 접근 가능한 영역인지 access_ok로 VERIFY_WRITE에 대해서 확인한 후 문제가 있으면 -EFAULT를 return합니다.

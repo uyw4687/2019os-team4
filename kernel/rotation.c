@@ -102,7 +102,7 @@ int my_enqueue(struct list_head *queue, struct rd* val) {
 }
 
 
-void delete_lock(struct list_head *queue, int degree, int range, int type) {
+int delete_lock(struct list_head *queue, int degree, int range, int type) {
     struct list_head *head;
     struct list_head *next_head;
 
@@ -126,9 +126,10 @@ void delete_lock(struct list_head *queue, int degree, int range, int type) {
 
             list_del(head);
             kfree(lock_entry);
-            break;
+            return 1;   // success to delete 
         }
     }
+    return 0;   // fail to delete
 }
 
 void remove_all(struct list_head *queue, pid_t pid) {
@@ -387,31 +388,47 @@ long sys_rotlock_write(int degree, int range){
 
 long sys_rotunlock_read(int degree, int range){
 
+    int success;
+
     if (check_input(degree, range) < 0)
         return -1;
 
     write_lock(&held_lock);
 
-	delete_lock(&lock_queue, degree, range, READ);	
+	success = delete_lock(&lock_queue, degree, range, READ);	
 
     write_unlock(&held_lock);
 
-	//check if other locks can come &
-	//wake_up
+    if (!success) {
+        printk(KERN_ERR "cannot unlock");
+        return -1;
+    }
+
+	// check if other locks can come
+    check_and_acquire_lock();
 
     return 0;
 }
 
 long sys_rotunlock_write(int degree, int range){
 
+    int success;
+
     if (check_input(degree, range) < 0)
         return -1;
 
 	write_lock(&held_lock);
 	
-	delete_lock(&lock_queue, degree, range, WRITE);	
+	success = delete_lock(&lock_queue, degree, range, WRITE);	
 
     write_unlock(&held_lock);
+
+    if (!success) {
+        printk(KERN_ERR "cannot unlock");
+        return -1;
+    }
+
+    check_and_acquire_lock();
     
     return 0;
 }

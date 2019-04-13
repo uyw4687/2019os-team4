@@ -45,7 +45,7 @@ DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍
 * check_range : rotation값과 struct rd를 받아 lock bound 내에 rotation이 있는지 체크합니다. return 1(true) or 0(false) 
 * check_waiting : 해당하는 struct rd가 wait_queue 내에 있는지 확인합니다. return 1(true) or 0(false)
 * my_enqueue : queue에 entry를 넣어줍니다.
-* * my_dequeue : queue에서 entry를 빼줍니다.
+* my_dequeue : queue에서 entry를 빼줍니다.
 * delete_lock : match 되는 lock entry를 없애줍니다. return 1(success) or 0 (fail)
 * remove_all : 해당되는 queue에서 pid가 match되는 모든 lock entry를 제거해 줍니다.
 * check_input : input이 범위 내의 값인지 확인합니다.

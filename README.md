@@ -60,61 +60,61 @@ pid, range(lower bound, upper bound), type(READ/WRITE)를 저장합니다.
 * check_and_acquire_lock : 현재 상태에서 잡을 수 있는 모든 락을 잡아줍니다. 그리고 잡은 락의 개수를 리턴합니다.
 
 ##### solving writer starvation
-check_and_acquire_lock에서 현재 rotation에 대해 잡고 있는 lock의 종류를 확인합니다.
-read lock 밖에 없을 경우 READ, write lock밖에 없을 경우 write 아무것도 없을 경우 EMPTY입니다.
+* check_and_acquire_lock에서 현재 rotation에 대해 잡고 있는 lock의 종류를 확인합니다.
+* read lock 밖에 없을 경우 READ, write lock밖에 없을 경우 write 아무것도 없을 경우 EMPTY입니다.
 
 
 #### set_rotation
-degree가 범위 안에 있는지 확인해 줍니다.
-그리고 rotation 값을 쓸 것이기에 write_lock을 해 줍니다.
-check_and_acquire_lock을 실행해 준 후 리턴 값을 리턴해 줍니다.
+* degree가 범위 안에 있는지 확인해 줍니다.
+* 그리고 rotation 값을 쓸 것이기에 write_lock을 해 줍니다.
+* check_and_acquire_lock을 실행해 준 후 리턴 값을 리턴해 줍니다.
 
 #### set_rotlock_read/set_rotlock_write
-새로운 lock을 만들어 주고 wait_queue에 넣어 줍니다.
-wait_queue에 추가하는 조작이므로 write_lock을 잡아 줍니다.
-wait_queue에 entry가 추가가 되었으므로 check_and_acquire_lock을 실행해 줍니다.
+* 새로운 lock을 만들어 주고 wait_queue에 넣어 줍니다.
+* wait_queue에 추가하는 조작이므로 write_lock을 잡아 줍니다.
+* wait_queue에 entry가 추가가 되었으므로 check_and_acquire_lock을 실행해 줍니다.
 
 ##### wait mechanism
-DEFINE_WAIT으로 wait을 지정해줍니다.
-condition은 check_waiting(newlock)이라는 condition을 이용해서 waiting list에 있는지 확인하고
-전후로 add_wait_queue, prepare_to_wait을 통해 wait queue에 넣어줍니다. schedule()로 wait시켜 줍니다.
-finish_wait으로 wait 과정을 끝냅니다.
+* DEFINE_WAIT으로 wait을 지정해줍니다.
+* condition은 check_waiting(newlock)이라는 condition을 이용해서 waiting list에 있는지 확인하고
+* 전후로 add_wait_queue, prepare_to_wait을 통해 wait queue에 넣어줍니다. schedule()로 wait시켜 줍니다.
+* finish_wait으로 wait 과정을 끝냅니다.
 
 #### set_rotunlock_read/set_rotunlock_write
-input의 validity를 체크해 줍니다.
-그리고 해당되는 lock이 있는지 찾은 후 못 찾았을 경우 -1을 return합니다.
-잡고 있는 lock을 체크하므로 held_lock에 대한 write_lock을 잡아 줍니다.
-그리고 entry가 delete된 후 다른 lock이 잡힐 수 있으므로 check_and_acquire_lock을 해 줍니다.
+* input의 validity를 체크해 줍니다.
+* 그리고 해당되는 lock이 있는지 찾은 후 못 찾았을 경우 -1을 return합니다.
+* 잡고 있는 lock을 체크하므로 held_lock에 대한 write_lock을 잡아 줍니다.
+* 그리고 entry가 delete된 후 다른 lock이 잡힐 수 있으므로 check_and_acquire_lock을 해 줍니다.
 
 ##### wait mechanism
-DEFINE_WAIT으로 wait을 지정해줍니다.
-condition은 check_waiting(newlock)이라는 condition을 이용해서 waiting list에 있는지 확인하고
-전후로 add_wait_queue, prepare_to_wait을 통해 wait queue에 넣어줍니다. schedule()로 wait시켜 줍니다.
-finish_wait으로 wait 과정을 끝냅니다.
+* DEFINE_WAIT으로 wait을 지정해줍니다.
+* condition은 check_waiting(newlock)이라는 condition을 이용해서 waiting list에 있는지 확인하고
+* 전후로 add_wait_queue, prepare_to_wait을 통해 wait queue에 넣어줍니다. schedule()로 wait시켜 줍니다.
+* finish_wait으로 wait 과정을 끝냅니다.
 
 #### exit_rotlock
-task_struct pointer를 받아서 pid를 얻습니다.
-그리고 wait_queue, lock_queue 모두에 접근하고 entry를 제거할 예정이므로, wait_lock과 held_lock에 대해 write_lock을 잡아 줍니다.
-그리고 remove_all 함수로 해당되는 pid를 가진 lock을 제거해 줍니다.
-이것으로 인해 새롭게 락을 잡을 수도 있으므로 check_and_acquire_lock을 실행해 줍니다.
+* task_struct pointer를 받아서 pid를 얻습니다.
+* 그리고 wait_queue, lock_queue 모두에 접근하고 entry를 제거할 예정이므로, wait_lock과 held_lock에 대해 write_lock을 잡아 줍니다.
+* 그리고 remove_all 함수로 해당되는 pid를 가진 lock을 제거해 줍니다.
+* 이것으로 인해 새롭게 락을 잡을 수도 있으므로 check_and_acquire_lock을 실행해 줍니다.
 
 ---
 
 > 다음은 test 프로그램에 대한 설명입니다.
 
 #### selector
-input으로 정수 하나를 받습니다.
-아래 과정을 반복합니다.
-degree = 90, range = 90으로 rotlock_write를 잡아준 후 integer라는 파일에 input으로 받은 정수를 넣습니다.
-정수값을 1 늘려줍니다.
-syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
+* input으로 정수 하나를 받습니다.
+* 아래 과정을 반복합니다.
+* degree = 90, range = 90으로 rotlock_write를 잡아준 후 integer라는 파일에 input으로 받은 정수를 넣습니다.
+* * 정수값을 1 늘려줍니다.
+* syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
 
 #### trial
-input으로 정수 하나를 받습니다.
-이를 출력할 때 trial- 다음에 춣력하여 index로 역할을 하게 합니다.
-아래 과정을 반복합니다.
-rotlock_read를 degree=90, range=90으로 잡아준 후 integer 파일에서 정수 하나를 읽습니다.
-그 정수를 인수분해해서 출력해 줍니다.
-syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
+* input으로 정수 하나를 받습니다.
+* 이를 출력할 때 trial- 다음에 춣력하여 index로 역할을 하게 합니다.
+* 아래 과정을 반복합니다.
+* rotlock_read를 degree=90, range=90으로 잡아준 후 integer 파일에서 정수 하나를 읽습니다.
+* 그 정수를 인수분해해서 출력해 줍니다.
+* syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
 
 ### Lessons learned

@@ -18,9 +18,6 @@ DEFINE_RWLOCK(rot_lock);
 DEFINE_RWLOCK(held_lock);
 DEFINE_RWLOCK(wait_lock);
 
-//int is_initialized1 = 0; // if initialize() is called, set to 1
-//int is_initialized2 = 0;
-
 /* range descriptor */
 struct rd {
     pid_t pid;      /* process id of requested process */
@@ -195,18 +192,7 @@ void change_queue(struct rd* input){
         }
     }
 }
-/*
-void initialize_list(void) {
-    if (is_initialized1 == 0) {
-        write_lock(&rot_lock);
-        if (is_initialized2 == 0) {
-            is_initialized1 = 1;
-            is_initialized2 = 1;
-        }
-        write_unlock(&rot_lock);
-    }
-}
-*/
+
 void set_lock(struct rd* newlock, int degree, int range, int type) {
 
     int lower, upper; 
@@ -310,8 +296,6 @@ long sys_set_rotation(int degree) {
         return -1;
     }
 
-    //initialize_list();
-
     write_lock(&rot_lock);
 
     rotation = degree;
@@ -343,7 +327,7 @@ long sys_rotlock_read(int degree, int range){
 
     write_unlock(&wait_lock);
 
-    check_and_acquire_lock();   // TODO is this right execution order?
+    check_and_acquire_lock();
 
 	add_wait_queue(&wait_queue_head, &wait);
 
@@ -382,7 +366,7 @@ long sys_rotlock_write(int degree, int range){
 
     write_unlock(&wait_lock);
 
-    check_and_acquire_lock();   // TODO is this right execution order?
+    check_and_acquire_lock(); 
 
 	add_wait_queue(&wait_queue_head, &wait);
 
@@ -501,5 +485,4 @@ void exit_rotlock(struct task_struct *tsk){
 
     check_and_acquire_lock();
 
-    // called with every thread exiting? or every process exiting?
 }

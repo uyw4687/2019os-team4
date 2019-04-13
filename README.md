@@ -106,7 +106,7 @@ pid, range(lower bound, upper bound), type(READ/WRITE)를 저장합니다.
 * input으로 정수 하나를 받습니다.
 * 아래 과정을 반복합니다.
 * degree = 90, range = 90으로 rotlock_write를 잡아준 후 integer라는 파일에 input으로 받은 정수를 넣습니다.
-* * 정수값을 1 늘려줍니다.
+* 정수값을 1 늘려줍니다.
 * syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
 
 #### trial

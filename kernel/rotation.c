@@ -267,69 +267,81 @@ int check_and_acquire_lock(void) {
     
     struct rd *wait_entry;
     struct rd *lock_entry;
-    
+
     int num_awoken_processes = 0;
-    int held_lock_type = EMPTY;
+    int acquire = 1;
+    int starvation = 0;
     
     read_lock(&rot_lock);
 
     write_lock(&wait_lock);
     write_lock(&held_lock);
-   
-    // set held_lock_type.
-    list_for_each_safe(head_lock, next_head_lock, &lock_queue) {
-
-        lock_entry = list_entry(head_lock, struct rd, list);
-
-        if (check_range(rotation, lock_entry) == 0) {
-            continue;
-        }
-        if (lock_entry->type == READ && held_lock_type != WRITE) {
-            held_lock_type = READ;
-        } else if (lock_entry->type == READ) {
-            held_lock_type = WRITE;
-            printk(KERN_ERR "Both write lock and read lock are held!");
-        } else if (lock_entry->type == WRITE && held_lock_type != READ) {
-            held_lock_type = WRITE;
-        } else {
-            held_lock_type = WRITE;
-            printk(KERN_ERR "Both write lock and read lock are held!");
-        }
-
-    }
-
+    
     // check if each wait_entry can acquire a lock.
     list_for_each_safe(head_wait, next_head_wait, &wait_queue) {
 
         wait_entry = list_entry(head_wait, struct rd, list);
 
         if (check_range(rotation, wait_entry) == 0) {
-            continue;
+            continue;   // ignore wait_entry whose range doesn't contain current rotation
         }
 
-        if (held_lock_type == EMPTY) {
+        if (wait_entry->type == READ) {
+            
+            if (starvation == 1)    // at least one writer is starved before, ignore reader
+                continue;
 
-            // awake a process and acquire lock for wait_entry
-            change_queue(wait_entry);
-            wake_up(&wait_queue_head);
+            acquire = 1;
 
-            held_lock_type = wait_entry->type;
-            num_awoken_processes++;
+            list_for_each_safe(head_lock, next_head_lock, &lock_queue) {
 
-        } else if (held_lock_type == READ && wait_entry->type == READ) {
+                lock_entry = list_entry(head_lock, struct rd, list);
+                if (lock_entry->type == WRITE &&
+                        compare_overlap(lock_entry, wait_entry)) {
+                    acquire = 0;
+                    break;
+                }
+            }
 
-            // awake a process and acquire lock for wait_entry
-            change_queue(wait_entry);
-            wake_up(&wait_queue_head);
+            if (acquire == 1) {
+                // awake a process and acquire lock for wait_entry
+                change_queue(wait_entry);
+                wake_up(&wait_queue_head);
+                num_awoken_processes++;
+            }
 
-            num_awoken_processes++;
+        } else {    // wait_entry->type == WRITE
 
-        } else {
-            // if a wait_entry cannot acquire a lock,
-            // also entries after the entry in wait_queue cannot acquire a lock.
-            break;
+            acquire = 1;
+
+            list_for_each_safe(head_lock, next_head_lock, &lock_queue) {
+
+                lock_entry = list_entry(head_lock, struct rd, list);
+
+                if (compare_overlap(lock_entry, wait_entry)) {
+
+                    acquire = 0;
+
+                    if (lock_entry->type == READ) {
+                        starvation = 1;
+                        break;
+                    }
+                    // if lock_entry->type == WRITE
+                        // then continue check for starvation
+                }
+            }
+
+            if (acquire == 1) {    // no overlapped lock
+
+                // awake a process and acquire lock for wait_entry
+                change_queue(wait_entry);
+                wake_up(&wait_queue_head);
+                num_awoken_processes++;
+
+                // no one can acquire lock anymore
+                break;
+            }
         }
-
     }
 
     write_unlock(&held_lock);

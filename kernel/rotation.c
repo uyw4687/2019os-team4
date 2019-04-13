@@ -416,19 +416,19 @@ long sys_rotunlock_write(int degree, int range){
     return 0;
 }
 
-void rechange_range(struct rd* target, int* range, int* degree){
+void rechange_range(struct rd* target, int* outrange, int* outdegree){
 
     int range1 = target->range[0];
     int range2 = target->range[1];
     
     if(range1 <= range2) {
-        *range = (range1 + range2)/2;
-        *degree = range2 - *range;
+        *outdegree = (range1 + range2)/2;
+        *outrange = range2 - *outdegree;
     }
     else {
         range2 += 360;
-        *range = ((range1 + range2)/2)%360;
-        *degree = range2 - *range;
+        *outdegree = ((range1 + range2)/2)%360;
+        *outrange = range2 - *outdegree;
     }
 }
 

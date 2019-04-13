@@ -18,8 +18,11 @@ DEFINE_RWLOCK(rot_lock);
 DEFINE_RWLOCK(held_lock);
 DEFINE_RWLOCK(wait_lock);
 
-int is_initialized1 = 0; // if initialize() is called, set to 1
-int is_initialized2 = 0;
+INIT_LIST_HEAD(&(lock_queue.list));
+INIT_LIST_HEAD(&(wait_queue.list));
+
+//int is_initialized1 = 0; // if initialize() is called, set to 1
+//int is_initialized2 = 0;
 
 /* range descriptor */
 struct rd {
@@ -195,20 +198,18 @@ void change_queue(struct rd* input){
         }
     }
 }
-
+/*
 void initialize_list(void) {
     if (is_initialized1 == 0) {
         write_lock(&rot_lock);
         if (is_initialized2 == 0) {
             is_initialized1 = 1;
             is_initialized2 = 1;
-            INIT_LIST_HEAD(&(lock_queue.list));
-            INIT_LIST_HEAD(&(wait_queue.list));
         }
         write_unlock(&rot_lock);
     }
 }
-
+*/
 void set_lock(struct rd* newlock, int degree, int range, int type) {
 
     int lower, upper; 

@@ -25,12 +25,17 @@ project 기본 build 방법으로 하시면 됩니다.
 * DEFINE_RWLOCK(held_lock);      // lock_queue에 대한 접근을 제한하는 lock입니다.
 * DEFINE_RWLOCK(wait_lock);      // wait_queue에 대한 접근을 제한하는 lock입니다.
 
-* `struct rd{`
-* ` pid_t pid;`
-* ` int range[2];`
-* ` int type;`
-* ` struct list_head list;`
-* `}`
+`struct rd{
+
+ pid_t pid;
+ 
+ int range[2];
+ 
+ int type;
+ 
+ struct list_head list;
+ 
+}`
 각 lock을 표현하는 struct입니다.
 pid, range(lower bound, upper bound), type(READ/WRITE)를 저장합니다.
 

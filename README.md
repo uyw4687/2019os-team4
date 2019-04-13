@@ -4,23 +4,50 @@ OS Spring Team4
 
 ### How to build our kernel
 Project0의 순서로 build하시면 됩니다.
-thread를 제외하고 출력해야 한다는 조건을 너무 늦게 안 나머지 thread와 process 구분 없이 출력했습니다.
-thread를 제외하는 방법은 tgid와 pid가 같을 때만 유효한 process로 하고 
-count를 늘려나가는 방식으로 하면 되겠습니다.
+
 
 ### High-level design and implementation
 #### System call registration
-* kernel 디렉토리에 시스템 콜 함수를 구현합니다.
-* arch/arm64/include/asm/unistd.h 에서 시스템 콜 개수를 1 늘려줍니다.
-* arch/arm64/include/asm/unistd32.h 에서 ptree 시스템 콜을 398번에 등록해 줍니다.
-* include/linux/syscalls.h 에서 sys_ptree의 prototype을 적어 줍니다.
-* kernel/Makefile에서 ptree.o를 추가해 줍니다.
+* kernel/rotation.c 에 시스템 콜 함수를 구현합니다.
+* arch/arm64/include/asm/unistd.h 에서 시스템 콜 개수를 5 늘려줍니다. 398 -> 403
+* arch/arm64/include/asm/unistd32.h 에서 각 시스템 콜을 스펙에 등록해 줍니다.
+* include/linux/syscalls.h 에서 각 system call의 prototype을 적어 줍니다.
+* kernel/Makefile에서 rotation.o를 추가해 줍니다.
 
 ---
 
-> 다음은 kernel/ptree.c에 대한 설명입니다.
+> 다음은 kernel/rotation.c에 대한 설명입니다.
 
-#### Error checking process / After DFS
+#### global values
+
+int rotation                   // rotation값을 저장하는 변수입니다.
+
+DEFINE_RWLOCK(rot_lock);       // rotation값에 대한 접근을 제한하는 lock입니다.
+DEFINE_RWLOCK(held_lock);      // lock_queue에 대한 접근을 제한하는 lock입니다.
+DEFINE_RWLOCK(wait_lock);      // wait_queue에 대한 접근을 제한하는 lock입니다.
+
+struct rd{
+ pid_t pid;
+ int range[2];
+ int type;
+ struct list_head list;
+}
+각 lock을 표현하는 struct입니다.
+pid, range(lower bound, upper bound), type(READ/WRITE)를 저장합니다.
+
+LIST_HEAD(lock_queue); //lock_queue doubly linked list의 list_head입니다.
+LIST_HEAD(wait_queue); //lock_queue doubly linked list의 list_head입니다.
+
+DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍니다.
+
+#### helper functions
+compare_rd : 두 struct rd를 포인터로 받아 pid, range[0], range[1], type을 비교합니다. return 1(true) or 0(false)
+set_lower_upper : degree와 range를 받아 lower bound, upper bound를 구해 줍니다.
+check_range : rotation값과 struct rd를 받아 lock이 bound 내에 rotation이 있는지 체크합니다.
+check_waiting : 해당하는 struct rd가 
+
+
+#### set_rotation
 * 먼저 user space memory인 buf, nr에 대해서 NULL값인지 확인해 줍니다. 만약 그렇다면 -EINVAL을 return합니다. 
 * 그리고 buf, nr의 값을 copy_from_user로 받을 때 또는 buf2, n의 값을 copy_to_user로 줄 때 오류가 발생하면 모두 -EINVAL을 return합니다.
 * buf, nr이 접근 가능한 영역인지 access_ok로 VERIFY_WRITE에 대해서 확인한 후 문제가 있으면 -EFAULT를 return합니다.

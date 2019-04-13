@@ -10,7 +10,7 @@ void factorize(int value)
 {
 	int divisor;
 	int dividend = value;
-	int end;
+	int end = 0;
 
 	for(divisor=2;divisor<=value;divisor++)
 	{
@@ -46,6 +46,8 @@ int main(int argc, char **argv)
 	int identifier;
 	int value;
 	
+	int success;
+	
 	identifier = strtol(argv[1], &end, 10);
 	
 	FILE *fp;
@@ -53,12 +55,18 @@ int main(int argc, char **argv)
 	while(1) {
 		//read integer & get value
 		//starting lock
-		syscall(SYS_ROTLOCK_READ, 90, 90);
+		success = syscall(SYS_ROTLOCK_READ, 90, 90);
+
+		if(success < 0) {
+			printf("rotlock_read failed");
+			exit(1);
+		}
 
 		fp = fopen("integer", "r");
+
 		if(!fp)
 		{
-			printf("null file pointer\n");
+			printf("fopen failed\n");
 			return 1;
 		}
 	
@@ -70,8 +78,13 @@ int main(int argc, char **argv)
 
 		fclose(fp);
 
-		syscall(SYS_ROTUNLOCK_READ, 90, 90);
+		success = syscall(SYS_ROTUNLOCK_READ, 90, 90);
 		//lock ended
+
+		if(success < 0) {
+			printf("rotunlock_read failed");
+			exit(1);
+		}
 	}
 
 	return 0;

@@ -10,9 +10,7 @@
 
 #define READ 0
 #define WRITE 1
-
-#define WAIT 0
-#define HELD 1
+#define EMPTY 2
 
 int rotation;
 
@@ -32,7 +30,6 @@ struct rd {
     pid_t pid;      /* process id of requested process */
     int range[2];   /* acquire lock only if range[0] <= rotation <= range[1] */
     int type;      /* READ or WRITE */
-	int held;		/* lock_queue -> 1, wait_queue -> 0 */
     struct list_head list;
 };
 
@@ -40,23 +37,24 @@ DECLARE_WAIT_QUEUE_HEAD(wait_queue_head);
 
 int compare_rd(struct rd *rd1, struct rd *rd2) {
 
-	if((rd1->pid == rd2->pid) && ((rd1->range)[0] == (rd2->range)[0]) && ((rd1->range)[1] == (rd2->range)[1]) && (rd1->type == rd2->type) && (rd1->held == rd2->held))
-		return 1; //true : same
-	else
-		return 0; //false : different
+    if ((rd1->pid == rd2->pid) && ((rd1->range)[0] == (rd2->range)[0]) &&
+            ((rd1->range)[1] == (rd2->range)[1]) && (rd1->type == rd2->type))
+        return 1; //true : same
+    else
+        return 0; //false : different
 }
 
 void set_lower_upper(int degree, int range, int *lower, int *upper) {
-	
-	*lower= degree-range;
-	*upper = degree+range;
+    
+    *lower= degree-range;
+    *upper = degree+range;
 
-	if(*lower < 0)
-		*lower = *lower + 360;
-	
-	if(*upper >= 360)
-		*upper = *upper - 360;
-	
+    if (*lower < 0)
+        *lower = *lower + 360;
+    
+    if (*upper >= 360)
+        *upper = *upper - 360;
+    
 }
 
 int check_range(int rot, struct rd* rd1){
@@ -66,7 +64,32 @@ int check_range(int rot, struct rd* rd1){
         return 1;   //Range include rotation
     else if(lower >= upper && (lower <= rot || rot <= upper))
         return 1;   //Range include rotation
-    else return 0;  //Range don't include rotation
+    else 
+        return 0;   //Range don't include rotation
+    
+}
+
+// if rd1 is in wait_queue, return 1; else return 0.
+int check_waiting(struct rd* rd1) {
+    struct list_head *head_wait;
+    struct list_head *next_head_wait;
+    
+    struct rd *wait_entry;
+    
+    read_lock(&wait_lock);
+
+    list_for_each_safe(head_wait, next_head_wait, &wait_queue) {
+
+        wait_entry = list_entry(head_wait, struct rd, list);
+
+        if (compare_rd(rd1, wait_entry) == 1) {
+            read_unlock(&wait_lock);
+            return 1;   // rd1 is in wait_queue
+        }
+    }
+
+    read_unlock(&wait_lock);
+    return 0;           // rd1 is not in wait_queue
 }
 
 int my_enqueue(struct list_head *queue, struct rd* val) {
@@ -78,50 +101,48 @@ int my_enqueue(struct list_head *queue, struct rd* val) {
     return 0;
 }
 
-void delete_lock(struct list_head *queue, int degree, int range, int type, int held) {
-	struct list_head *head;
-	struct list_head *next_head;
 
-	struct rd *lock_entry;
+void delete_lock(struct list_head *queue, int degree, int range, int type) {
+    struct list_head *head;
+    struct list_head *next_head;
 
-	int lower, upper;
+    struct rd *lock_entry;
 
-	struct rd compare;
+    int lower, upper;
+    struct rd compare;
 
-	set_lower_upper(degree, range, &lower, &upper);
+    set_lower_upper(degree, range, &lower, &upper);
 
-	compare.pid = task_pid_nr(current);
-	compare.range[0] = lower;
-	compare.range[1] = upper;
-	compare.type = type;
-	compare.held = held;
-	
-	list_for_each_safe(head, next_head, queue) {
+    compare.pid = task_pid_nr(current);
+    compare.range[0] = lower;
+    compare.range[1] = upper;
+    compare.type = type;
+    
+    list_for_each_safe(head, next_head, queue) {
 
-		lock_entry = list_entry(head, struct rd, list);
+        lock_entry = list_entry(head, struct rd, list);
 
-		if(compare_rd(lock_entry, &compare)){
+        if (compare_rd(lock_entry, &compare)){
 
-			list_del(head);
-
-			kfree(lock_entry);
-
-			break;
-
-		}
-	}
+            list_del(head);
+            kfree(lock_entry);
+            break;
+        }
+    }
 }
 
 void remove_all(struct list_head *queue, pid_t pid) {
-	
-	struct list_head *head;
-	struct list_head *next_head;
+    
+    struct list_head *head;
+    struct list_head *next_head;
 
-	struct rd *lock_entry;
+    struct rd *lock_entry;
 
 	list_for_each_safe(head, next_head, queue) {
+
 		lock_entry = list_entry(head, struct rd, list);
-		if(lock_entry->pid == pid) {
+
+		if (lock_entry->pid == pid) {
 			list_del(head);
 			kfree(lock_entry);
 		}
@@ -150,11 +171,11 @@ int my_dequeue(struct list_head *queue, struct rd *target) {
 
 int check_input(int degree, int range) {
 
-	if(degree < 0 || degree >= 360 || range <= 0 || range >=180) {
+    if(degree < 0 || degree >= 360 || range <= 0 || range >=180) {
         printk(KERN_ERR "Out of range");
-		return -1;
-	}
-	return 0;
+        return -1;
+    }
+    return 0;
 }
 
 void change_queue(struct rd* input){
@@ -186,6 +207,99 @@ void initialize_list(void) {
     }
 }
 
+void set_lock(struct rd* newlock, int degree, int range, int type) {
+
+    int lower, upper; 
+
+    set_lower_upper(degree, range, &lower, &upper);
+    
+    newlock->pid = task_pid_nr(current);
+    newlock->range[0]= lower;
+    newlock->range[1]= upper;
+    newlock->type = type;
+}
+
+// if locks in wait_queue can be acquired, acquire the locks.
+int check_and_acquire_lock(void) {
+    
+    struct list_head *head_wait;
+    struct list_head *next_head_wait;
+
+    struct list_head *head_lock;
+    struct list_head *next_head_lock;
+    
+    struct rd *wait_entry;
+    struct rd *lock_entry;
+    
+    int num_awoken_processes = 0;
+    int held_lock_type = EMPTY;
+    
+    read_lock(&rot_lock);
+
+    write_lock(&wait_lock);
+    write_lock(&held_lock);
+   
+    // set held_lock_type.
+    list_for_each_safe(head_lock, next_head_lock, &lock_queue) {
+        lock_entry = list_entry(head_lock, struct rd, list);
+
+        if (check_range(rotation, lock_entry) == 0) {
+            continue;
+        }
+        if (lock_entry->type == READ && held_lock_type != WRITE) {
+            held_lock_type = READ;
+        } else if (lock_entry->type == READ) {
+            held_lock_type = WRITE;
+            printk(KERN_ERR "Both write lock and read lock are held!");
+        } else if (lock_entry->type == WRITE && held_lock_type != READ) {
+            held_lock_type = WRITE;
+        } else {
+            held_lock_type = WRITE;
+            printk(KERN_ERR "Both write lock and read lock are held!");
+        }
+
+    }
+
+    // check if each wait_entry can acquire a lock.
+    list_for_each_safe(head_wait, next_head_wait, &wait_queue) {
+
+        wait_entry = list_entry(head_wait, struct rd, list);
+
+        if (check_range(rotation, wait_entry) == 0) {
+            continue;
+        }
+
+        if (held_lock_type == EMPTY) {
+
+            // TODO awake a process and acquire lock for wait_entry
+            //      no break
+
+            held_lock_type = wait_entry->type;
+            num_awoken_processes++;
+
+        } else if (held_lock_type == READ && wait_entry->type == READ) {
+
+            // TODO awake a process and acquire lock for wait_entry
+            //      no break
+
+            num_awoken_processes++;
+
+        } else {
+            // if a wait_entry cannot acquire a lock,
+            // also entries after the entry in wait_queue cannot acquire a lock.
+            break;
+        }
+
+    }
+
+    write_unlock(&held_lock);
+    write_unlock(&wait_lock);
+
+    read_unlock(&rot_lock);
+
+    return num_awoken_processes;
+}
+
 long sys_set_rotation(int degree) {
     if (degree < 0 || degree > 360) {
         printk(KERN_ERR "Out of range");
@@ -200,95 +314,85 @@ long sys_set_rotation(int degree) {
 
     write_unlock(&rot_lock);
 
-    return 0;
-
-}//TODO set queue stack that include rotation range.
-
-void set_lock(struct rd* newlock, int degree, int range, int type) {
-
-	int lower, upper; 
-
-	set_lower_upper(degree, range, &lower, &upper);
-	
-	newlock->pid = task_pid_nr(current);
-	newlock->range[0]= lower;
-	newlock->range[1]= upper;
-	newlock->type = type;
-	newlock->held = 0;
+    return check_and_acquire_lock();
 }
 
 long sys_rotlock_read(int degree, int range){
 
-	struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
-
+    struct rd* newlock;
 	DEFINE_WAIT(wait);
 
-	if(check_input(degree, range) < 0)
-		return -1;
+    if (check_input(degree, range) < 0)
+        return -1;
 
-	set_lock(newlock, degree, range, READ);
+    newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+
+    set_lock(newlock, degree, range, READ);
 
     write_lock(&wait_lock);
 
-	my_enqueue(&wait_queue, newlock);
+    my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
 
 	add_wait_queue(&wait_queue_head, &wait);
 
-	while((newlock->held) == WAIT) {
+	while (check_waiting(newlock)) {
 
 		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
 
-		if((newlock->held) == WAIT)
+		if (check_waiting(newlock))
 			schedule();
 	}
 
 	finish_wait(&wait_queue_head, &wait);
+    check_and_acquire_lock();
 
     return 0;
 }
 
 long sys_rotlock_write(int degree, int range){
 
-	struct rd* newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+    struct rd* newlock; 
+    DEFINE_WAIT(wait);
 
-	DEFINE_WAIT(wait);
-
-	if(check_input(degree, range) < 0)
-		return -1;
+    if (check_input(degree, range) < 0)
+        return -1;
+    
+    newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
 	
-	set_lock(newlock, degree, range, WRITE);
-	
+    set_lock(newlock, degree, range, WRITE);
+    
     write_lock(&wait_lock);
 
-	my_enqueue(&wait_queue, newlock);
+    my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
 
 	add_wait_queue(&wait_queue_head, &wait);
 
-	while((newlock->held) == WAIT) {
+	while (check_waiting(newlock)) {
 
 		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
 
-		if((newlock->held) == WAIT)
+		if (check_waiting(newlock))
 			schedule();
 	}
 
 	finish_wait(&wait_queue_head, &wait);
+    check_and_acquire_lock();
 
     return 0;
 }
 
 long sys_rotunlock_read(int degree, int range){
 
-	if(check_input(degree, range) < 0)
-		return -1;
+    if (check_input(degree, range) < 0)
+        return -1;
 
     write_lock(&held_lock);
 
-	delete_lock(&lock_queue, degree, range, READ, HELD);
+	delete_lock(&lock_queue, degree, range, READ);	
 
     write_unlock(&held_lock);
 
@@ -300,28 +404,30 @@ long sys_rotunlock_read(int degree, int range){
 
 long sys_rotunlock_write(int degree, int range){
 
-	if(check_input(degree, range) < 0)
-		return -1;
+    if (check_input(degree, range) < 0)
+        return -1;
 
 	write_lock(&held_lock);
 	
-	delete_lock(&lock_queue, degree, range, WRITE, HELD);	
+	delete_lock(&lock_queue, degree, range, WRITE);	
 
     write_unlock(&held_lock);
-	
+    
     return 0;
 }
 
 void exit_rotlock(struct task_struct *tsk){
 
+    write_lock(&wait_lock);
     write_lock(&held_lock);
-	remove_all(&lock_queue, tsk->pid);
-    write_unlock(&held_lock);
 
-    write_lock(&wait_lock);
-	remove_all(&wait_queue, tsk->pid);
-    write_lock(&wait_lock);
-	//called with every thread exiting? or every process exiting?
+    remove_all(&wait_queue, tsk->pid); 
+    remove_all(&lock_queue, tsk->pid);
+
+    write_unlock(&held_lock);
+    write_unlock(&wait_lock);
+
+    //called with every thread exiting? or every process exiting?
 }
 /*
 **********pid or tgid what to use in lock struct

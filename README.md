@@ -43,7 +43,7 @@ pid, range(lower bound, upper bound), type(READ/WRITE)를 저장합니다.
 * LIST_HEAD(lock_queue); //lock_queue doubly linked list의 list_head입니다.
 * LIST_HEAD(wait_queue); //lock_queue doubly linked list의 list_head입니다.
 
-DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍니다.
+* DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍니다.
 
 #### helper functions
 * compare_rd : 두 struct rd를 포인터로 받아 pid, range[0], range[1], type을 비교합니다. return 1(true) or 0(false)

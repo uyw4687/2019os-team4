@@ -18,7 +18,6 @@ DEFINE_RWLOCK(rot_lock);
 DEFINE_RWLOCK(held_lock);
 DEFINE_RWLOCK(wait_lock);
 
-int front = 0, rear = 0;
 int is_initialized1 = 0; // if initialize() is called, set to 1
 int is_initialized2 = 0;
 

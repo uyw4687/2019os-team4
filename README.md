@@ -22,7 +22,9 @@ project 기본 build 방법으로 하시면 됩니다.
 int rotation                   // rotation값을 저장하는 변수입니다.
 
 DEFINE_RWLOCK(rot_lock);       // rotation값에 대한 접근을 제한하는 lock입니다.
+
 DEFINE_RWLOCK(held_lock);      // lock_queue에 대한 접근을 제한하는 lock입니다.
+
 DEFINE_RWLOCK(wait_lock);      // wait_queue에 대한 접근을 제한하는 lock입니다.
 
 struct rd{
@@ -52,6 +54,11 @@ check_input : input이 범위 내의 값인지 확인합니다.
 change_queue : wait_queue에서 lock_queue로 옮겨줍니다.
 set_lock : lock entry의 값을 세팅합니다.
 check_and_acquire_lock : 현재 상태에서 잡을 수 있는 모든 락을 잡아줍니다. 그리고 잡은 락의 개수를 리턴합니다.
+
+##### solving writer starvation
+check_and_acquire_lock에서 현재 rotation에 대해 잡고 있는 lock의 종류를 확인합니다.
+read lock 밖에 없을 경우 READ, write lock밖에 없을 경우 write 아무것도 없을 경우 EMPTY입니다.
+
 
 #### set_rotation
 degree가 범위 안에 있는지 확인해 줍니다.

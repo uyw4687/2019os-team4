@@ -144,9 +144,11 @@ struct rd* my_dequeue(struct list_head *queue, struct rd *target) {
         if(compare_rd(target, lock_entry)){
             list_del_init(head);
             //TODO have to kfree target??
+            return lock_entry;
         }
     }
     lock_entry->pid = -1;//didn't find target
+    printk(KERN_ERR "can't find target");
     return lock_entry;
     // TODO must call kfree(lock_entry);
 }

@@ -18,9 +18,6 @@ DEFINE_RWLOCK(rot_lock);
 DEFINE_RWLOCK(held_lock);
 DEFINE_RWLOCK(wait_lock);
 
-INIT_LIST_HEAD(&(lock_queue.list));
-INIT_LIST_HEAD(&(wait_queue.list));
-
 //int is_initialized1 = 0; // if initialize() is called, set to 1
 //int is_initialized2 = 0;
 
@@ -32,8 +29,8 @@ struct rd {
     struct list_head list;
 };
 
-struct rd lock_queue = { .pid = -1 };
-struct rd wait_queue = { .pid = -1 };
+LIST_HEAD(lock_queue);
+LIST_HEAD(wait_queue);
 
 DECLARE_WAIT_QUEUE_HEAD(wait_queue_head);
 
@@ -81,7 +78,7 @@ int check_waiting(struct rd* rd1) {
     
     read_lock(&wait_lock);
 
-    list_for_each_safe(head_wait, next_head_wait, &(wait_queue.list)) {
+    list_for_each_safe(head_wait, next_head_wait, &wait_queue) {
 
         wait_entry = list_entry(head_wait, struct rd, list);
 
@@ -186,13 +183,13 @@ void change_queue(struct rd* input){
     struct list_head *next_head;
     struct rd *lock_entry;
 
-    list_for_each_safe(head, next_head, &(wait_queue.list)) {
+    list_for_each_safe(head, next_head, &wait_queue) {
         lock_entry = list_entry(head, struct rd, list);
 
         if (compare_rd(lock_entry, input)) {
 
-            if (my_dequeue(&(wait_queue.list), input)) {
-                my_enqueue(&(lock_queue.list), input);
+            if (my_dequeue(&wait_queue, input)) {
+                my_enqueue(&lock_queue, input);
                 break;
             }
         }
@@ -243,10 +240,9 @@ int check_and_acquire_lock(void) {
     write_lock(&held_lock);
    
     // set held_lock_type.
-    list_for_each_safe(head_lock, next_head_lock, &(lock_queue.list)) {
+    list_for_each_safe(head_lock, next_head_lock, &lock_queue) {
 
         lock_entry = list_entry(head_lock, struct rd, list);
-        if (lock_entry->pid == -1) continue;
 
         if (check_range(rotation, lock_entry) == 0) {
             continue;
@@ -266,10 +262,9 @@ int check_and_acquire_lock(void) {
     }
 
     // check if each wait_entry can acquire a lock.
-    list_for_each_safe(head_wait, next_head_wait, &(wait_queue.list)) {
+    list_for_each_safe(head_wait, next_head_wait, &wait_queue) {
 
         wait_entry = list_entry(head_wait, struct rd, list);
-        if (wait_entry->pid == -1) continue;
 
         if (check_range(rotation, wait_entry) == 0) {
             continue;
@@ -344,7 +339,7 @@ long sys_rotlock_read(int degree, int range){
 
     write_lock(&wait_lock);
 
-    my_enqueue(&(wait_queue.list), newlock);
+    my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
 
@@ -383,7 +378,7 @@ long sys_rotlock_write(int degree, int range){
     
     write_lock(&wait_lock);
 
-    my_enqueue(&(wait_queue.list), newlock);
+    my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
 
@@ -413,7 +408,7 @@ long sys_rotunlock_read(int degree, int range){
 
     write_lock(&held_lock);
 
-	success = delete_lock(&(lock_queue.list), degree, range, READ);	
+	success = delete_lock(&lock_queue, degree, range, READ);	
 
     write_unlock(&held_lock);
 
@@ -437,7 +432,7 @@ long sys_rotunlock_write(int degree, int range){
 
 	write_lock(&held_lock);
 	
-	success = delete_lock(&(lock_queue.list), degree, range, WRITE);	
+	success = delete_lock(&lock_queue, degree, range, WRITE);	
 
     write_unlock(&held_lock);
 
@@ -478,9 +473,9 @@ void exit_rotlock(struct task_struct *tsk){
     write_lock(&wait_lock);
     write_lock(&held_lock);
 
-    remove_all(&(wait_queue.list), pid);   // remove wait queue
+    remove_all(&wait_queue, pid);   // remove wait queue
     
-    list_for_each_safe(head, next_head, &(lock_queue.list)) {
+    list_for_each_safe(head, next_head, &lock_queue) {
 
         lock_entry = list_entry(head, struct rd, list);
 

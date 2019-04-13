@@ -59,8 +59,8 @@ void set_lower_upper(int degree, int range, int *lower, int *upper) {
 
 int check_range(int rot, struct rd* rd1){
 
-    int lower = rd1->range[0];
-    int upper = rd1->range[1];
+    int lower = (rd1->range)[0];
+    int upper = (rd1->range)[1];
     if(lower <= upper && lower <= rot && rot <= upper)
         return 1;   //Range include rotation
     else if(lower >= upper && (lower <= rot || rot <= upper))
@@ -498,6 +498,3 @@ void exit_rotlock(struct task_struct *tsk){
 
     //called with every thread exiting? or every process exiting?
 }
-/*
-**********pid or tgid what to use in lock struct
-*/

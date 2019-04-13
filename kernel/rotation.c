@@ -45,8 +45,8 @@ int compare_rd(struct rd *rd1, struct rd *rd2) {
 
 void set_lower_upper(int degree, int range, int *lower, int *upper) {
     
-    *lower= degree-range;
-    *upper = degree+range;
+    *lower = degree - range;
+    *upper = degree + range;
 
     if (*lower < 0)
         *lower = *lower + 360;
@@ -474,7 +474,8 @@ void exit_rotlock(struct task_struct *tsk){
     write_lock(&held_lock);
 
     remove_all(&wait_queue, pid);   // remove wait queue
-    
+    remove_all(&lock_queue, pid);
+    /*
     list_for_each_safe(head, next_head, &lock_queue) {
 
         lock_entry = list_entry(head, struct rd, list);
@@ -491,9 +492,12 @@ void exit_rotlock(struct task_struct *tsk){
             sys_rotunlock_write(degree, range);
         }
     }   // if processes held locks, unlock them
+    */
 
     write_unlock(&held_lock);
     write_unlock(&wait_lock);
+
+    check_and_acquire_lock();
 
     // called with every thread exiting? or every process exiting?
 }

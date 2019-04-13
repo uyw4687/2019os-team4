@@ -184,10 +184,12 @@ void change_queue(struct rd* input){
     struct list_head *next_head;
     struct rd *lock_entry;
 
-    list_for_each_safe(head, next_head, &wait_queue){
+    list_for_each_safe(head, next_head, &wait_queue) {
         lock_entry = list_entry(head, struct rd, list);
-        if(compare_rd(lock_entry, input)) {
-            if(my_dequeue(&wait_queue, input)) {
+
+        if (compare_rd(lock_entry, input)) {
+
+            if (my_dequeue(&wait_queue, input)) {
                 my_enqueue(&lock_queue, input);
                 break;
             }
@@ -272,16 +274,18 @@ int check_and_acquire_lock(void) {
 
         if (held_lock_type == EMPTY) {
 
-            // TODO awake a process and acquire lock for wait_entry
-            //      no break
+            // awake a process and acquire lock for wait_entry
+            change_queue(wait_entry);
+            wake_up(&wait_queue_head);
 
             held_lock_type = wait_entry->type;
             num_awoken_processes++;
 
         } else if (held_lock_type == READ && wait_entry->type == READ) {
 
-            // TODO awake a process and acquire lock for wait_entry
-            //      no break
+            // awake a process and acquire lock for wait_entry
+            change_queue(wait_entry);
+            wake_up(&wait_queue_head);
 
             num_awoken_processes++;
 
@@ -347,7 +351,7 @@ long sys_rotlock_read(int degree, int range){
 	}
 
 	finish_wait(&wait_queue_head, &wait);
-    check_and_acquire_lock();
+    check_and_acquire_lock();   // TODO is this right execution order?
 
     return 0;
 }
@@ -381,7 +385,7 @@ long sys_rotlock_write(int degree, int range){
 	}
 
 	finish_wait(&wait_queue_head, &wait);
-    check_and_acquire_lock();
+    check_and_acquire_lock();   // TODO is this right execution order?
 
     return 0;
 }

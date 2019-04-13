@@ -162,8 +162,8 @@ int my_dequeue(struct list_head *queue, struct rd *target) {
         lock_entry = list_entry(head, struct rd, list);
         if(compare_rd(target, lock_entry)){
             list_del_init(head);
-            //TODO have to kfree target??
             return 1;   //dequeue success, can use target.
+            // please call kfree(target); after return
         }
     }
     printk(KERN_ERR "can't find target");

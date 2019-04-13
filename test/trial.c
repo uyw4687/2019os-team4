@@ -10,7 +10,7 @@ void factorize(int value)
 {
 	int divisor;
 	int dividend = value;
-	int end;
+	int end = 0;
 
 	for(divisor=2;divisor<=value;divisor++)
 	{

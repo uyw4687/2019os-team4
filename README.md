@@ -89,7 +89,7 @@ task_struct pointer를 받아서 pid를 얻습니다.
 
 ---
 
-> 다음은 test/selector.c에 대한 설명입니다.
+> 다음은 test 프로그램에 대한 설명입니다.
 
 #### selector
 input으로 정수 하나를 받습니다.

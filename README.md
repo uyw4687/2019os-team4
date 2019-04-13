@@ -93,10 +93,17 @@ task_struct pointer를 받아서 pid를 얻습니다.
 
 #### selector
 input으로 정수 하나를 받습니다.
+아래 과정을 반복합니다.
 degree = 90, range = 90으로 rotlock_write를 잡아준 후 integer라는 파일에 input으로 받은 정수를 넣습니다.
-
+정수값을 1 늘려줍니다.
 syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
 
 #### trial
+input으로 정수 하나를 받습니다.
+이를 출력할 때 trial- 다음에 춣력하여 index로 역할을 하게 합니다.
+아래 과정을 반복합니다.
+rotlock_read를 degree=90, range=90으로 잡아준 후 integer 파일에서 정수 하나를 읽습니다.
+그 정수를 인수분해해서 출력해 줍니다.
+syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
 
 ### Lessons learned

@@ -49,21 +49,35 @@ int compare_overlap(struct rd *rd1, struct rd *rd2) {
 
     if(lower1 == lower2 || lower1 == upper2 || upper1 == lower2 || upper1 == upper2)
         return 1;
-/*
+
     //overlap case 1
-    //0<= l1 l2 u1 u2 < 360, vice versa(change 1, 2)
-    if(lower1 <= upper1 && lower2 <= upper2) {
-        if(lower2 < upper1 || lower1 < upper2)
-            return 1;
+    //no overflow/underflow
+    //0<= l1- l2- u1 u2 < 360, vice versa(change 1, 2)
+    if((lower1 <= upper1) && (lower2 <= upper2)) {
+        if(lower1 < lower2) {
+            if(upper1 > lower2)
+                return 1;
+            else
+                return 0;
+        }
+        else {
+            if(upper2 > lower1)
+                return 1;
+            else
+                return 0;
+        }
     }
     //case 2
     //second entry overflow/underflow
+    //0  l1- u2- u1 l2
+    //0  u2 l1- l2- u1
+    //0  l1- u2- l2- u1
     else if(lower1 <= upper1) {
-        if(lower2 < upper1 || lower1 < upper2)
+        if(lower1 < upper2 || lower2 < upper1)
             return 1;
     }
     //case 3
-    //third entry overflow/underflow
+    //third entry overflow/underflow - symmetric to case 2
     else if(lower2 <= upper2) {
         if(lower1 < upper2 || lower2 < upper1)
             return 1;
@@ -72,13 +86,6 @@ int compare_overlap(struct rd *rd1, struct rd *rd2) {
     //all entry overflow/underflow
     else
       return 1;
-*/ 
-    if(lower1 <= upper1 || lower2 <= upper2) {
-        if(lower1 < upper2 || lower2 < upper1)
-            return 1;
-    }
-    else
-        return 1;
 
     //otherwise, don't overlap
     return 0;

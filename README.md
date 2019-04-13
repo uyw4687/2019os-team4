@@ -43,9 +43,11 @@ DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍
 #### helper functions
 compare_rd : 두 struct rd를 포인터로 받아 pid, range[0], range[1], type을 비교합니다. return 1(true) or 0(false)
 set_lower_upper : degree와 range를 받아 lower bound, upper bound를 구해 줍니다.
-check_range : rotation값과 struct rd를 받아 lock이 bound 내에 rotation이 있는지 체크합니다.
-check_waiting : 해당하는 struct rd가 
-
+check_range : rotation값과 struct rd를 받아 lock bound 내에 rotation이 있는지 체크합니다. return 1(true) or 0(false) 
+check_waiting : 해당하는 struct rd가 wait_queue 내에 있는지 확인합니다. return 1(true) or 0(false)
+my_enqueue : queue에 entry를 넣어줍니다.
+my_dequeue : queue에서 entry를 빼줍니다.
+delete_lock : match 되는 lock entry를 없애줍니다.
 
 #### set_rotation
 * 먼저 user space memory인 buf, nr에 대해서 NULL값인지 확인해 줍니다. 만약 그렇다면 -EINVAL을 return합니다. 

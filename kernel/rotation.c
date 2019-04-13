@@ -78,7 +78,7 @@ int check_waiting(struct rd* rd1) {
     
     read_lock(&wait_lock);
 
-    list_for_each(head_wait, next_head_wait, wait_queue) {
+    list_for_each_safe(head_wait, next_head_wait, &wait_queue) {
 
         wait_entry = list_entry(head_wait, struct rd, list);
 
@@ -197,7 +197,7 @@ void set_lock(struct rd* newlock, int degree, int range, int type) {
 }
 
 // if locks in wait_queue can be acquired, acquire the locks.
-int check_and_acquire_lock() {
+int check_and_acquire_lock(void) {
     
     struct list_head *head_wait;
     struct list_head *next_head_wait;
@@ -217,7 +217,7 @@ int check_and_acquire_lock() {
     write_lock(&held_lock);
    
     // set held_lock_type.
-    list_for_each_safe(head_lock, next_head_lock, lock_queue) {
+    list_for_each_safe(head_lock, next_head_lock, &lock_queue) {
         lock_entry = list_entry(head_lock, struct rd, list);
 
         if (check_range(rotation, lock_entry) == 0) {
@@ -238,7 +238,7 @@ int check_and_acquire_lock() {
     }
 
     // check if each wait_entry can acquire a lock.
-    list_for_each_safe(head_wait, next_head_wait, wait_queue) {
+    list_for_each_safe(head_wait, next_head_wait, &wait_queue) {
 
         wait_entry = list_entry(head_wait, struct rd, list);
 

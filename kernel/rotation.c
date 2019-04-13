@@ -40,6 +40,50 @@ int compare_rd(struct rd *rd1, struct rd *rd2) {
         return 0; //false : different
 }
 
+int compare_overlap(struct rd *rd1, struct rd *rd2) {
+    
+    int lower1 = (rd1->range)[0]; 
+    int lower2 = (rd2->range)[0]; 
+    int upper1 = (rd1->range)[1]; 
+    int upper2 = (rd2->range)[1];
+
+    if(lower1 == lower2 || lower1 == upper2 || upper1 == lower2 || upper1 == upper2)
+        return 1;
+/*
+    //overlap case 1
+    //0<= l1 l2 u1 u2 < 360, vice versa(change 1, 2)
+    if(lower1 <= upper1 && lower2 <= upper2) {
+        if(lower2 < upper1 || lower1 < upper2)
+            return 1;
+    }
+    //case 2
+    //second entry overflow/underflow
+    else if(lower1 <= upper1) {
+        if(lower2 < upper1 || lower1 < upper2)
+            return 1;
+    }
+    //case 3
+    //third entry overflow/underflow
+    else if(lower2 <= upper2) {
+        if(lower1 < upper2 || lower2 < upper1)
+            return 1;
+    }
+    //case 4
+    //all entry overflow/underflow
+    else
+      return 1;
+*/ 
+    if(lower1 <= upper1 || lower2 <= upper2) {
+        if(lower1 < upper2 || lower2 < upper1)
+            return 1;
+    }
+    else
+        return 1;
+
+    //otherwise, don't overlap
+    return 0;
+}
+
 void set_lower_upper(int degree, int range, int *lower, int *upper) {
     
     *lower = degree - range;

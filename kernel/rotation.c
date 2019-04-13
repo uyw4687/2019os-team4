@@ -416,13 +416,49 @@ long sys_rotunlock_write(int degree, int range){
     return 0;
 }
 
+void rechange_range(struct rd* target, int* range, int* degree){
+
+    int range1 = target->range[0];
+    int range2 = target->range[1];
+    
+    if(range1 <= range2) {
+        *range = (range1 + range2)/2;
+        *degree = range2 - *range;
+    }
+    else {
+        range2 += 360;
+        *range = ((range1 + range2)/2)%360;
+        *degree = range2 - *range;
+    }
+}
+
 void exit_rotlock(struct task_struct *tsk){
+    
+    int pid = tsk->pid;
+    int range, degree;
+    struct rd* lock_entry;
+    struct list_head *head;
+    struct list_head *next_head;
 
     write_lock(&wait_lock);
     write_lock(&held_lock);
 
-    remove_all(&wait_queue, tsk->pid); 
-    remove_all(&lock_queue, tsk->pid);
+    remove_all(&wait_queue, pid);//remove wait queue
+    
+    list_for_each_safe(head, next_head, &lock_queue) {
+        lock_entry = list_entry(head, struct rd, list);
+        if(lock_entry->pid != pid) {
+            continue;
+        }
+        else if(lock_entry->type == READ) {
+            rechange_range(lock_entry, &range, &degree);
+            sys_rotunlock_read(degree, range);
+        }
+        else if(lock_entry->type == WRITE) {
+            rechange_range(lock_entry, &range, &degree);
+            sys_rotunlock_write(degree, range);
+        }
+    }//if processes held locks, unlock them
 
     write_unlock(&held_lock);
     write_unlock(&wait_lock);

@@ -22,9 +22,7 @@ project 기본 build 방법으로 하시면 됩니다.
 int rotation                   // rotation값을 저장하는 변수입니다.
 
 DEFINE_RWLOCK(rot_lock);       // rotation값에 대한 접근을 제한하는 lock입니다.
-
 DEFINE_RWLOCK(held_lock);      // lock_queue에 대한 접근을 제한하는 lock입니다.
-
 DEFINE_RWLOCK(wait_lock);      // wait_queue에 대한 접근을 제한하는 lock입니다.
 
 struct rd{

@@ -58,6 +58,7 @@ void set_lower_upper(int degree, int range, int *lower, int *upper) {
 }
 
 int check_range(int rot, struct rd* rd1){
+
     int lower = rd1->range[0];
     int upper = rd1->range[1];
     if(lower <= upper && lower <= rot && rot <= upper)
@@ -306,6 +307,7 @@ int check_and_acquire_lock(void) {
 }
 
 long sys_set_rotation(int degree) {
+
     if (degree < 0 || degree > 360) {
         printk(KERN_ERR "Out of range");
         return -1;
@@ -331,6 +333,10 @@ long sys_rotlock_read(int degree, int range){
         return -1;
 
     newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
+	
+	if(!newlock) {
+		return -1;
+	}
 
     set_lock(newlock, degree, range, READ);
 
@@ -339,6 +345,8 @@ long sys_rotlock_read(int degree, int range){
     my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
+
+    check_and_acquire_lock();   // TODO is this right execution order?
 
 	add_wait_queue(&wait_queue_head, &wait);
 
@@ -351,7 +359,6 @@ long sys_rotlock_read(int degree, int range){
 	}
 
 	finish_wait(&wait_queue_head, &wait);
-    check_and_acquire_lock();   // TODO is this right execution order?
 
     return 0;
 }
@@ -366,6 +373,10 @@ long sys_rotlock_write(int degree, int range){
     
     newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
 	
+	if(!newlock) {
+		return -1;
+	}
+
     set_lock(newlock, degree, range, WRITE);
     
     write_lock(&wait_lock);
@@ -373,6 +384,8 @@ long sys_rotlock_write(int degree, int range){
     my_enqueue(&wait_queue, newlock);
 
     write_unlock(&wait_lock);
+
+    check_and_acquire_lock();   // TODO is this right execution order?
 
 	add_wait_queue(&wait_queue_head, &wait);
 
@@ -385,7 +398,6 @@ long sys_rotlock_write(int degree, int range){
 	}
 
 	finish_wait(&wait_queue_head, &wait);
-    check_and_acquire_lock();   // TODO is this right execution order?
 
     return 0;
 }

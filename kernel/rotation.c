@@ -47,21 +47,21 @@ int compare_overlap(struct rd *rd1, struct rd *rd2) {
     int upper1 = (rd1->range)[1]; 
     int upper2 = (rd2->range)[1];
 
-    if(lower1 == lower2 || lower1 == upper2 || upper1 == lower2 || upper1 == upper2)
+    if (lower1 == lower2 || lower1 == upper2 || upper1 == lower2 || upper1 == upper2)
         return 1;
 
     //overlap case 1
     //no overflow/underflow
     //0<= l1- l2- u1 u2 < 360, vice versa(change 1, 2)
-    if((lower1 <= upper1) && (lower2 <= upper2)) {
-        if(lower1 < lower2) {
-            if(upper1 > lower2)
+    if ((lower1 <= upper1) && (lower2 <= upper2)) {
+        if (lower1 < lower2) {
+            if (upper1 > lower2)
                 return 1;
             else
                 return 0;
         }
         else {
-            if(upper2 > lower1)
+            if (upper2 > lower1)
                 return 1;
             else
                 return 0;
@@ -72,20 +72,20 @@ int compare_overlap(struct rd *rd1, struct rd *rd2) {
     //0  l1- u2- u1 l2
     //0  u2 l1- l2- u1
     //0  l1- u2- l2- u1
-    else if(lower1 <= upper1) {
-        if(lower1 < upper2 || lower2 < upper1)
+    else if (lower1 <= upper1) {
+        if (lower1 < upper2 || lower2 < upper1)
             return 1;
     }
     //case 3
     //third entry overflow/underflow - symmetric to case 2
-    else if(lower2 <= upper2) {
-        if(lower1 < upper2 || lower2 < upper1)
+    else if (lower2 <= upper2) {
+        if (lower1 < upper2 || lower2 < upper1)
             return 1;
     }
     //case 4
     //all entry overflow/underflow
     else
-      return 1;
+        return 1;
 
     //otherwise, don't overlap
     return 0;
@@ -206,15 +206,15 @@ void remove_all(struct list_head *queue, pid_t pid) {
 
     struct rd *lock_entry;
 
-	list_for_each_safe(head, next_head, queue) {
+    list_for_each_safe(head, next_head, queue) {
 
-		lock_entry = list_entry(head, struct rd, list);
+        lock_entry = list_entry(head, struct rd, list);
 
-		if (lock_entry->pid == pid) {
-			list_del(head);
-			kfree(lock_entry);
-		}
-	}
+        if (lock_entry->pid == pid) {
+            list_del(head);
+            kfree(lock_entry);
+        }
+    }
 }
 
 int check_input(int degree, int range) {
@@ -368,16 +368,16 @@ long sys_set_rotation(int degree) {
 long sys_rotlock_read(int degree, int range){
 
     struct rd* newlock;
-	DEFINE_WAIT(wait);
+    DEFINE_WAIT(wait);
 
     if (check_input(degree, range) < 0)
         return -1;
 
     newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
-	
-	if(!newlock) {
-		return -1;
-	}
+    
+    if (!newlock) {
+        return -1;
+    }
 
     set_lock(newlock, degree, range, READ);
 
@@ -389,17 +389,17 @@ long sys_rotlock_read(int degree, int range){
 
     check_and_acquire_lock();
 
-	add_wait_queue(&wait_queue_head, &wait);
+    add_wait_queue(&wait_queue_head, &wait);
 
-	while (check_waiting(newlock)) {
+    while (check_waiting(newlock)) {
 
-		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
+        prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
 
-		if (check_waiting(newlock))
-			schedule();
-	}
+        if (check_waiting(newlock))
+            schedule();
+    }
 
-	finish_wait(&wait_queue_head, &wait);
+    finish_wait(&wait_queue_head, &wait);
 
     return 0;
 }
@@ -413,10 +413,10 @@ long sys_rotlock_write(int degree, int range){
         return -1;
     
     newlock = (struct rd*)kmalloc(sizeof(struct rd), GFP_KERNEL);
-	
-	if(!newlock) {
-		return -1;
-	}
+    
+    if(!newlock) {
+        return -1;
+    }
 
     set_lock(newlock, degree, range, WRITE);
     
@@ -428,17 +428,17 @@ long sys_rotlock_write(int degree, int range){
 
     check_and_acquire_lock(); 
 
-	add_wait_queue(&wait_queue_head, &wait);
+    add_wait_queue(&wait_queue_head, &wait);
 
-	while (check_waiting(newlock)) {
+    while (check_waiting(newlock)) {
 
-		prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
+        prepare_to_wait(&wait_queue_head, &wait, TASK_INTERRUPTIBLE);
 
-		if (check_waiting(newlock))
-			schedule();
-	}
+        if (check_waiting(newlock))
+            schedule();
+    }
 
-	finish_wait(&wait_queue_head, &wait);
+    finish_wait(&wait_queue_head, &wait);
 
     return 0;
 }
@@ -452,7 +452,7 @@ long sys_rotunlock_read(int degree, int range){
 
     write_lock(&held_lock);
 
-	success = delete_lock(&lock_queue, degree, range, READ);	
+    success = delete_lock(&lock_queue, degree, range, READ);    
 
     write_unlock(&held_lock);
 
@@ -461,7 +461,7 @@ long sys_rotunlock_read(int degree, int range){
         return -1;
     }
 
-	// check if other locks can come
+    // check if other locks can come
     check_and_acquire_lock();
 
     return 0;
@@ -474,9 +474,9 @@ long sys_rotunlock_write(int degree, int range){
     if (check_input(degree, range) < 0)
         return -1;
 
-	write_lock(&held_lock);
-	
-	success = delete_lock(&lock_queue, degree, range, WRITE);	
+    write_lock(&held_lock);
+    
+    success = delete_lock(&lock_queue, degree, range, WRITE);    
 
     write_unlock(&held_lock);
 

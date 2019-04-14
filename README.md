@@ -120,7 +120,7 @@ DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍
 * 이를 출력할 때 trial- 다음에 출력하여 index로 역할을 하게 합니다.
 * 아래 과정을 반복합니다.
 * rotlock_read를 degree=90, range=90으로 잡아준 후 integer 파일에서 정수 하나를 읽습니다.
-* 그 정수를 인수분해해서 출력해 줍니다.
+* 그 정수를 소인수분해해서 출력해 줍니다.
 * syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
 
 ### Lessons learned

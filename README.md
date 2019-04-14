@@ -17,6 +17,9 @@ project 기본 build 방법으로 하시면 됩니다.
 * kernel/exit.c의 do_exit() 함수에 kernel/rotation.c에서 정의된 exit_rotlock을 호출하는 코드를 넣습니다.
   * rotation lock을 잡은 프로세스가 unlock하지 않고 종료될 때, 잡고 있던 rotation lock을 놓게 합니다.
 
+#### Synchronization
+* 내부적으로 rwlock을 이용하여, 공유 메모리에 대한 critical section을 만들어 주는 방식으로 구현하였습니다.
+
 ---
 
 > 다음은 kernel/rotation.c에 대한 설명입니다.
@@ -121,4 +124,11 @@ DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍
 * syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
 
 ### Lessons learned
-* 
+* lock을 이용하여 새로운 lock을 구현한다는 것이 처음에는 이상하게 느껴졌지만, concurrency를 보장하기 위해 rotation lock 내부적으로도 lock이 필요하다는 것을 깨닫게 되었습니다.
+* 여러 프로세스가 동시에 실행될 때 concurrency가 보장되지 않으면 무슨 일이 일어나는지 직접 테스트하면서 확인해 보았습니다.
+* 여러 프로세스가 동시에 실행될 때 concurrency가 보장되면 결과가 어떻게 달라지는지 확인해 보았습니다.
+* concurrency를 보장하기 위해 어느 부분에서 어떤 장치를 두어야 할지 고민하고 이를 섬세하게 구현하였습니다. 그 장치(rwlock)가 잘 구현되어 있더라도 그것을 사용하는 쪽(rotation lock)에서 제대로 사용하지 않으면 deadlock 등의 문제가 발생할 수 있음을 알게 되었습니다.
+* 서로 다른 두 circular range의 범위를 비교하는 함수나 각 wait entry가 lock을 잡을 수 있는지 판단하는 함수를 구현하기가 살짝 까다로웠습니다. 이 과정에서 writer starvation을 방지하려면 어떻게 구현해야 하는지 알게 되었습니다.
+* lock을 사용하면 필연적으로 blocking이 일어나 속도가 느려질 수밖에 없다는 것을 알게 되었습니다.
+* 프로세스가 종료된 후에 커널에서 처리하는 과정(do_exit)이 있다는 것을 새롭게 알게 되었습니다.
+* 시스템 콜을 새로 등록하는 방법이나 doubly linked list를 사용하는 방법에는 꽤 익숙해졌습니다.

@@ -270,7 +270,7 @@ int check_and_acquire_lock(void) {
 
     int num_awoken_processes = 0;
     int acquire = 1;
-    int starvation = 0;
+    int prevent_starvation = 0;
     
     read_lock(&rot_lock);
 
@@ -288,7 +288,7 @@ int check_and_acquire_lock(void) {
 
         if (wait_entry->type == READ) {
             
-            if (starvation == 1)    // at least one writer is starved before, ignore reader
+            if (prevent_starvation == 1)    // at least one writer is blocked before, ignore reader
                 continue;
 
             acquire = 1;
@@ -296,6 +296,7 @@ int check_and_acquire_lock(void) {
             list_for_each_safe(head_lock, next_head_lock, &lock_queue) {
 
                 lock_entry = list_entry(head_lock, struct rd, list);
+
                 if (lock_entry->type == WRITE &&
                         compare_overlap(lock_entry, wait_entry)) {
                     acquire = 0;
@@ -320,14 +321,10 @@ int check_and_acquire_lock(void) {
 
                 if (compare_overlap(lock_entry, wait_entry)) {
 
+                    // once a writer is blocked, readers cannot acquire lock
                     acquire = 0;
-
-                    if (lock_entry->type == READ) {
-                        starvation = 1;
-                        break;
-                    }
-                    // if lock_entry->type == WRITE
-                        // then continue check for starvation
+                    prevent_starvation = 1;
+                    break;
                 }
             }
 

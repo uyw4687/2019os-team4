@@ -18,7 +18,7 @@ project 기본 build 방법으로 하시면 됩니다.
 > 다음은 kernel/rotation.c에 대한 설명입니다.
 
 #### global values
-
+<pre><code>
 int rotation                   // rotation값을 저장하는 변수입니다.
 
 DEFINE_RWLOCK(rot_lock);       // rotation값에 대한 접근을 제한하는 lock입니다.
@@ -31,14 +31,15 @@ struct rd{
  int type;
  struct list_head list;
 }
+</code></pre>
 각 lock을 표현하는 struct입니다.
 pid, range(lower bound, upper bound), type(READ/WRITE)를 저장합니다.
-
+<pre><code>
 LIST_HEAD(lock_queue); //lock_queue doubly linked list의 list_head입니다.
 LIST_HEAD(wait_queue); //lock_queue doubly linked list의 list_head입니다.
 
 DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍니다.
-
+</code></pre>
 #### helper functions
 compare_rd : 두 struct rd를 포인터로 받아 pid, range[0], range[1], type을 비교합니다. return 1(true) or 0(false)
 set_lower_upper : degree와 range를 받아 lower bound, upper bound를 구해 줍니다.

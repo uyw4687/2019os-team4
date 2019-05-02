@@ -6756,3 +6756,26 @@ const u32 sched_prio_to_wmult[40] = {
  /*  10 */  39045157,  49367440,  61356676,  76695844,  95443717,
  /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
 };
+
+long sched_setweight(pid_t pid, int weight){
+    struct task_struct *task;
+    return -1;
+/*
+    if(weight <= 0 || weight > 20) return -1;//weight is out of range
+    
+    if (pid == 0) task = current;
+    else task = find_task_by_vpid(pid);
+    task->weight = weight;//TODO using lock
+    return 1;
+*/
+}
+
+long sched_getweight(pid_t pid){
+    struct task_struct *task;
+    return -1;
+/*
+    if (pid == 0) task = current;
+    else task = find_task_by_vpid(pid);
+    return (long)task->weight;//TODO using lock
+*/
+}

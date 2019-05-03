@@ -6772,12 +6772,19 @@ long sched_setweight(pid_t pid, int weight){
         return -1;//weight is out of range
     }
     
-    write_lock(&lock);
     
+    read_lock(&lock);
     if (pid == 0) task = current;
     else task = find_task_by_vpid(pid);
+    read_unlock(&lock);
+
+    if(task->rt_priority != 7){
+        printk(KERN_ERR"This process isn't scheduled wrr\n");
+        return -1;
+    }
+
+    write_lock(&lock);
     task->wrr.weight = weight;
-    
     write_unlock(&lock);
     
     return 1;
@@ -6795,5 +6802,10 @@ long sched_getweight(pid_t pid){
     
     read_unlock(&lock);
     
+    if(task->rt_priority != 7) {
+        printk(KERN_ERR"This processer isn't scheduled wrr\n");
+        return -1;
+    }
+
     return (long)task->wrr.weight;
 }

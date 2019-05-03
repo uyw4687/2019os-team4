@@ -6757,25 +6757,43 @@ const u32 sched_prio_to_wmult[40] = {
  /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
 };
 
+
+#include <linux/rwlock.h>
+#include <linux/spinlock.h>
+#include <linux/rwlock_types.h>
+
 long sched_setweight(pid_t pid, int weight){
+    
+    DEFINE_RWLOCK(lock);
     struct task_struct *task;
-    return -1;
-/*
-    if(weight <= 0 || weight > 20) return -1;//weight is out of range
+    
+    if(weight <= 0 || weight > 20) {
+        printk(KERN_ERR"weight out of range\n");
+        return -1;//weight is out of range
+    }
+    
+    write_lock(&lock);
     
     if (pid == 0) task = current;
     else task = find_task_by_vpid(pid);
-    task->weight = weight;//TODO using lock
+    task->wrr.weight = weight;
+    
+    write_unlock(&lock);
+    
     return 1;
-*/
 }
 
 long sched_getweight(pid_t pid){
+    
+    DEFINE_RWLOCK(lock);
     struct task_struct *task;
-    return -1;
-/*
+
+    read_lock(&lock);
+    
     if (pid == 0) task = current;
     else task = find_task_by_vpid(pid);
-    return (long)task->weight;//TODO using lock
-*/
+    
+    read_unlock(&lock);
+    
+    return (long)task->wrr.weight;
 }

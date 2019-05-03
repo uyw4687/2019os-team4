@@ -22,5 +22,6 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
 }
 const struct sched_class wrr_sched_class = {
 
+    .next = &fair_sched_class,
     .task_tick = task_tick_wrr,
 }

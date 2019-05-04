@@ -470,6 +470,7 @@ struct sched_rt_entity {
 
 struct sched_wrr_entity {
     int weight;
+    unsigned int time_slice;
 }; //TODO make struct sched_wrr_entity more
 
 struct sched_dl_entity {

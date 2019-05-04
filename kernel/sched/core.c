@@ -5084,6 +5084,7 @@ SYSCALL_DEFINE1(sched_get_priority_min, int, policy)
 	case SCHED_NORMAL:
 	case SCHED_BATCH:
 	case SCHED_IDLE:
+    case SCHED_WRR:
 		ret = 0;
 	}
 	return ret;
@@ -6756,3 +6757,62 @@ const u32 sched_prio_to_wmult[40] = {
  /*  10 */  39045157,  49367440,  61356676,  76695844,  95443717,
  /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
 };
+
+
+#include <linux/rwlock.h>
+#include <linux/spinlock.h>
+#include <linux/rwlock_types.h>
+
+long sched_setweight(pid_t pid, int weight){
+    
+    struct task_struct *task;
+    
+    if(weight <= 0 || weight > 20)
+    {
+        printk(KERN_ERR "weight out of range\n");
+        return -1;
+    }
+    
+    rcu_read_lock();
+
+    if (pid == 0)
+        task = current;
+    else
+        task = find_task_by_vpid(pid);
+
+    rcu_read_unlock();
+
+    if(task->policy != SCHED_WRR)
+    {
+        printk(KERN_ERR "not a wrr scheduled process\n");
+        return -1;
+    }
+
+    write_lock(&tasklist_lock);
+    task->wrr.weight = weight;
+    write_unlock(&tasklist_lock);
+    
+    return 1;
+}
+
+long sched_getweight(pid_t pid){
+    
+    struct task_struct *task;
+
+    rcu_read_lock();
+    
+    if (pid == 0)
+        task = current;
+    else
+        task = find_task_by_vpid(pid);
+    
+    rcu_read_unlock();
+    
+    if(task->policy != SCHED_WRR)
+    {
+        printk(KERN_ERR "not a wrr scheduled process\n");
+        return -1;
+    }
+
+    return (long)(task->wrr.weight);
+}

@@ -140,10 +140,16 @@ static inline int dl_policy(int policy)
 {
 	return policy == SCHED_DEADLINE;
 }
+
+static inline int wrr_policy(int policy)
+{
+	return policy == SCHED_WRR;
+}
+
 static inline bool valid_policy(int policy)
 {
 	return idle_policy(policy) || fair_policy(policy) ||
-		rt_policy(policy) || dl_policy(policy);
+		rt_policy(policy) || dl_policy(policy) || wrr_policy(policy);
 }
 
 static inline int task_has_rt_policy(struct task_struct *p)
@@ -155,6 +161,12 @@ static inline int task_has_dl_policy(struct task_struct *p)
 {
 	return dl_policy(p->policy);
 }
+
+static inline int task_has_wrr_policy(struct task_struct *p)
+{
+	return wrr_policy(p->policy);
+}
+
 
 /*
  * Tells if entity @a should preempt entity @b.
@@ -269,6 +281,7 @@ extern bool dl_cpu_busy(unsigned int cpu);
 #include <linux/cgroup.h>
 
 struct cfs_rq;
+struct wrr_rq;
 struct rt_rq;
 
 extern struct list_head task_groups;
@@ -496,6 +509,13 @@ struct cfs_rq {
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 };
 
+struct wrr_rq
+{
+    unsigned int nr_running, h_nr_running;
+
+    struct sched_entity *curr, *next, *last, *skip;
+};
+
 static inline int rt_bandwidth_enabled(void)
 {
 	return sysctl_sched_rt_runtime >= 0;
@@ -706,6 +726,7 @@ struct rq {
 	u64 nr_switches;
 
 	struct cfs_rq cfs;
+    struct wrr_rq wrr;
 	struct rt_rq rt;
 	struct dl_rq dl;
 
@@ -1494,6 +1515,7 @@ static inline void set_curr_task(struct rq *rq, struct task_struct *curr)
 extern const struct sched_class stop_sched_class;
 extern const struct sched_class dl_sched_class;
 extern const struct sched_class rt_sched_class;
+extern const struct sched_class wrr_sched_class;
 extern const struct sched_class fair_sched_class;
 extern const struct sched_class idle_sched_class;
 
@@ -1540,6 +1562,7 @@ extern void update_max_interval(void);
 
 extern void init_sched_dl_class(void);
 extern void init_sched_rt_class(void);
+extern void init_sched_wrr_class(void);
 extern void init_sched_fair_class(void);
 
 extern void resched_curr(struct rq *rq);
@@ -1967,9 +1990,11 @@ extern struct sched_entity *__pick_last_entity(struct cfs_rq *cfs_rq);
 extern bool sched_debug_enabled;
 
 extern void print_cfs_stats(struct seq_file *m, int cpu);
+extern void print_wrr_stats(struct seq_file *m, int cpu);
 extern void print_rt_stats(struct seq_file *m, int cpu);
 extern void print_dl_stats(struct seq_file *m, int cpu);
 extern void print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq);
+extern void print_wrr_rq(struct seq_file *m, int cpu, struct wrr_rq *wrr_rq);
 extern void print_rt_rq(struct seq_file *m, int cpu, struct rt_rq *rt_rq);
 extern void print_dl_rq(struct seq_file *m, int cpu, struct dl_rq *dl_rq);
 #ifdef CONFIG_NUMA_BALANCING
@@ -1982,6 +2007,7 @@ print_numa_stats(struct seq_file *m, int node, unsigned long tsf,
 #endif /* CONFIG_SCHED_DEBUG */
 
 extern void init_cfs_rq(struct cfs_rq *cfs_rq);
+extern void init_wrr_rq(struct wrr_rq *wrr_rq);
 extern void init_rt_rq(struct rt_rq *rt_rq);
 extern void init_dl_rq(struct dl_rq *dl_rq);
 

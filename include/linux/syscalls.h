@@ -940,5 +940,7 @@ asmlinkage long sys_pkey_alloc(unsigned long flags, unsigned long init_val);
 asmlinkage long sys_pkey_free(int pkey);
 asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
 			  unsigned mask, struct statx __user *buffer);
+asmlinkage long sched_setweight(pid_t pid, int weight);
+asmlinkage long sched_getweight(pid_t pid);
 
 #endif

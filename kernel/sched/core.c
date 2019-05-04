@@ -5084,6 +5084,7 @@ SYSCALL_DEFINE1(sched_get_priority_min, int, policy)
 	case SCHED_NORMAL:
 	case SCHED_BATCH:
 	case SCHED_IDLE:
+    case SCHED_WRR:
 		ret = 0;
 	}
 	return ret;
@@ -6764,48 +6765,54 @@ const u32 sched_prio_to_wmult[40] = {
 
 long sched_setweight(pid_t pid, int weight){
     
-    DEFINE_RWLOCK(lock);
     struct task_struct *task;
     
-    if(weight <= 0 || weight > 20) {
-        printk(KERN_ERR"weight out of range\n");
-        return -1;//weight is out of range
+    if(weight <= 0 || weight > 20)
+    {
+        printk(KERN_ERR "weight out of range\n");
+        return -1;
     }
     
-    
-    read_lock(&lock);
-    if (pid == 0) task = current;
-    else task = find_task_by_vpid(pid);
-    read_unlock(&lock);
+    rcu_read_lock();
 
-    if(task->rt_priority != 7){
-        printk(KERN_ERR"This process isn't scheduled wrr\n");
+    if (pid == 0)
+        task = current;
+    else
+        task = find_task_by_vpid(pid);
+
+    rcu_read_unlock();
+
+    if(task->policy != SCHED_WRR)
+    {
+        printk(KERN_ERR "not a wrr scheduled process\n");
         return -1;
     }
 
-    write_lock(&lock);
+    write_lock(&tasklist_lock);
     task->wrr.weight = weight;
-    write_unlock(&lock);
+    write_unlock(&tasklist_lock);
     
     return 1;
 }
 
 long sched_getweight(pid_t pid){
     
-    DEFINE_RWLOCK(lock);
     struct task_struct *task;
 
-    read_lock(&lock);
+    rcu_read_lock();
     
-    if (pid == 0) task = current;
-    else task = find_task_by_vpid(pid);
+    if (pid == 0)
+        task = current;
+    else
+        task = find_task_by_vpid(pid);
     
-    read_unlock(&lock);
+    rcu_read_unlock();
     
-    if(task->rt_priority != 7) {
-        printk(KERN_ERR"This processer isn't scheduled wrr\n");
+    if(task->policy != SCHED_WRR)
+    {
+        printk(KERN_ERR "not a wrr scheduled process\n");
         return -1;
     }
 
-    return (long)task->wrr.weight;
+    return (long)(task->wrr.weight);
 }

@@ -509,12 +509,12 @@ struct cfs_rq {
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 };
 
-struct wrr_rq {
+struct wrr_rq
+{
     unsigned int nr_running, h_nr_running;
 
     struct sched_entity *curr, *next, *last, *skip;
-    
-}
+};
 
 static inline int rt_bandwidth_enabled(void)
 {

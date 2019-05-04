@@ -5,12 +5,12 @@
 #include "sched.h"
 
 /*
- * default timeslice is 10 msecs (used only for SCHED_WRR tasks).
+ * default timeslice is 100 msecs (used only for SCHED_WRR tasks).
  * Timeslices get refilled after they expire.
  *
  * (ref)include/linux/sched/rt.h 65
  */
-#define WRR_TIMESLICE (10 * HZ / 1000)
+#define WRR_TIMESLICE (100 * HZ / 1000)
 
 const struct sched_class wrr_sched_class;
 

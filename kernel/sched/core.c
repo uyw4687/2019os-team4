@@ -6758,14 +6758,12 @@ const u32 sched_prio_to_wmult[40] = {
  /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
 };
 
-
-#include <linux/rwlock.h>
-#include <linux/spinlock.h>
-#include <linux/rwlock_types.h>
-
-long sched_setweight(pid_t pid, int weight){
-    
+long sched_setweight(pid_t pid, int weight)
+{
     struct task_struct *task;
+    int uid, euid, taskuid;
+    int policy;
+    int oldweight;
     
     if(weight <= 0 || weight > 20)
     {
@@ -6780,23 +6778,37 @@ long sched_setweight(pid_t pid, int weight){
     else
         task = find_task_by_vpid(pid);
 
+    uid = current->cred->uid.val;
+    euid = current->cred->euid.val;
+    taskuid = task->cred->uid.val;
+    policy = task->policy;
+    oldweight = task->wrr.weight;
+
     rcu_read_unlock();
 
-    if(task->policy != SCHED_WRR)
+    if(policy != SCHED_WRR)
     {
         printk(KERN_ERR "not a wrr scheduled process\n");
         return -1;
     }
 
-    write_lock(&tasklist_lock);
-    task->wrr.weight = weight;
-    write_unlock(&tasklist_lock);
-    
-    return 1;
+    if(oldweight < weight)
+        if(uid && euid)
+            return -EPERM;
+
+    if(!uid || !euid || uid == taskuid || euid == taskuid)
+    {
+        write_lock(&tasklist_lock);
+        task->wrr.weight = weight;
+        write_unlock(&tasklist_lock);
+        return 0;
+    }
+    else
+        return -EPERM;
 }
 
-long sched_getweight(pid_t pid){
-    
+long sched_getweight(pid_t pid)
+{
     struct task_struct *task;
 
     rcu_read_lock();

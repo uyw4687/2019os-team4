@@ -469,6 +469,7 @@ struct sched_rt_entity {
 } __randomize_layout;
 
 struct sched_wrr_entity {
+	struct list_head		run_list;
 	unsigned long			timeout;
 	unsigned int			time_slice;
     int weight;

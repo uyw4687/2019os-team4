@@ -5,8 +5,8 @@
 #include "sched.h"
 
 /*
- * default timeslice is 10 msecs (used only for SCHED_WRR tasks).
- * Timeslices get refilled after they expire.
+ * Timeslice unit is 10 msecs (used only for SCHED_WRR tasks).
+ * (Timeslices get refilled after they expire.)
  *
  * (ref)include/linux/sched/rt.h 65
  */

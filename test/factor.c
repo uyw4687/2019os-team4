@@ -7,7 +7,7 @@
 #define DBGVAL  324
 
 /* Select */
-#define SELECT  1 // 0 for PRIME32, 1 for PRIME64
+#define SELECT  0 // 0 for PRIME32, 1 for PRIME64
 #define PRIME32 2147483647
 #define PRIME64 2305843009213693951
 

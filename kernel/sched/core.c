@@ -3989,7 +3989,9 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
-	else
+	else if (attr->sched_policy == SCHED_WRR)
+        p->sched_class = &wrr_sched_class;
+    else
 		p->sched_class = &fair_sched_class;
 }
 
@@ -6782,6 +6784,12 @@ long sched_setweight(pid_t pid, int weight)
     else
         task = find_task_by_vpid(pid);
 
+    if(!task)
+    {
+        rcu_read_unlock();
+        return -EINVAL;
+    }
+
     uid = current->cred->uid.val;
     euid = current->cred->euid.val;
     taskuid = task->cred->uid.val;
@@ -6821,6 +6829,12 @@ long sched_getweight(pid_t pid)
         task = current;
     else
         task = find_task_by_vpid(pid);
+
+    if(!task)
+    {
+        rcu_read_unlock();
+        return -EINVAL;
+    }
     
     rcu_read_unlock();
     

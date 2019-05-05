@@ -80,7 +80,7 @@ int main()
     ret = syscall(SCHED_GETWEIGHT, 0);
     if(ret < 0)
     {
-        perror("sched_setweight failed\n");
+        perror("sched_getweight failed\n");
         return -1;
     }
 

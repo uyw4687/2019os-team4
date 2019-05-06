@@ -14,6 +14,8 @@
 #define SCHED_SETWEIGHT     398
 #define SCHED_GETWEIGHT     399
 
+#define SCHED_WRR 7
+
 void factor(long num)
 {
     long long divisor;
@@ -58,11 +60,11 @@ int main()
     
     struct sched_param param;
 
-    param.sched_priority = sched_get_priority_min(SCHED_RR);
+    param.sched_priority = sched_get_priority_min(SCHED_WRR);
 
     printf("sched_priority : %d\n", param.sched_priority);
 
-    ret = sched_setscheduler(0, SCHED_RR, &param);
+    ret = sched_setscheduler(0, SCHED_WRR, &param);
     if(ret < 0)
     {
         perror("sched_setscheduler failed");
@@ -82,14 +84,14 @@ int main()
         return -1;
     }
 
-    factor(num);
-
     ret = syscall(SCHED_GETWEIGHT, 0);
     if(ret < 0)
     {
         perror("sched_getweight failed\n");
         return -1;
     }
+ 
+    factor(num);
 
     return 0;
 }

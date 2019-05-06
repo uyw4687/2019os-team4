@@ -8,11 +8,11 @@
 
 #define SCHED_WRR 7
 
-#define DEBUG1 0 // 1 : WRR, 0 : RR
+#define DEBUG1 1 // 1 : WRR, 0 : RR
 #define DEBUG2 1
-#define DEBUG3 0 // setscheduler
-#define DEBUG4 0 // fork
-#define DEBUG5 0 // setaffinity with argument & infinite loop
+#define DEBUG3 1 // setscheduler
+#define DEBUG4 1 // fork
+#define DEBUG5 1 // setaffinity with argument & infinite loop
 
 int main(
 #if DEBUG5

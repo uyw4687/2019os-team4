@@ -12,3 +12,4 @@ mkdir mntdir
 sudo mount rootfs.img ./mntdir/
 sudo -s
 sudo umount ~/tizen-image/mntdir
+./qemu.sh

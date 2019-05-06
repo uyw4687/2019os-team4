@@ -2388,7 +2388,9 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 		p->sched_reset_on_fork = 0;
 	}
 
-	if (dl_prio(p->prio)) {
+    if (p->policy == SCHED_WRR)
+        p->sched_class = &wrr_sched_class;
+    else if (dl_prio(p->prio)) {
 		put_cpu();
 		return -EAGAIN;
 	} else if (rt_prio(p->prio)) {
@@ -3985,12 +3987,12 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 	if (keep_boost)
 		p->prio = rt_effective_prio(p, p->prio);
 
-	if (dl_prio(p->prio))
+	if (attr->sched_policy == SCHED_WRR)
+        p->sched_class = &wrr_sched_class;
+    else if (dl_prio(p->prio))
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
-	else if (attr->sched_policy == SCHED_WRR)
-        p->sched_class = &wrr_sched_class;
     else
 		p->sched_class = &fair_sched_class;
 }

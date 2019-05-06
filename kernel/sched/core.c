@@ -2389,7 +2389,9 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 		p->sched_reset_on_fork = 0;
 	}
 
-	if (dl_prio(p->prio)) {
+    if (p->policy == SCHED_WRR)
+        p->sched_class = &wrr_sched_class;
+    else if (dl_prio(p->prio)) {
 		put_cpu();
 		return -EAGAIN;
 	} else if (rt_prio(p->prio)) {
@@ -3986,11 +3988,13 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 	if (keep_boost)
 		p->prio = rt_effective_prio(p, p->prio);
 
-	if (dl_prio(p->prio))
+	if (attr->sched_policy == SCHED_WRR)
+        p->sched_class = &wrr_sched_class;
+    else if (dl_prio(p->prio))
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
-	else
+    else
 		p->sched_class = &fair_sched_class;
 }
 
@@ -5869,6 +5873,7 @@ void __init sched_init(void)
 		rq->calc_load_active = 0;
 		rq->calc_load_update = jiffies + LOAD_FREQ;
 		init_cfs_rq(&rq->cfs);
+        init_wrr_rq(&rq->wrr);
 		init_rt_rq(&rq->rt);
 		init_dl_rq(&rq->dl);
 #ifdef CONFIG_FAIR_GROUP_SCHED
@@ -6783,6 +6788,12 @@ long sched_setweight(pid_t pid, int weight)
     else
         task = find_task_by_vpid(pid);
 
+    if(!task)
+    {
+        rcu_read_unlock();
+        return -EINVAL;
+    }
+
     uid = current->cred->uid.val;
     euid = current->cred->euid.val;
     taskuid = task->cred->uid.val;
@@ -6822,6 +6833,12 @@ long sched_getweight(pid_t pid)
         task = current;
     else
         task = find_task_by_vpid(pid);
+
+    if(!task)
+    {
+        rcu_read_unlock();
+        return -EINVAL;
+    }
     
     rcu_read_unlock();
     

@@ -8,7 +8,7 @@
 
 #define SCHED_WRR 7
 
-#define DEBUG1 1 // 1 : WRR, 0 : RR
+#define DEBUG1 0 // 1 : WRR, 0 : RR
 #define DEBUG2 1
 #define DEBUG3 0 // setscheduler
 #define DEBUG4 0 // fork

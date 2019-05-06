@@ -69,7 +69,7 @@ static inline int on_wrr_rq(struct sched_wrr_entity *wrr_se)
 static void requeue_wrr_entity(struct wrr_rq *wrr_rq, struct sched_wrr_entity *wrr_se, int head)
 {
     if(on_wrr_rq(wrr_se)) {
-        struct list_head *queue = wrr_rq->queue;
+        struct list_head *queue = &wrr_rq->queue;
 
         if(head)
             list_move(&wrr_se->run_list, queue);

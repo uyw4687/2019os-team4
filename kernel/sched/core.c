@@ -2206,6 +2206,7 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	INIT_LIST_HEAD(&p->wrr.run_list);
 	p->wrr.timeout		= 0;
 	p->wrr.time_slice	= 10*sched_wrr_timeslice;
+    p->wrr.on_rq        = 0;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	INIT_HLIST_HEAD(&p->preempt_notifiers);

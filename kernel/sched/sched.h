@@ -509,14 +509,6 @@ struct cfs_rq {
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 };
 
-struct wrr_rq
-{
-    unsigned int nr_running, h_nr_running;
-    struct list_head queue;
-    
-    struct sched_entity *curr, *next, *last, *skip;
-};
-
 static inline int rt_bandwidth_enabled(void)
 {
 	return sysctl_sched_rt_runtime >= 0;
@@ -560,6 +552,20 @@ struct rt_rq {
 	struct rq *rq;
 	struct task_group *tg;
 #endif
+};
+
+/* Weighted Round Robin classes' related fields in a runqueue */
+struct wrr_rq
+{
+    unsigned int nr_running, h_nr_running;
+    struct list_head queue;
+    
+    struct sched_entity *curr, *next, *last, *skip;
+
+	u64 wrr_time;
+	u64 wrr_runtime;
+	/* Nests inside the rq lock: */
+	raw_spinlock_t wrr_runtime_lock;
 };
 
 /* Deadline class' related fields in a runqueue */

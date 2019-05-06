@@ -35,8 +35,6 @@ int main(
     printf("max priority = %d, min priority = %d, my priority = %d\n", sched_get_priority_max(scheduler), sched_get_priority_min(scheduler), param.sched_priority);
 #endif
 
-    printf("start policy = %d\n", sched_getscheduler(0));
-
 #if DEBUG3
     if(sched_setscheduler(0, scheduler, &param) != 0)
     {

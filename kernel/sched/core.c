@@ -5063,6 +5063,7 @@ SYSCALL_DEFINE1(sched_get_priority_max, int, policy)
 		ret = MAX_USER_RT_PRIO-1;
 		break;
 	case SCHED_DEADLINE:
+    case SCHED_WRR:
 	case SCHED_NORMAL:
 	case SCHED_BATCH:
 	case SCHED_IDLE:
@@ -5760,6 +5761,7 @@ void __init sched_init_smp(void)
 
 	init_sched_rt_class();
 	init_sched_dl_class();
+    init_sched_wrr_class();
 
 	sched_smp_initialized = true;
 }
@@ -5876,6 +5878,7 @@ void __init sched_init(void)
         init_wrr_rq(&rq->wrr);
 		init_rt_rq(&rq->rt);
 		init_dl_rq(&rq->dl);
+        init_wrr_rq(&rq->wrr);
 #ifdef CONFIG_FAIR_GROUP_SCHED
 		root_task_group.shares = ROOT_TASK_GROUP_LOAD;
 		INIT_LIST_HEAD(&rq->leaf_cfs_rq_list);

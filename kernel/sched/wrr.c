@@ -34,7 +34,7 @@ static inline bool task_is_wrr(struct task_struct *tsk)
 
 void init_wrr_rq(struct wrr_rq *wrr_rq)
 {
-    INIT_LIST_HEAD(wrr_rq->queue);
+    INIT_LIST_HEAD(&wrr_rq->queue);
 }
 
 static inline struct task_struct *wrr_task_of(struct sched_wrr_entity *wrr_se)

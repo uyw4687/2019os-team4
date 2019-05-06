@@ -472,6 +472,7 @@ struct sched_wrr_entity {
 	struct list_head		run_list;
 	unsigned long			timeout;
 	unsigned int			time_slice;
+	unsigned short			on_rq;
     int weight;
 }; //TODO make struct sched_wrr_entity more
 

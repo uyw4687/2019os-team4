@@ -11,14 +11,13 @@
 #define PRIME32 2147483647
 #define PRIME64 2305843009213693951
 
-#define SCHED_WRR           7
 #define SCHED_SETWEIGHT     398
 #define SCHED_GETWEIGHT     399
 
 void factor(long num)
 {
-    long divisor;
-    long dividend = num;
+    long long divisor;
+    long long dividend = num;
 
     if(DEBUG)
         dividend = DBGVAL;
@@ -27,13 +26,13 @@ void factor(long num)
     if(dividend<2)
         return;
 
-    printf("%ld = ", dividend);
+    printf("%lld = ", dividend);
 
     for(divisor=2;divisor<=dividend;divisor++)
     {
         while(dividend%divisor==0)
         {
-            printf("%ld ", divisor);
+            printf("%lld ", divisor);
 
             dividend /= divisor;
 
@@ -49,7 +48,7 @@ void factor(long num)
 int main()
 {
     long i;
-    long num;
+    long long num;
     int ret;
     
     if(!SELECT)
@@ -59,14 +58,22 @@ int main()
     
     struct sched_param param;
 
-    param.sched_priority = sched_get_priority_min(SCHED_WRR);
+    param.sched_priority = sched_get_priority_min(SCHED_RR);
 
-    ret = sched_setscheduler(0, SCHED_WRR, &param);
+    printf("sched_priority : %d\n", param.sched_priority);
+
+    ret = sched_setscheduler(0, SCHED_RR, &param);
     if(ret < 0)
     {
         perror("sched_setscheduler failed");
         return -1;
     }
+    printf("policy : %d\n", sched_getscheduler(0));
+
+    if(fork())
+        printf("end policy(child) = %d\n", sched_getscheduler(0));
+    else
+        printf("end policy(parent) = %d\n", sched_getscheduler(0));
 
     ret = syscall(SCHED_SETWEIGHT, 0, 5);
     if(ret < 0)

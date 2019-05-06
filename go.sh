@@ -8,3 +8,7 @@ cp tizen-unified_20181024.1_iot-headless-2parts-armv7l-rpi3.tar.gz ../tizen-imag
 cd ../tizen-image/
 tar -xvzf tizen.tar.gz
 rm tizen.tar.gz
+mkdir mntdir
+sudo mount rootfs.img ./mntdir/
+sudo -s
+sudo umount ~/tizen-image/mntdir

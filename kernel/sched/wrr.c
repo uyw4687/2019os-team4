@@ -201,8 +201,6 @@ void __init init_sched_wrr_class(void)
 }
 #endif /* CONFIG_SMP */
 
-
-
 static unsigned int get_rr_interval_wrr(struct rq *rq, struct task_struct *task)
 {
 	if (task->policy == SCHED_WRR)
@@ -294,13 +292,22 @@ static void switched_to_wrr(struct rq *rq, struct task_struct *p)
     // TODO fair.c 9232L / rt.c 2209L
 }
 
+/*
+ * Preempt the current task with a newly woken task if needed:
+ */
+static void check_preempt_curr_wrr(struct rq *rq, struct task_struct *p, int flags)
+{
+
+}
+
 const struct sched_class wrr_sched_class = {
     .next = &fair_sched_class,
     .enqueue_task = enqueue_task_wrr,
     .dequeue_task = dequeue_task_wrr,
     .yield_task = yield_task_wrr,
     //.yield_to_task = yield_to_task_wrr,
-    //.check_preempt = check_preempt_...,
+    .check_preempt_curr = check_preempt_curr_wrr,
+
     .pick_next_task = pick_next_task_wrr,
     .put_prev_task = put_prev_task_wrr,
 
@@ -319,7 +326,7 @@ const struct sched_class wrr_sched_class = {
     .task_tick = task_tick_wrr,
     .task_fork = task_fork_wrr,
     .get_rr_interval = get_rr_interval_wrr,
-    .switched_from = switched_from_wrr,
     .switched_to = switched_to_wrr,
+    .switched_from = switched_from_wrr,
     .update_curr = update_curr_wrr,
 };

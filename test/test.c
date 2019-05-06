@@ -25,7 +25,7 @@ int main(
     cpu_set_t mask;
     int cpu;
 
-    int scheduler = DEBUG2 ? SCHED_WRR : SCHED_RR;
+    int scheduler = DEBUG1 ? SCHED_WRR : SCHED_RR;
 
 #if DEBUG2
     printf("start policy = %d\n", sched_getscheduler(0));

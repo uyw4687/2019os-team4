@@ -199,7 +199,7 @@ static void __delist_wrr_entity(struct sched_wrr_entity *wrr_se)//, struct rt_pr
 	if (list_empty(array->queue + rt_se_prio(rt_se)))
 		__clear_bit(rt_se_prio(rt_se), array->bitmap);
 */
-	wrr_se->on_list = 0;
+	wrr_se->on_rq = 0;
 }
 
 static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
@@ -241,7 +241,7 @@ static void dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 {
 	struct rq *rq = rq_of_wrr_se(wrr_se);
 
-	dequeue_wrr_stack(rt_se, flags);
+	dequeue_wrr_stack(wrr_se, flags);
     /*
 	for_each_sched_wrr_entity(wrr_se) {
 		struct rt_rq *rt_rq = group_rt_rq(rt_se);

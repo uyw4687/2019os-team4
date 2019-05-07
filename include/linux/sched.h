@@ -474,6 +474,7 @@ struct sched_wrr_entity {
 	unsigned int			time_slice;
     int                     weight;
     unsigned short          on_rq;
+	struct sched_wrr_entity		*back;
 }; //TODO make struct sched_wrr_entity more
 
 struct sched_dl_entity {

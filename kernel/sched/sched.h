@@ -557,7 +557,7 @@ struct rt_rq {
 /* Weighted Round Robin classes' related fields in a runqueue */
 struct wrr_rq
 {
-	struct load_weight load;
+	//struct load_weight load;
     unsigned int wrr_nr_running;//, h_nr_running;
     struct list_head queue;
     

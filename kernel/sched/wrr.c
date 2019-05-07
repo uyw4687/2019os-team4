@@ -38,7 +38,7 @@ static inline bool task_is_wrr(struct task_struct *tsk)
  * Change wrr_se->run_list location unless SAVE && !MOVE
  *
  * assumes ENQUEUE/DEQUEUE flags match
- */
+ *//*
 static inline bool move_entity(unsigned int flags)
 {
 	if ((flags & (DEQUEUE_SAVE | DEQUEUE_MOVE)) == DEQUEUE_SAVE)
@@ -60,15 +60,15 @@ void inc_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 	//inc_rt_migration(rt_se, rt_rq);
 	//inc_rt_group(rt_se, rt_rq);
 }
-
+*/
 void init_wrr_rq(struct wrr_rq *wrr_rq)
 {
-#ifdef CONFIG_SMP
-    wrr_rq->load.weight = 0;
-#endif
+//#ifdef CONFIG_SMP
+//    wrr_rq->load.weight = 0;
+//#endif
     INIT_LIST_HEAD(&wrr_rq->queue);
-    wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
-	raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
+  //  wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
+    //raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
 }
 
 static inline struct task_struct *wrr_task_of(struct sched_wrr_entity *wrr_se)
@@ -127,14 +127,14 @@ static inline u64 sched_wrr_runtime(struct wrr_rq *wrr_rq)
 {
 	return wrr_rq->wrr_runtime;
 }
-
+/*
 static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
 	struct wrr_rq *wrr_rq = wrr_rq_of_se(wrr_se);
 	//struct rt_prio_array *array = &rt_rq->active;
 	//struct rt_rq *group_rq = group_rt_rq(rt_se);
 	struct list_head *queue = &wrr_rq->queue; //array->queue + rt_se_prio(rt_se);
-
+*/
 	/*
 	 * Don't enqueue the group if its throttled, or when empty.
 	 * The latter is a consequence of the former when a child group
@@ -148,7 +148,7 @@ static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 		return;
 	}
 	 */
-
+/*
 	if (move_entity(flags)) {
 		//WARN_ON_ONCE(rt_se->on_list);
 		if (flags & ENQUEUE_HEAD)
@@ -163,9 +163,10 @@ static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 
 	inc_wrr_tasks(wrr_se, wrr_rq);
 }
-
+*/
 static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
+/*
     // TODO fair.c 4879L / rt.c 1321L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
@@ -177,8 +178,9 @@ static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 
 	//if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
 	//	enqueue_pushable_task(rq, p);
+*/
 }
-
+/*
 static inline
 void dec_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 {
@@ -191,17 +193,17 @@ void dec_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 	//dec_rt_migration(rt_se, rt_rq);
 	//dec_rt_group(rt_se, rt_rq);
 }
-
+*//*
 static void __delist_wrr_entity(struct sched_wrr_entity *wrr_se)//, struct rt_prio_array *array)
 {
 	list_del_init(&wrr_se->run_list);
-/*
+*//*
 	if (list_empty(array->queue + rt_se_prio(rt_se)))
 		__clear_bit(rt_se_prio(rt_se), array->bitmap);
-*/
+*//*
 	wrr_se->on_rq = 0;
-}
-
+}*/
+/*
 static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
 	struct wrr_rq *wrr_rq = wrr_rq_of_se(wrr_se);
@@ -215,11 +217,11 @@ static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int f
 
 	dec_wrr_tasks(wrr_se, wrr_rq);
 }
-
+*/
 /*
  * Because the prio of an upper entry depends on the lower
  * entries, we must remove entries top - down.
- */
+ *//*
 static void dequeue_wrr_stack(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
 	struct sched_wrr_entity *back = NULL;
@@ -239,10 +241,10 @@ static void dequeue_wrr_stack(struct sched_wrr_entity *wrr_se, unsigned int flag
 
 static void dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
-	struct rq *rq = rq_of_wrr_se(wrr_se);
+	//struct rq *rq = rq_of_wrr_se(wrr_se);
 
 	dequeue_wrr_stack(wrr_se, flags);
-    /*
+   */ /*
 	for_each_sched_wrr_entity(wrr_se) {
 		struct rt_rq *rt_rq = group_rt_rq(rt_se);
 
@@ -251,10 +253,11 @@ static void dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 	}
 	enqueue_top_rt_rq(&rq->rt);
     */
-}
+//}
 
 static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
+/*
     // TODO fair.c 4935L / rt.c 1334L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
@@ -262,6 +265,7 @@ static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 	dequeue_wrr_entity(wrr_se, flags);
 
 	//dequeue_pushable_task(rq, p);
+*/
 }
 
 static void yield_task_wrr(struct rq *rq)

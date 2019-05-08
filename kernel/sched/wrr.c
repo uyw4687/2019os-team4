@@ -34,45 +34,6 @@ static inline bool task_is_wrr(struct task_struct *tsk)
 #define for_each_sched_wrr_entity(wrr_se) \
     for(; wrr_se; wrr_se = NULL)
 
-/*
- * Change wrr_se->run_list location unless SAVE && !MOVE
- *
- * assumes ENQUEUE/DEQUEUE flags match
- */
-static inline bool move_entity(unsigned int flags){
-	if ((flags & (DEQUEUE_SAVE | DEQUEUE_MOVE)) == DEQUEUE_SAVE)
-		return false;
-
-	return true;
-}
-
-static inline
-void inc_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
-{
-    pr_err("inc_wrr_tasks");
-	//int prio = rt_se_prio(rt_se);
-
-	//WARN_ON(!rt_prio(prio));
-	wrr_rq->wrr_nr_running += 1; // wrr_se_nr_running(wrr_se);
-	//wrr_rq->rr_nr_running += rt_se_rr_nr_running(rt_se);
-
-	//inc_rt_prio(rt_rq, prio);
-	//inc_rt_migration(rt_se, rt_rq);
-	//inc_rt_group(rt_se, rt_rq);
-    pr_err("%d", wrr_rq->wrr_nr_running);
-}
-
-void init_wrr_rq(struct wrr_rq *wrr_rq)
-{
-    pr_err("init_wrr_rq");
-//#ifdef CONFIG_SMP
-//    wrr_rq->load.weight = 0;
-//#endif
-    INIT_LIST_HEAD(&wrr_rq->queue);
-    wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
-    raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
-}
-
 static inline struct task_struct *wrr_task_of(struct sched_wrr_entity *wrr_se)
 {
     return container_of(wrr_se, struct task_struct, wrr);
@@ -102,6 +63,57 @@ static inline int on_wrr_rq(struct sched_wrr_entity *wrr_se)
     return wrr_se->on_rq;
 }
 
+void init_wrr_rq(struct wrr_rq *wrr_rq)
+{
+    pr_err("init_wrr_rq");
+#ifdef CONFIG_SMP
+    pr_err("CONFIG_SMP");
+//    wrr_rq->load.weight = 0;
+#endif
+    INIT_LIST_HEAD(&wrr_rq->queue);
+    wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
+    raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
+    pr_err("wrr_rq->curr %p", wrr_rq->curr);
+#ifdef CONFIG_NUMA_BALANCING
+    pr_err("CONFIG_NUMA_BALANCING");
+#endif
+#ifdef CONFIG_RT_GROUP_SCHED
+    pr_err("CONFIG_RT_GROUP_SCHED");
+#endif
+#ifdef CONFIG_SCHED_DEBUG
+    pr_err("CONFIG_SCHED_DEBUG");
+#endif
+}
+
+/*
+ * Change wrr_se->run_list location unless SAVE && !MOVE
+ *
+ * assumes ENQUEUE/DEQUEUE flags match
+ */
+static inline bool move_entity(unsigned int flags)
+{
+	if ((flags & (DEQUEUE_SAVE | DEQUEUE_MOVE)) == DEQUEUE_SAVE)
+		return false;
+
+	return true;
+}
+
+static inline
+void inc_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
+{
+    pr_err("inc_wrr_tasks");
+	//int prio = rt_se_prio(rt_se);
+
+	//WARN_ON(!rt_prio(prio));
+	wrr_rq->wrr_nr_running += 1; // wrr_se_nr_running(wrr_se);
+	//wrr_rq->rr_nr_running += rt_se_rr_nr_running(rt_se);
+
+	//inc_rt_prio(rt_rq, prio);
+	//inc_rt_migration(rt_se, rt_rq);
+	//inc_rt_group(rt_se, rt_rq);
+    pr_err("wrr_nr_running %d", wrr_rq->wrr_nr_running);
+}
+
 static void requeue_wrr_entity(struct wrr_rq *wrr_rq, struct sched_wrr_entity *wrr_se, int head)
 {
     pr_err("requeue_wrr_entity");
@@ -117,9 +129,9 @@ static void requeue_wrr_entity(struct wrr_rq *wrr_rq, struct sched_wrr_entity *w
 
 static void requeue_task_wrr(struct rq *rq, struct task_struct *p, int head)
 {
-    pr_err("requeue_task_wrr");
     struct sched_wrr_entity *wrr_se = &p->wrr;
     struct wrr_rq *wrr_rq;
+    pr_err("requeue_task_wrr");
 
     for_each_sched_wrr_entity(wrr_se) {
         wrr_rq = wrr_rq_of_se(wrr_se);
@@ -134,11 +146,11 @@ static inline u64 sched_wrr_runtime(struct wrr_rq *wrr_rq)
 
 static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
-    pr_err("enqueue_wrr_entity");
 	struct wrr_rq *wrr_rq = wrr_rq_of_se(wrr_se);
 	//struct rt_prio_array *array = &rt_rq->active;
 	//struct rt_rq *group_rq = group_rt_rq(rt_se);
 	struct list_head *queue = &wrr_rq->queue; //array->queue + rt_se_prio(rt_se);
+    pr_err("enqueue_wrr_entity");
 
 	/*
 	 * Don't enqueue the group if its throttled, or when empty.
@@ -171,15 +183,16 @@ static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 
 static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
-    pr_err("enqueue_task_wrr");
     // TODO fair.c 4879L / rt.c 1321L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
+    pr_err("enqueue_task_wrr, p->comm %s, p->pid %d", p->comm, p->pid);
 
 	if (flags & ENQUEUE_WAKEUP)
 		wrr_se->timeout = 0;
 
     for_each_sched_wrr_entity(wrr_se)
 	    enqueue_wrr_entity(wrr_se, flags);
+    
 /*
 	//if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
 	//	enqueue_pushable_task(rq, p);
@@ -211,10 +224,10 @@ static void __delist_wrr_entity(struct sched_wrr_entity *wrr_se)//, struct rt_pr
 
 static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
-    pr_err("__dequeue_wrr_entity");
 	struct wrr_rq *wrr_rq = wrr_rq_of_se(wrr_se);
 	//struct rt_prio_array *array = &rt_rq->active;
 
+    pr_err("__dequeue_wrr_entity");
 	if (move_entity(flags)) {
 	//	WARN_ON_ONCE(!rt_se->on_list);
 //		__delist_wrr_entity(wrr_se);//, array);
@@ -267,13 +280,14 @@ static void dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 
 static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
-    pr_err("dequeue_task_wrr");
     // TODO fair.c 4935L / rt.c 1334L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
+    pr_err("before dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq);
 	update_curr_wrr(rq);
 	dequeue_wrr_entity(wrr_se, flags);
 
+    pr_err("after  dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq);
 	//dequeue_pushable_task(rq, p);
 }
 
@@ -285,13 +299,14 @@ static void yield_task_wrr(struct rq *rq)
 
 static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
 {
-    //pr_err("task_tick_wrr");
     // TODO fair.c 6396L / rt.c 1373L
     struct sched_wrr_entity *wrr_se = &p->wrr;
 
     //TODO make updata_curr_wrr and watchdog
-	update_curr_wrr(rq);
+	//update_curr_wrr(rq);
 
+    if(p->wrr.time_slice % 1000)
+        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d", p->wrr.time_slice, p->wrr.weight);
     if(p->policy != SCHED_WRR)
         return;
 
@@ -344,12 +359,12 @@ static unsigned int get_rr_interval_wrr(struct rq *rq, struct task_struct *task)
  */
 static void update_curr_wrr(struct rq *rq)
 {
-    pr_err("update_curr_wrr");
     // TODO fair.c 6396L / rt.c 1373L
     // TODO fair.c 862L & 827L / rt.c 951L
 	struct task_struct *curr = rq->curr;
 	struct sched_wrr_entity *wrr_se = &curr->wrr;
 	u64 delta_exec;
+    pr_err("update_curr_wrr");
 
 	if (curr->sched_class != &wrr_sched_class)
 		return;
@@ -402,6 +417,7 @@ static DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask);
 
 void __init init_sched_wrr_class(void)
 {
+    pr_err("int_sched_wrr_class");
 	unsigned int i;
 
 	for_each_possible_cpu(i) {
@@ -420,6 +436,7 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
 
 static void put_prev_task_wrr(struct rq *rq, struct task_struct *prev)
 {
+    pr_err("put_prev_task_Wrr");
     // TODO fair.c 6380L / rt.c 1577L
 }
 
@@ -457,8 +474,38 @@ static void set_curr_task_wrr(struct rq *rq)
 }
 
 static void task_fork_wrr(struct task_struct *p)
-{
-    // TODO fair.c 9064L
+{	
+    /*
+    struct wrr_rq *wrr_rq;
+	struct sched_entity *se = &p->se, *curr;
+	struct rq *rq = this_rq();
+	struct rq_flags rf;
+
+	rq_lock(rq, &rf);
+	update_rq_clock(rq);
+
+	cfs_rq = task_cfs_rq(current);
+	curr = cfs_rq->curr;
+	if (curr) {
+		update_curr(cfs_rq);
+		se->vruntime = curr->vruntime;
+	}
+	place_entity(cfs_rq, se, 1);
+
+	if (sysctl_sched_child_runs_first && curr && entity_before(curr, se)) {
+	*/	/*
+		 * Upon rescheduling, sched_class::put_prev_task() will place
+		 * 'current' within the tree based on its new key value.
+		 */
+	/*	swap(curr->vruntime, se->vruntime);
+		resched_curr(rq);
+	}
+
+	se->vruntime -= cfs_rq->min_vruntime;
+	rq_unlock(rq, &rf);
+
+    p->wrr.weight = 10;
+    */// TODO fair.c 9064L
 }
 
 static void switched_from_wrr(struct rq *rq, struct task_struct *p)

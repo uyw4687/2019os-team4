@@ -11,12 +11,15 @@
  * (ref)include/linux/sched/rt.h 65
  */
 #define WRR_TIMESLICE (10 * HZ / 1000)
+#define WRR_LB_TIMESLICE 2 * HZ
 
 int sched_wrr_timeslice = WRR_TIMESLICE;
 
 const struct sched_class wrr_sched_class;
 
 static void update_curr_wrr(struct rq *rq);
+
+static void load_balance_wrr(struct rq *rq);
 
 static inline bool task_is_wrr(struct task_struct *tsk)
 {
@@ -69,6 +72,7 @@ void init_wrr_rq(struct wrr_rq *wrr_rq)
     INIT_LIST_HEAD(&wrr_rq->queue);
     wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
 	raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
+    wrr_rq->next_load_balance = WRR_LB_TIMESLICE;
 }
 
 static inline struct task_struct *wrr_task_of(struct sched_wrr_entity *wrr_se)
@@ -273,7 +277,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
 {
     struct sched_wrr_entity *wrr_se = &p->wrr;
 
-    //TODO make updata_curr_wrr and watchdog
+    //TODO make update_curr_wrr
 	update_curr_wrr(rq);
 
     if(p->policy != SCHED_WRR)
@@ -458,6 +462,92 @@ static void switched_to_wrr(struct rq *rq, struct task_struct *p)
     }
 
     // TODO fair.c 9232L / rt.c 2209L
+}
+
+static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, int *max_weight, int *min_weight)
+{
+    int weight, cpu;
+    int max = 0, min = 0;
+    struct rq *rq;
+    struct sched_wrr_entity *wrr_se;
+
+    rcu_read_lock();
+
+    for_each_online_cpu(cpu) {
+        weight = 0;
+        rq = cpu_rq(cpu);
+        
+        list_for_each_entry(wrr_se, &rq->wrr.queue, run_list) {
+            weight += wrr_se->weight;
+        }
+
+        if(max < weight) {
+            max = weight;
+            max_rq = rq;
+        }
+
+        if(min == 0 || min > weight) {
+            min = weight;
+            min_rq = rq;
+        }
+    }
+
+    rcu_read_unlock();
+
+    *max_weight = max;
+    *min_weight = min;
+}
+
+static void reset_lb_timeslice(void) {
+    int cpu;
+    struct rq *rq;
+
+    for_each_online_cpu(cpu) {
+        rq = cpu_rq(cpu);
+        rq->wrr.next_load_balance = WRR_LB_TIMESLICE;
+    }
+}
+
+static void load_balance_wrr(struct rq *rq)
+{
+    struct rq *busiest;
+    struct rq *freest;
+    struct sched_wrr_entity *wrr_se;
+    struct task_struct *task;
+    int max_weight;
+    int min_weight;
+    int diff;
+
+    if(--rq->wrr.next_load_balance)
+        return;
+    
+
+
+    else {
+        reset_lb_timeslice();
+        raw_spin_unlock(&rq->wrr.lb_lock);
+    }
+
+    find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
+
+    if(max_weight == min_weight)
+        return;
+
+    diff = max_weight - min_weight;
+
+    double_rq_lock(busiest, freest);
+
+    list_for_each_entry(wrr_se, &busiest->wrr.queue, run_list) {
+        if(wrr_se->weight <= diff/2 && !task_on_rq_queued(task)) {
+            task = wrr_task_of(wrr_se);
+            break;
+        }
+    }
+
+    dequeue_task_wrr(busiest, task, 1);
+    enqueue_task_wrr(freest, task, 1);
+
+    double_rq_unlock(busiest, freest);
 }
 
 const struct sched_class wrr_sched_class = {

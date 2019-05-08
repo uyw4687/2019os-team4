@@ -244,7 +244,7 @@ static void dequeue_wrr_stack(struct sched_wrr_entity *wrr_se, unsigned int flag
 		back = wrr_se;
 	}
 
-	//dequeue_top_rt_rq(rt_rq_of_se(back));
+	//dequeue_top_wrr_rq(wrr_rq_of_se(back));
 
 	for (wrr_se = back; wrr_se; wrr_se = wrr_se->back) {
 		if (on_wrr_rq(wrr_se))
@@ -358,7 +358,7 @@ static void update_curr_wrr(struct rq *rq)
 		return;
 
 	/* Kick cpufreq (see the comment in kernel/sched/sched.h). */
-	cpufreq_update_util(rq, SCHED_CPUFREQ_RT);
+	//cpufreq_update_util(rq, SCHED_CPUFREQ_RT);
 
 	schedstat_set(curr->se.statistics.exec_max,
 		      max(curr->se.statistics.exec_max, delta_exec));

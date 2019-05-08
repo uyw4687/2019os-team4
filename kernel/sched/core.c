@@ -3026,8 +3026,6 @@ unsigned long long task_sched_runtime(struct task_struct *p)
  * We call it with interrupts disabled.
  */
 
-DEFINE_RAW_SPINLOCK(wrr_lb_lock);
-
 extern void load_balance_wrr(struct rq *rq);
 
 void scheduler_tick(void)
@@ -3045,14 +3043,10 @@ void scheduler_tick(void)
 	curr->sched_class->task_tick(rq, curr, 0);
 	cpu_load_update_active(rq);
 	calc_global_load_tick(rq);
-
-	rq_unlock(rq, &rf);
-
-    raw_spin_lock(&wrr_lb_lock);
-
+    
     load_balance_wrr(rq);
 
-    raw_spin_unlock(&wrr_lb_lock);
+	rq_unlock(rq, &rf);
 
 	perf_event_task_tick();
 

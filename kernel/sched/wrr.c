@@ -539,6 +539,7 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
     int max = 0, min = 0;
     struct rq *rq;
     struct sched_wrr_entity *wrr_se;
+    struct list_head *list;
 
     rcu_read_lock();
 
@@ -546,7 +547,8 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
         weight = 0;
         rq = cpu_rq(cpu);
         
-        list_for_each_entry(wrr_se, &rq->wrr.queue, run_list) {
+        list_for_each(list, &rq->wrr.queue) {
+            wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
             weight += wrr_se->weight;
         }
 
@@ -610,7 +612,7 @@ void load_balance_wrr(struct rq *rq)
         wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
         task = wrr_task_of(wrr_se);
 
-        if(wrr_se->weight <= diff/2 && !task_on_rq_queued(task))
+        if(wrr_se->weight <= diff/2 && !task_current(freest, task))
             break;
     }
 

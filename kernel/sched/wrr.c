@@ -62,13 +62,14 @@ void inc_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 	//inc_rt_prio(rt_rq, prio);
 	//inc_rt_migration(rt_se, rt_rq);
 	//inc_rt_group(rt_se, rt_rq);
+    pr_err("%d", wrr_rq->wrr_nr_running);
 }
 
 void init_wrr_rq(struct wrr_rq *wrr_rq)
 {
-#ifdef CONFIG_SMP
-    wrr_rq->load.weight = 0;
-#endif
+//#ifdef CONFIG_SMP
+//    wrr_rq->load.weight = 0;
+//#endif
     INIT_LIST_HEAD(&wrr_rq->queue);
     wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
 	raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
@@ -170,6 +171,7 @@ static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 
 static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
+
     // TODO fair.c 4879L / rt.c 1321L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
@@ -178,11 +180,12 @@ static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 
     for_each_sched_wrr_entity(wrr_se)
 	    enqueue_wrr_entity(wrr_se, flags);
-
+/*
 	//if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
 	//	enqueue_pushable_task(rq, p);
+*/
 }
-
+/*
 static inline
 void dec_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 {
@@ -195,17 +198,17 @@ void dec_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 	//dec_rt_migration(rt_se, rt_rq);
 	//dec_rt_group(rt_se, rt_rq);
 }
-
+*//*
 static void __delist_wrr_entity(struct sched_wrr_entity *wrr_se)//, struct rt_prio_array *array)
 {
 	list_del_init(&wrr_se->run_list);
-/*
+*//*
 	if (list_empty(array->queue + rt_se_prio(rt_se)))
 		__clear_bit(rt_se_prio(rt_se), array->bitmap);
-*/
+*//*
 	wrr_se->on_rq = 0;
-}
-
+}*/
+/*
 static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
 	struct wrr_rq *wrr_rq = wrr_rq_of_se(wrr_se);
@@ -219,11 +222,11 @@ static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int f
 
 	dec_wrr_tasks(wrr_se, wrr_rq);
 }
-
+*/
 /*
  * Because the prio of an upper entry depends on the lower
  * entries, we must remove entries top - down.
- */
+ *//*
 static void dequeue_wrr_stack(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
 	struct sched_wrr_entity *back = NULL;
@@ -243,10 +246,10 @@ static void dequeue_wrr_stack(struct sched_wrr_entity *wrr_se, unsigned int flag
 
 static void dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
-	struct rq *rq = rq_of_wrr_se(wrr_se);
+	//struct rq *rq = rq_of_wrr_se(wrr_se);
 
 	dequeue_wrr_stack(wrr_se, flags);
-    /*
+   */ /*
 	for_each_sched_wrr_entity(wrr_se) {
 		struct rt_rq *rt_rq = group_rt_rq(rt_se);
 
@@ -255,7 +258,7 @@ static void dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 	}
 	enqueue_top_rt_rq(&rq->rt);
     */
-}
+//}
 
 static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
@@ -263,9 +266,11 @@ static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
 	update_curr_wrr(rq);
+/*
 	dequeue_wrr_entity(wrr_se, flags);
 
 	//dequeue_pushable_task(rq, p);
+*/
 }
 
 static void yield_task_wrr(struct rq *rq)
@@ -299,6 +304,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
             return;
         }
     }
+    pr_err("task_tick");
 
 
 /*

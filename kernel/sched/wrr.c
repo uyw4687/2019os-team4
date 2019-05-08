@@ -167,6 +167,7 @@ static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 	 */
 
 	if (move_entity(flags)) {
+        pr_err("flags & ENQUEUE_HEAD : %d", flags & ENQUEUE_HEAD);
 		//WARN_ON_ONCE(rt_se->on_list);
 		if (flags & ENQUEUE_HEAD)
 			list_add(&wrr_se->run_list, queue);
@@ -185,7 +186,7 @@ static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
     // TODO fair.c 4879L / rt.c 1321L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
-    pr_err("enqueue_task_wrr, p->comm %s, p->pid %d", p->comm, p->pid);
+    pr_err("enqueue_task_wrr, p->comm %s, p->pid %d, wrr_rq_of_se(wrr_se)->curr : %p, task_cpu(p) %d", p->comm, p->pid, wrr_rq_of_se(wrr_se)->curr, task_cpu(p));
 
 	if (flags & ENQUEUE_WAKEUP)
 		wrr_se->timeout = 0;
@@ -198,7 +199,7 @@ static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 	//	enqueue_pushable_task(rq, p);
 */
 }
-/*
+
 static inline
 void dec_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 {
@@ -210,17 +211,18 @@ void dec_wrr_tasks(struct sched_wrr_entity *wrr_se, struct wrr_rq *wrr_rq)
 	//dec_rt_prio(rt_rq, rt_se_prio(rt_se));
 	//dec_rt_migration(rt_se, rt_rq);
 	//dec_rt_group(rt_se, rt_rq);
+    pr_err("wrr_nr_running %d", wrr_rq->wrr_nr_running);
 }
-*//*
+
 static void __delist_wrr_entity(struct sched_wrr_entity *wrr_se)//, struct rt_prio_array *array)
 {
 	list_del_init(&wrr_se->run_list);
-*//*
-	if (list_empty(array->queue + rt_se_prio(rt_se)))
-		__clear_bit(rt_se_prio(rt_se), array->bitmap);
-*//*
+
+//    if (list_empty(array->queue + rt_se_prio(rt_se)))
+//		__clear_bit(rt_se_prio(rt_se), array->bitmap);
+
 	wrr_se->on_rq = 0;
-}*/
+}
 
 static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
@@ -230,11 +232,11 @@ static void __dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int f
     pr_err("__dequeue_wrr_entity");
 	if (move_entity(flags)) {
 	//	WARN_ON_ONCE(!rt_se->on_list);
-//		__delist_wrr_entity(wrr_se);//, array);
+		__delist_wrr_entity(wrr_se);//, array);
 	}
-	wrr_se->on_rq = 0;
+	//wrr_se->on_rq = 0;
 
-//	dec_wrr_tasks(wrr_se, wrr_rq);
+	dec_wrr_tasks(wrr_se, wrr_rq);
 }
 
 /*
@@ -283,11 +285,11 @@ static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
     // TODO fair.c 4935L / rt.c 1334L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
-    pr_err("before dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq);
+    pr_err("before dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq, task_cpu(p), wrr_rq_of_se(wrr_se)->curr);
 	update_curr_wrr(rq);
 	dequeue_wrr_entity(wrr_se, flags);
 
-    pr_err("after  dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq);
+    pr_err("after dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq, task_cpu(p), wrr_rq_of_se(wrr_se)->curr);
 	//dequeue_pushable_task(rq, p);
 }
 
@@ -303,10 +305,10 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
     struct sched_wrr_entity *wrr_se = &p->wrr;
 
     //TODO make updata_curr_wrr and watchdog
-	//update_curr_wrr(rq);
+	update_curr_wrr(rq);
 
-    if(p->wrr.time_slice % 1000)
-        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d", p->wrr.time_slice, p->wrr.weight);
+    if(!(p->wrr.time_slice % 3))
+        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p", p->wrr.time_slice, p->wrr.weight, task_cpu(p), wrr_rq_of_se(wrr_se)->curr);
     if(p->policy != SCHED_WRR)
         return;
 
@@ -369,6 +371,8 @@ static void update_curr_wrr(struct rq *rq)
 	if (curr->sched_class != &wrr_sched_class)
 		return;
 
+    rq->wrr.curr = curr;
+
 	delta_exec = rq_clock_task(rq) - curr->se.exec_start;
 	if (unlikely((s64)delta_exec <= 0))
 		return;
@@ -417,8 +421,8 @@ static DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask);
 
 void __init init_sched_wrr_class(void)
 {
-    pr_err("int_sched_wrr_class");
 	unsigned int i;
+    pr_err("int_sched_wrr_class");
 
 	for_each_possible_cpu(i) {
 		zalloc_cpumask_var_node(&per_cpu(local_cpu_mask, i),

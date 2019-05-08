@@ -69,6 +69,9 @@ void init_wrr_rq(struct wrr_rq *wrr_rq)
 //#endif
     INIT_LIST_HEAD(&wrr_rq->queue);
     wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
+    wrr_rq->wrr_queued = 0;
+    wrr_rq->wrr_time = 0;
+    wrr_rq->wrr_runtime = 0;
     raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
 }
 
@@ -128,6 +131,15 @@ static inline u64 sched_wrr_runtime(struct wrr_rq *wrr_rq)
 {
 	return wrr_rq->wrr_runtime;
 }
+
+/*
+static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
+{
+    plist_del(&p->pushable_tasks, &rq->wrr.pushable_tasks);
+    plist_node_init(&p->pushable_tasks, p->prio);
+    // ...
+}
+*/
 
 static void enqueue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int flags)
 {
@@ -398,11 +410,62 @@ void __init init_sched_wrr_class(void)
 }
 #endif /* CONFIG_SMP */
 
+static struct sched_wrr_entity *pick_next_wrr_entity(struct rq *rq, struct wrr_rq *wrr_rq)
+{
+    struct sched_wrr_entity *next = NULL;
+    struct list_head *queue;
+    struct wrr_rq *wrr_rq = &rq->wrr;
+ 
+    queue = &wrr_rq->queue;
+    next = list_entry(queue->next, struct sched_wrr_entity, run_list);
+
+    return next;
+}
+
+static struct task_struct *_pick_next_task_wrr(struct rq *rq)
+{
+    struct sched_wrr_entity *wrr_se;
+    struct task_struct *p;
+    struct wrr_rq *wrr_rq = &rq->wrr;
+
+    do {
+        wrr_se = pick_next_wrr_entity(rq, wrr_rq);
+        BUG_ON(!wrr_se);
+        //wrr_rq = group_wrr_rq(wrr_se);
+    } while (wrr_rq);
+
+    p = wrr_task_of(wrr_se);
+    p->se.exec_start = rq_clock_task(rq);
+
+    return p;
+}
+
 static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 {
     // TODO fair.c 6252L / rt.c 1530L & 1511L
-    
-    return NULL;
+
+    struct task_struct *p;
+    struct wrr_rq *wrr_rq = &rq->wrr;
+
+    /* 
+     * We may dequeue prev's wrr_rq in put_prev_task().
+     * So, we update time before wrr_nr_running check.
+     */
+    if (prev->sched_class == &wrr_sched_class)
+        update_curr_wrr(rq);
+
+    if (!wrr_rq->wrr_queued)
+        return NULL;
+
+    put_prev_task(rq, prev);
+
+    p = _pick_next_task_wrr(rq);
+
+    //dequeue_pushable_task(rq, p);
+
+    //queue_push_tasks(rq);
+
+    return p;
 }
 
 static void put_prev_task_wrr(struct rq *rq, struct task_struct *prev)

@@ -562,9 +562,15 @@ struct wrr_rq
     struct list_head queue;
     
     struct sched_entity *curr, *next, *last, *skip;
+    int wrr_queued;
 
 	u64 wrr_time;
 	u64 wrr_runtime;
+    /*
+#ifdef CONFIG_SMP
+    struct plist_head pushable_tasks;
+#endif
+    */
 
 	/* Nests inside the rq lock: */
 	raw_spinlock_t wrr_runtime_lock;

@@ -561,7 +561,7 @@ struct wrr_rq
     unsigned int wrr_nr_running;//, h_nr_running;
     struct list_head queue;
     
-    struct sched_entity *curr, *next, *last, *skip;
+    struct task_struct *curr, *next, *last, *skip;
     int wrr_queued;
 
 	u64 wrr_time;

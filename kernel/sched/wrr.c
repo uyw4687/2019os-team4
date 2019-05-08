@@ -258,11 +258,11 @@ static void dequeue_wrr_entity(struct sched_wrr_entity *wrr_se, unsigned int fla
 
 static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
-/*
     // TODO fair.c 4935L / rt.c 1334L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
 	update_curr_wrr(rq);
+/*
 	dequeue_wrr_entity(wrr_se, flags);
 
 	//dequeue_pushable_task(rq, p);
@@ -300,6 +300,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
             return;
         }
     }
+    pr_err("task_tick");
 
 
 /*

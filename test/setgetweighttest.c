@@ -62,7 +62,8 @@ int main(
         return -1;
     }
     while(1)
-        ;
+        if(!(i%50))
+            printf("running\n");
 #endif
     return 0;
 }

@@ -81,7 +81,10 @@ void init_wrr_rq(struct wrr_rq *wrr_rq)
     pr_err("CONFIG_RT_GROUP_SCHED");
 #endif
 #ifdef CONFIG_SCHED_DEBUG
-    rr_err("CONFIG_SCHED_DEBUG");
+    pr_err("CONFIG_SCHED_DEBUG");
+#endif
+#ifdef CONFIG_HOTPLUG_CPU
+    pr_err("CONFIG_HOTPLUG_CPU");
 #endif
 }
 
@@ -308,7 +311,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
 	update_curr_wrr(rq);
 
     if(!(p->wrr.time_slice % 3))
-        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p, task_cpu(p) %d", p->wrr.time_slice, p->wrr.weight, task_cpu(p), wrr_rq_of_se(wrr_se)->curri, task_cpu(p));
+        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p, task_cpu(p) %d", p->wrr.time_slice, p->wrr.weight, task_cpu(p), wrr_rq_of_se(wrr_se)->curr, task_cpu(p));
     if(p->policy != SCHED_WRR)
         return;
 

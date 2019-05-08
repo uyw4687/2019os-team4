@@ -366,7 +366,7 @@ static void update_curr_wrr(struct rq *rq)
 	struct task_struct *curr = rq->curr;
 	struct sched_wrr_entity *wrr_se = &curr->wrr;
 	u64 delta_exec;
-    pr_err("update_curr_wrr");
+    //pr_err("update_curr_wrr");
 
 	if (curr->sched_class != &wrr_sched_class)
 		return;

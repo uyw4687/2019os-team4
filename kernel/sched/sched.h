@@ -562,7 +562,6 @@ struct wrr_rq
     struct list_head queue;
     
     struct sched_entity *curr, *next, *last, *skip;
-    
     unsigned int next_load_balance; //using wrr load_balancing
 
 	u64 wrr_time;

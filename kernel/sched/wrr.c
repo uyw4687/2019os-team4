@@ -19,8 +19,6 @@ const struct sched_class wrr_sched_class;
 
 static void update_curr_wrr(struct rq *rq);
 
-static void load_balance_wrr(struct rq *rq);
-
 static inline bool task_is_wrr(struct task_struct *tsk)
 {
     int policy = tsk->policy;
@@ -77,6 +75,7 @@ void init_wrr_rq(struct wrr_rq *wrr_rq)
     wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
     raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
     pr_err("wrr_rq->curr %p", wrr_rq->curr);
+    wrr_rq->next_load_balance = WRR_LB_TIMESLICE;
 #ifdef CONFIG_NUMA_BALANCING
     pr_err("CONFIG_NUMA_BALANCING");
 #endif
@@ -84,7 +83,7 @@ void init_wrr_rq(struct wrr_rq *wrr_rq)
     pr_err("CONFIG_RT_GROUP_SCHED");
 #endif
 #ifdef CONFIG_SCHED_DEBUG
-    rr_err("CONFIG_SCHED_DEBUG");
+    pr_err("CONFIG_SCHED_DEBUG");
 #endif
 }
 
@@ -311,7 +310,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
 	update_curr_wrr(rq);
 
     if(!(p->wrr.time_slice % 3))
-        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p, task_cpu(p) %d", p->wrr.time_slice, p->wrr.weight, task_cpu(p), wrr_rq_of_se(wrr_se)->curri, task_cpu(p));
+        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p, task_cpu(p) %d", p->wrr.time_slice, p->wrr.weight, task_cpu(p), wrr_rq_of_se(wrr_se)->curr, task_cpu(p));
     if(p->policy != SCHED_WRR)
         return;
 
@@ -374,7 +373,7 @@ static void update_curr_wrr(struct rq *rq)
 	if (curr->sched_class != &wrr_sched_class)
 		return;
 
-    rq->wrr.curr = curr;
+    rq->wrr.curr_task = curr;
 
 	delta_exec = rq_clock_task(rq) - curr->se.exec_start;
 	if (unlikely((s64)delta_exec <= 0))
@@ -578,25 +577,24 @@ static void reset_lb_timeslice(void) {
     }
 }
 
-static void load_balance_wrr(struct rq *rq)
+extern struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf, struct task_struct *p, int dest_cpu);
+
+void load_balance_wrr(struct rq *rq)
 {
     struct rq *busiest;
     struct rq *freest;
     struct sched_wrr_entity *wrr_se;
+    struct list_head *list;
     struct task_struct *task;
+    struct rq_flags rf;
     int max_weight;
     int min_weight;
     int diff;
 
     if(--rq->wrr.next_load_balance)
         return;
-    
 
-
-    else {
-        reset_lb_timeslice();
-        raw_spin_unlock(&rq->wrr.lb_lock);
-    }
+    reset_lb_timeslice();
 
     find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
 
@@ -607,17 +605,19 @@ static void load_balance_wrr(struct rq *rq)
 
     double_rq_lock(busiest, freest);
 
-    list_for_each_entry(wrr_se, &busiest->wrr.queue, run_list) {
-        if(wrr_se->weight <= diff/2 && !task_on_rq_queued(task)) {
-            task = wrr_task_of(wrr_se);
+    list_for_each(list, &freest->wrr.queue) {
+        
+        wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
+        task = wrr_task_of(wrr_se);
+
+        if(wrr_se->weight <= diff/2 && !task_on_rq_queued(task))
             break;
-        }
     }
 
-    dequeue_task_wrr(busiest, task, 1);
-    enqueue_task_wrr(freest, task, 1);
+    __migrate_task(freest, &rf, task, busiest->cpu);
 
     double_rq_unlock(busiest, freest);
+    pr_err("load_balance_complite. task %d, busiest cpu %d, freest cpu %d, weight %d", task->pid, busiest->cpu, freest->cpu, task->wrr.weight);
 }
 
 const struct sched_class wrr_sched_class = {

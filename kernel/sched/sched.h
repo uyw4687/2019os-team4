@@ -564,6 +564,8 @@ struct wrr_rq
     struct sched_entity *curr, *next, *last, *skip;
     unsigned int next_load_balance; //using wrr load_balancing
 
+    struct task_struct *curr_task;
+
 	u64 wrr_time;
 	u64 wrr_runtime;
 

@@ -975,7 +975,7 @@ struct migration_arg {
  * So we race with normal scheduler movements, but that's OK, as long
  * as the task is no longer on this CPU.
  */
-struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf,
+static struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf,
 				 struct task_struct *p, int dest_cpu)
 {
 	/* Affinity changed (again). */
@@ -3043,10 +3043,10 @@ void scheduler_tick(void)
 	curr->sched_class->task_tick(rq, curr, 0);
 	cpu_load_update_active(rq);
 	calc_global_load_tick(rq);
-    
-    load_balance_wrr(rq);
 
 	rq_unlock(rq, &rf);
+
+    load_balance_wrr(rq);
 
 	perf_event_task_tick();
 

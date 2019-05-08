@@ -579,27 +579,30 @@ static void reset_lb_timeslice(void) {
     }
 }
 
-extern struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf, struct task_struct *p, int dest_cpu);
-
 void load_balance_wrr(struct rq *rq)
 {
-    struct rq *busiest;
-    struct rq *freest;
+    struct rq *busiest = cpu_rq(0);
+    struct rq *freest = cpu_rq(1);
     struct sched_wrr_entity *wrr_se;
     struct list_head *list;
-    struct task_struct *task;
+    struct task_struct *task = rq->curr;
     struct rq_flags rf;
     int max_weight;
     int min_weight;
+    int find_movable_task = 0;
     int diff;
-
+    
     if(--rq->wrr.next_load_balance)
         return;
 
     reset_lb_timeslice();
 
-    find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
+    pr_err("reset_lb_timeslice %d %d %d %d", cpu_rq(0)->wrr.next_load_balance, cpu_rq(1)->wrr.next_load_balance, cpu_rq(2)->wrr.next_load_balance, cpu_rq(3)->wrr.next_load_balance);
 
+    
+    find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
+    pr_err("find busiest, freest queue %d %d max %d min %d", busiest->cpu, freest->cpu, max_weight, min_weight);
+    
     if(max_weight == min_weight)
         return;
 
@@ -612,14 +615,18 @@ void load_balance_wrr(struct rq *rq)
         wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
         task = wrr_task_of(wrr_se);
 
-        if(wrr_se->weight <= diff/2 && !task_current(freest, task))
+        if(wrr_se->weight <= diff/2 && !task_current(freest, task)) {
+            find_movable_task = 1;
             break;
+        }
     }
-
-    __migrate_task(freest, &rf, task, busiest->cpu);
+    if(find_movable_task){
+        dequeue_task_wrr(busiest, task, 1);
+        enqueue_task_wrr(freest, task, 1);
+        }
 
     double_rq_unlock(busiest, freest);
-    pr_err("load_balance_complite. task %d, busiest cpu %d, freest cpu %d, weight %d", task->pid, busiest->cpu, freest->cpu, task->wrr.weight);
+    pr_err("load_balance_complite. find %d, task %d, busiest cpu %d, freest cpu %d, weight %d", find_movable_task, task->pid, busiest->cpu, freest->cpu, task->wrr.weight);
 }
 
 const struct sched_class wrr_sched_class = {

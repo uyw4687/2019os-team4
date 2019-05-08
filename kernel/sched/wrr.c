@@ -414,7 +414,6 @@ static struct sched_wrr_entity *pick_next_wrr_entity(struct rq *rq, struct wrr_r
 {
     struct sched_wrr_entity *next = NULL;
     struct list_head *queue;
-    struct wrr_rq *wrr_rq = &rq->wrr;
  
     queue = &wrr_rq->queue;
     next = list_entry(queue->next, struct sched_wrr_entity, run_list);

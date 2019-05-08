@@ -562,9 +562,15 @@ struct wrr_rq
     struct list_head queue;
     
     struct task_struct *curr, *next, *last, *skip;
+    int wrr_queued;
 
 	u64 wrr_time;
 	u64 wrr_runtime;
+    /*
+#ifdef CONFIG_SMP
+    struct plist_head pushable_tasks;
+#endif
+    */
 
 	/* Nests inside the rq lock: */
 	raw_spinlock_t wrr_runtime_lock;
@@ -1999,11 +2005,11 @@ extern struct sched_entity *__pick_last_entity(struct cfs_rq *cfs_rq);
 extern bool sched_debug_enabled;
 
 extern void print_cfs_stats(struct seq_file *m, int cpu);
-extern void print_wrr_stats(struct seq_file *m, int cpu);
+//extern void print_wrr_stats(struct seq_file *m, int cpu);
 extern void print_rt_stats(struct seq_file *m, int cpu);
 extern void print_dl_stats(struct seq_file *m, int cpu);
 extern void print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq);
-extern void print_wrr_rq(struct seq_file *m, int cpu, struct wrr_rq *wrr_rq);
+//extern void print_wrr_rq(struct seq_file *m, int cpu, struct wrr_rq *wrr_rq);
 extern void print_rt_rq(struct seq_file *m, int cpu, struct rt_rq *rt_rq);
 extern void print_dl_rq(struct seq_file *m, int cpu, struct dl_rq *dl_rq);
 #ifdef CONFIG_NUMA_BALANCING

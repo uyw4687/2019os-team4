@@ -2207,6 +2207,7 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	p->wrr.timeout		= 0;
 	p->wrr.time_slice	= 10*sched_wrr_timeslice;
     p->wrr.on_rq        = 0;
+    p->wrr.on_list      = 0;
     p->wrr.weight       = 10;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
@@ -5879,7 +5880,6 @@ void __init sched_init(void)
         init_wrr_rq(&rq->wrr);
 		init_rt_rq(&rq->rt);
 		init_dl_rq(&rq->dl);
-        init_wrr_rq(&rq->wrr);
 #ifdef CONFIG_FAIR_GROUP_SCHED
 		root_task_group.shares = ROOT_TASK_GROUP_LOAD;
 		INIT_LIST_HEAD(&rq->leaf_cfs_rq_list);

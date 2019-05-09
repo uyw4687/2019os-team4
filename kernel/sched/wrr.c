@@ -517,6 +517,9 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
      * We may dequeue prev's wrr_rq in put_prev_task().
      * So, we update time before wrr_nr_running check.
      */
+    if(unlikely((rq->stop && task_on_rq_queued(rq->stop)) || rq->dl.dl_nr_running || rq->rt.rt_nr_running))
+        return RETRY_TASK;
+
     if (prev->sched_class == &wrr_sched_class)
         update_curr_wrr(rq);
 
@@ -675,6 +678,7 @@ static void reset_lb_timeslice(void) {
 
 void load_balance_wrr(struct rq *rq)
 {
+    DEFINE_RAW_SPINLOCK(lb_wrr_lock);
     struct rq *busiest = cpu_rq(0);
     struct rq *freest = cpu_rq(1);
     struct sched_wrr_entity *wrr_se;
@@ -688,13 +692,17 @@ void load_balance_wrr(struct rq *rq)
     if(--rq->wrr.next_load_balance)
         return;
 
+    pr_err("load_balance_wrr");
+
+    raw_spin_lock(&lb_wrr_lock);
+
     reset_lb_timeslice();
 
-    pr_err("reset_lb_timeslice %d %d %d %d", cpu_rq(0)->wrr.next_load_balance, cpu_rq(1)->wrr.next_load_balance, cpu_rq(2)->wrr.next_load_balance, cpu_rq(3)->wrr.next_load_balance);
+    raw_spin_unlock(&lb_wrr_lock);
+
 
     
     find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
-    pr_err("find busiest, freest queue %d %d max %d min %d", busiest->cpu, freest->cpu, max_weight, min_weight);
     
     if(max_weight == min_weight)
         return;
@@ -719,7 +727,7 @@ void load_balance_wrr(struct rq *rq)
         }
 
     double_rq_unlock(busiest, freest);
-    pr_err("load_balance_complite. find %d, task %d, busiest cpu %d, freest cpu %d, weight %d", find_movable_task, task->pid, busiest->cpu, freest->cpu, task->wrr.weight);
+    pr_err("load_balance_complete. move %d, task %d, busiest cpu %d, freest cpu %d, task weight %d", find_movable_task, task->pid, busiest->cpu, freest->cpu, task->wrr.weight);
 }
 
 const struct sched_class wrr_sched_class = {

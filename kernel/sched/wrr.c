@@ -417,7 +417,7 @@ static void update_curr_wrr(struct rq *rq)
 	if (curr->sched_class != &wrr_sched_class)
 		return;
 
-    rq->wrr.curr_task = curr;
+    //rq->wrr.curr_task = curr;
 
 	delta_exec = rq_clock_task(rq) - curr->se.exec_start;
 	if (unlikely((s64)delta_exec <= 0))
@@ -451,6 +451,7 @@ static void update_curr_wrr(struct rq *rq)
 			raw_spin_unlock(&wrr_rq->wrr_runtime_lock);
 		}
 	}
+    //pr_err("update_curr_wrr complete");
 }
 
 /*
@@ -481,10 +482,10 @@ static struct sched_wrr_entity *pick_next_wrr_entity(struct rq *rq, struct wrr_r
 {
     struct sched_wrr_entity *next = NULL;
     struct list_head *queue;
- 
+    pr_err("pick_next_wrr_entity");
     queue = &wrr_rq->queue;
     next = list_entry(queue->next, struct sched_wrr_entity, run_list);
-
+    pr_err("pick_next_wrr_entity complete");
     return next;
 }
 
@@ -496,11 +497,11 @@ static struct task_struct *_pick_next_task_wrr(struct rq *rq)
 
     pr_err("_pick_next_task");
 
-    do {
+    //do {
         wrr_se = pick_next_wrr_entity(rq, wrr_rq);
         BUG_ON(!wrr_se);
         //wrr_rq = group_wrr_rq(wrr_se);
-    } while (wrr_rq);
+    //} while (wrr_rq);
 
     p = wrr_task_of(wrr_se);
     p->se.exec_start = rq_clock_task(rq);
@@ -527,11 +528,11 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
      * So, we update time before wrr_nr_running check.
      */
 
-    //if(unlikely((rq->stop && task_on_rq_queued(rq->stop)) || rq->dl.dl_nr_running || rq->rt.rt_nr_running))
-    //    return RETRY_TASK;
-
     if (prev->sched_class == &wrr_sched_class)
         update_curr_wrr(rq);
+    
+   // if (unlikely((rq->stop && task_on_rq_queued(rq->stop)) || rq->dl.dl_nr_running || rq->rt.rt_nr_running))
+   //     return RETRY_TASK;
 
     if (!wrr_rq->wrr_queued)
         return NULL;

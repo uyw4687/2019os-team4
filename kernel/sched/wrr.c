@@ -79,7 +79,7 @@ void init_wrr_rq(struct wrr_rq *wrr_rq)
     wrr_rq->curr = wrr_rq->next = wrr_rq->last = wrr_rq->skip = NULL;
     raw_spin_lock_init(&wrr_rq->wrr_runtime_lock);
     pr_err("wrr_rq->curr %p", wrr_rq->curr);
-    wrr_rq->next_load_balance = WRR_LB_TIMESLICE;
+    wrr_rq->next_load_balance = jiffies + WRR_LB_TIMESLICE;
 #ifdef CONFIG_NUMA_BALANCING
     pr_err("CONFIG_NUMA_BALANCING");
 #endif
@@ -494,6 +494,8 @@ static struct task_struct *_pick_next_task_wrr(struct rq *rq)
     struct task_struct *p;
     struct wrr_rq *wrr_rq = &rq->wrr;
 
+    pr_err("_pick_next_task");
+
     do {
         wrr_se = pick_next_wrr_entity(rq, wrr_rq);
         BUG_ON(!wrr_se);
@@ -502,6 +504,11 @@ static struct task_struct *_pick_next_task_wrr(struct rq *rq)
 
     p = wrr_task_of(wrr_se);
     p->se.exec_start = rq_clock_task(rq);
+
+    if(!p)
+        pr_err("end pick_next_task. picked task is NULL");
+    else
+        pr_err("end pick_next_task picked task is %d", p->pid);
 
     return p;
 }
@@ -512,13 +519,16 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
 
     struct task_struct *p;
     struct wrr_rq *wrr_rq = &rq->wrr;
+    
+    pr_err("pick_next_task");
 
     /* 
      * We may dequeue prev's wrr_rq in put_prev_task().
      * So, we update time before wrr_nr_running check.
      */
-    if(unlikely((rq->stop && task_on_rq_queued(rq->stop)) || rq->dl.dl_nr_running || rq->rt.rt_nr_running))
-        return RETRY_TASK;
+
+    //if(unlikely((rq->stop && task_on_rq_queued(rq->stop)) || rq->dl.dl_nr_running || rq->rt.rt_nr_running))
+    //    return RETRY_TASK;
 
     if (prev->sched_class == &wrr_sched_class)
         update_curr_wrr(rq);
@@ -526,7 +536,7 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
     if (!wrr_rq->wrr_queued)
         return NULL;
 
-    put_prev_task(rq, prev);
+    //put_prev_task(rq, prev);
 
     p = _pick_next_task_wrr(rq);
 
@@ -539,8 +549,9 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
 
 static void put_prev_task_wrr(struct rq *rq, struct task_struct *prev)
 {
-    pr_err("put_prev_task_Wrr");
     // TODO fair.c 6380L / rt.c 1577L
+
+    pr_err("put_prev_task_wrr");
 }
 
 static int select_task_rq_wrr(struct task_struct *p, int prev_cpu, int sd_flag, int wake_flags)
@@ -670,15 +681,14 @@ static void reset_lb_timeslice(void) {
     int cpu;
     struct rq *rq;
 
-    for_each_online_cpu(cpu) {
+    for(cpu = 0; cpu < 4; cpu++) {
         rq = cpu_rq(cpu);
-        rq->wrr.next_load_balance = WRR_LB_TIMESLICE;
+        rq->wrr.next_load_balance = jiffies + WRR_LB_TIMESLICE;
     }
 }
 
 void load_balance_wrr(struct rq *rq)
 {
-    DEFINE_RAW_SPINLOCK(lb_wrr_lock);
     struct rq *busiest = cpu_rq(0);
     struct rq *freest = cpu_rq(1);
     struct sched_wrr_entity *wrr_se;
@@ -689,18 +699,12 @@ void load_balance_wrr(struct rq *rq)
     int find_movable_task = 0;
     int diff;
     
-    if(--rq->wrr.next_load_balance)
+    if(jiffies <= rq->wrr.next_load_balance)
         return;
 
-    pr_err("load_balance_wrr");
-
-    raw_spin_lock(&lb_wrr_lock);
+    pr_err("load_balance_wrr start");
 
     reset_lb_timeslice();
-
-    raw_spin_unlock(&lb_wrr_lock);
-
-
     
     find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
     
@@ -711,12 +715,12 @@ void load_balance_wrr(struct rq *rq)
 
     double_rq_lock(busiest, freest);
 
-    list_for_each(list, &freest->wrr.queue) {
+    list_for_each(list, &busiest->wrr.queue) {
         
         wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
         task = wrr_task_of(wrr_se);
 
-        if(wrr_se->weight <= diff/2 && !task_current(freest, task)) {
+        if(wrr_se->weight < diff/2 && !task_current(busiest, task)) {
             find_movable_task = 1;
             break;
         }

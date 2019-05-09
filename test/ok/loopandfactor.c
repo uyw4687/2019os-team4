@@ -182,10 +182,10 @@ int main()
             case 8:
             printf("pid : ");
             scanf("%d", &q);
-            if(sched_getscheduler(q) ==0)
-                printf("scheduler : %d\n", sched_getscheduler(q));
-            else
+            if(sched_getscheduler(q)<0)
                     perror("getscheduler error");
+            else
+                printf("scheduler : %d\n", sched_getscheduler(q));
             continue;
             case 9:
     break;

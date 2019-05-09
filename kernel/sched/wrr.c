@@ -383,7 +383,6 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
     pr_err("round robin complete. task %d timeslice %d weight %d cpu %d", p->pid, p->wrr.time_slice, p->wrr.weight, rq->cpu);
 
 /*
- * load balancing : 2000ms
  * refer to other schedulers about load balancing if materials exists
  * 
  * Make sure that it only works when more than one CPU is active

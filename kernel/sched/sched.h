@@ -560,8 +560,11 @@ struct wrr_rq
 	//struct load_weight load;
     unsigned int wrr_nr_running;//, h_nr_running;
     struct list_head queue;
+   
+    //struct task_struct *curr_task;
+    struct sched_entity *curr, *next, *last, *skip;
     
-    struct task_struct *curr, *next, *last, *skip;
+    unsigned long int next_load_balance; //using wrr load_balancing
     int wrr_queued;
 
 	u64 wrr_time;

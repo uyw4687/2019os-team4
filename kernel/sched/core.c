@@ -3026,6 +3026,11 @@ unsigned long long task_sched_runtime(struct task_struct *p)
  * This function gets called by the timer code, with HZ frequency.
  * We call it with interrupts disabled.
  */
+
+DEFINE_RAW_SPINLOCK(wrr_lb_lock);
+
+extern void load_balance_wrr(struct rq *rq);
+
 void scheduler_tick(void)
 {
 	int cpu = smp_processor_id();
@@ -3043,6 +3048,12 @@ void scheduler_tick(void)
 	calc_global_load_tick(rq);
 
 	rq_unlock(rq, &rf);
+    
+    raw_spin_lock(&wrr_lb_lock);
+
+    //load_balance_wrr(rq);
+
+    raw_spin_unlock(&wrr_lb_lock);
 
 	perf_event_task_tick();
 

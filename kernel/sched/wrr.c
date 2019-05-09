@@ -353,13 +353,15 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
     //TODO make update_curr_wrr
 	update_curr_wrr(rq);
 
-    if(!(p->wrr.time_slice % 3))
-        pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p, task_cpu(p) %d", p->wrr.time_slice, p->wrr.weight, task_cpu(p), wrr_rq_of_se(wrr_se)->curr, task_cpu(p));
+    //if(!(p->wrr.time_slice % 3))
+    //    pr_err("task_tick_wrr, p->wrr.time_slice %d, p->wrr.weight %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p, task_cpu(p) %d", p->wrr.time_slice, p->wrr.weight, task_cpu(p), wrr_rq_of_se(wrr_se)->curr, task_cpu(p));
     if(p->policy != SCHED_WRR)
         return;
 
     if(--p->wrr.time_slice)
         return;
+
+    pr_err("round robin");
 
     p->wrr.time_slice = p->wrr.weight * sched_wrr_timeslice;
 
@@ -374,6 +376,8 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
             return;
         }
     }
+
+    pr_err("round robin complete. task %d timeslice %d weight %d cpu %d", p->pid, p->wrr.time_slice, p->wrr.weight, rq->cpu);
 
 /*
  * load balancing : 2000ms
@@ -506,10 +510,7 @@ static struct task_struct *_pick_next_task_wrr(struct rq *rq)
     p = wrr_task_of(wrr_se);
     p->se.exec_start = rq_clock_task(rq);
 
-    if(!p)
-        pr_err("end pick_next_task. picked task is NULL");
-    else
-        pr_err("end pick_next_task picked task is %d", p->pid);
+    pr_err("end pick_next_task picked task is %d", p->pid);
 
     return p;
 }
@@ -537,7 +538,7 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
     if (!wrr_rq->wrr_queued)
         return NULL;
 
-    //put_prev_task(rq, prev);
+    put_prev_task(rq, prev);
 
     p = _pick_next_task_wrr(rq);
 

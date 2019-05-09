@@ -3051,7 +3051,7 @@ void scheduler_tick(void)
     
     raw_spin_lock(&wrr_lb_lock);
 
-    load_balance_wrr(rq);
+    //load_balance_wrr(rq);
 
     raw_spin_unlock(&wrr_lb_lock);
 

@@ -47,9 +47,9 @@ int main(
 
 #if DEBUG4
     if(fork())
-        printf("end policy(child) = %d\n", sched_getscheduler(0));
-    else
         printf("end policy(parent) = %d\n", sched_getscheduler(0));
+    else
+        printf("end policy(child) = %d\n", sched_getscheduler(0));
 #endif
 
 #if DEBUG5
@@ -62,7 +62,8 @@ int main(
         return -1;
     }
     while(1)
-        ;
+        if(!(i%50))
+            printf("running\n");
 #endif
     return 0;
 }

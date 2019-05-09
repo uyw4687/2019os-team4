@@ -975,7 +975,7 @@ struct migration_arg {
  * So we race with normal scheduler movements, but that's OK, as long
  * as the task is no longer on this CPU.
  */
-static struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf,
+struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf,
 				 struct task_struct *p, int dest_cpu)
 {
 	/* Affinity changed (again). */
@@ -3029,7 +3029,7 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 
 DEFINE_RAW_SPINLOCK(wrr_lb_lock);
 
-extern void load_balance_wrr(struct rq *rq);
+extern void load_balance_wrr(struct rq *rq, struct rq_flags *rf);
 
 void scheduler_tick(void)
 {
@@ -3051,7 +3051,7 @@ void scheduler_tick(void)
     
     raw_spin_lock(&wrr_lb_lock);
 
-    //load_balance_wrr(rq);
+    load_balance_wrr(rq, &rf);
 
     raw_spin_unlock(&wrr_lb_lock);
 

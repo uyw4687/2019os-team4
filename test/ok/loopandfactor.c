@@ -5,26 +5,34 @@
 #include <sys/types.h>
 #include <sched.h>
 #include <unistd.h>
+#include <time.h>
 
 #define SCHED_WRR 7
 
 #define SETWEIGHT 398
 #define GETWEIGHT 399
 
-void factor(long num)
+void factor2()
 {
     long long divisor;
-    long long dividend = num;
+    long long dividend;
+    long long input;
+    clock_t begin, end;
 
     printf("what to factor?");
-    scanf("%lld", &dividend);
+    scanf("%lld", &input);
 
     //invalid input
-    if(dividend<2)
+    if(input<2){
+            printf("wrong");
         return;
+    }
 
+    while(1){
+            dividend = input;
     printf("%lld = ", dividend);
 
+    begin = clock();
     for(divisor=2;divisor<=dividend;divisor++)
     {
         while(dividend%divisor==0)
@@ -40,6 +48,45 @@ void factor(long num)
         }
     }
     printf("\n");
+    end = clock();
+    printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
+    }
+}
+
+
+void factor(long long num)
+{
+    long long divisor;
+    long long dividend = num;
+    clock_t begin, end;
+
+    printf("what to factor?");
+    scanf("%lld", &dividend);
+
+    //invalid input
+    if(dividend<2)
+        return;
+
+    printf("%lld = ", dividend);
+
+    begin = clock();
+    for(divisor=2;divisor<=dividend;divisor++)
+    {
+        while(dividend%divisor==0)
+        {
+            printf("%lld ", divisor);
+
+            dividend /= divisor;
+
+            if(dividend==1)
+                break;
+
+            printf("* ");
+        }
+    }
+    printf("\n");
+    end = clock();
+    printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
 }
 
 int main()
@@ -50,7 +97,7 @@ int main()
     int cpu;
     int q, w, e, r, t;
     int i;
-/*
+
     param.sched_priority = sched_get_priority_min(SCHED_WRR);
 
     if(sched_setscheduler(0, SCHED_WRR, &param) != 0)
@@ -58,12 +105,12 @@ int main()
         perror("failed");
         return -1;
     }
-*/
+
     printf("end policy = %d\n", sched_getscheduler(0));
     
     while(1) {
 
-            printf("1:sleep, 2: loop from 0 to input value without printing, 3: loop from 0 to input value with printing by the input value increment, 4:setweight, 5:getweight, 6:fork, 7:use only 0, 1, 2 cpu 8:getscheduler 9:break and factor, 10:finish program return, 11: clear screen, 12: use only one cpu, 13: cpu setting not zeroing mask value\n");
+            printf("1:sleep, 2: loop from 0 to input value without printing, 3: loop from 0 to input value with printing by the input value increment, 4:setweight, 5:getweight, 6:fork, 7:use only 0, 1, 2 cpu 8:getscheduler 9:break and factor, 10:finish program return, 11: clear screen, 12: use only one cpu, 13: cpu setting not zeroing mask value, 14: repeat factor, 15: repeat factor with only one value\n");
             scanf("%d", &q);
            switch(q)
            {
@@ -171,6 +218,7 @@ int main()
             if(q>3 || q<0){
                     printf("bad value\n");
                     continue;
+
             }
     CPU_SET(q, &mask);
     
@@ -179,6 +227,15 @@ int main()
         perror("setaffinity");
     }
     continue;
+
+                    case 14:
+                    while(1)
+                    {
+                        factor(3);
+                    }
+                    case 15:
+                    printf("value to factor continuously\n");
+                        factor2();
             default:
     continue;
            }

@@ -1210,7 +1210,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 	__set_task_cpu(p, new_cpu);
 }
 
-static void __migrate_swap_task(struct task_struct *p, int cpu)
+void __migrate_swap_task(struct task_struct *p, int cpu)
 {
 	if (task_on_rq_queued(p)) {
 		struct rq *src_rq, *dst_rq;
@@ -3029,7 +3029,7 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 
 DEFINE_RAW_SPINLOCK(wrr_lb_lock);
 
-extern void load_balance_wrr(struct rq *rq, struct rq_flags *rf);
+extern void load_balance_wrr(struct rq *rq);
 
 void scheduler_tick(void)
 {
@@ -3051,7 +3051,7 @@ void scheduler_tick(void)
     
     raw_spin_lock(&wrr_lb_lock);
 
-    load_balance_wrr(rq, &rf);
+    load_balance_wrr(rq);
 
     raw_spin_unlock(&wrr_lb_lock);
 
@@ -6830,8 +6830,12 @@ long sched_setweight(pid_t pid, int weight)
     if(!uid || !euid || uid == taskuid || euid == taskuid)
     {
         write_lock(&tasklist_lock);
+        
         task->wrr.weight = weight;
-        task->wrr.time_slice = weight * sched_wrr_timeslice;
+        
+        if(task != current)
+            task->wrr.time_slice = weight * sched_wrr_timeslice;
+        
         write_unlock(&tasklist_lock);
         return 0;
     }

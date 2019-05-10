@@ -587,6 +587,8 @@ static void set_curr_task_wrr(struct rq *rq)
     // TODO fair.c 9254L / rt.c 2328L
 }
 
+extern long sched_setweight(pid_t pid, int weight);
+
 static void task_fork_wrr(struct task_struct *p)
 {	
     /*
@@ -620,6 +622,9 @@ static void task_fork_wrr(struct task_struct *p)
 
     p->wrr.weight = 10;
     */// TODO fair.c 9064L
+
+    sched_setweight(p->pid, p->parent->wrr.weight);
+
     pr_err("task_fork_wrr");
 }
 
@@ -644,7 +649,7 @@ static void switched_to_wrr(struct rq *rq, struct task_struct *p)
 static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, int *max_weight, int *min_weight)
 {
     int weight, cpu;
-    int max = 0, min = 0;
+    int max = 0, min = 0x8fffffff;
     struct rq *rq;
     struct sched_wrr_entity *wrr_se;
     struct list_head *list;
@@ -665,7 +670,7 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
             max_rq = rq;
         }
 
-        if(min == 0 || min > weight) {
+        if(min > weight) {
             min = weight;
             min_rq = rq;
         }
@@ -675,6 +680,8 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
 
     *max_weight = max;
     *min_weight = min;
+    if(min == 0x8fffffff)
+        *min_weight = 0;
 }
 
 static void reset_lb_timeslice(void) {

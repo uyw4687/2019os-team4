@@ -142,12 +142,12 @@ int main()
     
     while(1) {
 
-            printf("1:sleep, 2: loop from 0 to input value without printing, 3: loop from 0 to input value with printing by the input value increment, 4:setweight, 5:getweight, 6:fork, 7:use only 0, 1, 2 cpu 8:getscheduler 9:break and factor, 10:finish program return, 11: clear screen, 12: use only one cpu, 13: cpu setting not zeroing mask value, 14: repeat factor, 15: repeat factor with only one value, 16: from 0 to input value loop and print time continuously\n");
+            printf("1:sleep\n2: loop from 0 to input value without printing\n3: loop from 0 to input value with printing by the input value increment\n4:setweight\n5:getweight\n6:fork\n7:use only 0, 1, 2 cpu\n8:getscheduler\n9:break and factor\n10:finish program return\n11: clear screen\n12: use only one cpu\n13: cpu setting not zeroing mask value\n14: repeat factor\n15: repeat factor with only one value\n16: from 0 to input value loop and print time continuously\n");
             scanf("%d", &q);
            switch(q)
            {
             case 1:
-                  printf("amount(sec)\n");
+                  printf("input amount(sec)\n");
                  scanf("%d",&q);
                 sleep(q);
                continue;
@@ -166,9 +166,9 @@ int main()
             continue;
 
             case 4:
-            printf("pid :  (0 for myself)");
+            printf("input pid :  (0 for myself)");
             scanf("%d", &q);
-            printf("weight :  (1~20)");
+            printf("input weight :  (1~20)");
             scanf("%d", &r);
             r = syscall(SETWEIGHT, q,r);
         if(r<0)
@@ -177,7 +177,7 @@ int main()
 
             continue;
             case 5:
-            printf("pid :  (0 for myself)");
+            printf("input pid :  (0 for myself)");
             scanf("%d", &q);
             r = syscall(GETWEIGHT, q);
         if(r<0)
@@ -228,7 +228,7 @@ int main()
             continue;
             case 12:
 
-            printf("cpu to use: 0~3\n");
+            printf("input cpu to use: 0~3\n");
             scanf("%d", &q);
             if(q>3 || q<0){
                     printf("bad value");
@@ -245,7 +245,7 @@ int main()
 
             case 13:
 
-            printf("cpu to use: 0~3\n");
+            printf("input cpu to use: 0~3\n");
             scanf("%d", &q);
             if(q>3 || q<0){
                     printf("bad value\n");

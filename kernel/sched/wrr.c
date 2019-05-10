@@ -656,7 +656,7 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
 
     rcu_read_lock();
 
-    for_each_online_cpu(cpu) {
+    for_each_possible_cpu(cpu) {
         weight = 0;
         rq = cpu_rq(cpu);
         

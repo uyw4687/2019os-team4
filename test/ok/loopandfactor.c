@@ -12,6 +12,38 @@
 #define SETWEIGHT 398
 #define GETWEIGHT 399
 
+void print()
+{
+    long long divisor;
+    long long dividend;
+    long long input;
+    clock_t begin, end;
+
+    printf("what to factor?");
+    scanf("%lld", &input);
+
+    //invalid input
+    if(input<2){
+            printf("wrong");
+        return;
+    }
+
+    while(1){
+            dividend = input;
+    printf("%lld = ", dividend);
+
+    begin = clock();
+    for(divisor=2;divisor<=dividend;divisor++)
+    {
+            ;
+    }
+    printf("\n");
+    end = clock();
+    printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
+    }
+}
+
+
 void factor2()
 {
     long long divisor;
@@ -110,7 +142,7 @@ int main()
     
     while(1) {
 
-            printf("1:sleep, 2: loop from 0 to input value without printing, 3: loop from 0 to input value with printing by the input value increment, 4:setweight, 5:getweight, 6:fork, 7:use only 0, 1, 2 cpu 8:getscheduler 9:break and factor, 10:finish program return, 11: clear screen, 12: use only one cpu, 13: cpu setting not zeroing mask value, 14: repeat factor, 15: repeat factor with only one value\n");
+            printf("1:sleep, 2: loop from 0 to input value without printing, 3: loop from 0 to input value with printing by the input value increment, 4:setweight, 5:getweight, 6:fork, 7:use only 0, 1, 2 cpu 8:getscheduler 9:break and factor, 10:finish program return, 11: clear screen, 12: use only one cpu, 13: cpu setting not zeroing mask value, 14: repeat factor, 15: repeat factor with only one value, 16: from 0 to input value loop and print time continuously\n");
             scanf("%d", &q);
            switch(q)
            {
@@ -182,10 +214,10 @@ int main()
             case 8:
             printf("pid : ");
             scanf("%d", &q);
-            if(sched_getscheduler(q) ==0)
-                printf("scheduler : %d\n", sched_getscheduler(q));
-            else
+            if(sched_getscheduler(q)<0)
                     perror("getscheduler error");
+            else
+                printf("scheduler : %d\n", sched_getscheduler(q));
             continue;
             case 9:
     break;
@@ -236,6 +268,10 @@ int main()
                     case 15:
                     printf("value to factor continuously\n");
                         factor2();
+                        continue;
+                    case 16:
+                        print();
+                        continue;
             default:
     continue;
            }

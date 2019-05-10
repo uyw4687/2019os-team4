@@ -383,7 +383,6 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
     pr_err("round robin complete. task %d timeslice %d weight %d cpu %d", p->pid, p->wrr.time_slice, p->wrr.weight, rq->cpu);
 
 /*
- * load balancing : 2000ms
  * refer to other schedulers about load balancing if materials exists
  * 
  * Make sure that it only works when more than one CPU is active
@@ -495,7 +494,7 @@ static struct task_struct *_pick_next_task_wrr(struct rq *rq)
     struct task_struct *p;
     struct wrr_rq *wrr_rq = &rq->wrr;
 
-    pr_err("_pick_next_task");
+    pr_err("_pick_next_task_wrr");
 
     //do {
         wrr_se = pick_next_wrr_entity(rq, wrr_rq);
@@ -506,7 +505,7 @@ static struct task_struct *_pick_next_task_wrr(struct rq *rq)
     p = wrr_task_of(wrr_se);
     p->se.exec_start = rq_clock_task(rq);
 
-    pr_err("end pick_next_task picked task is %d", p->pid);
+    pr_err("end _pick_next_task_wrr picked task is %d", p->pid);
 
     return p;
 }
@@ -518,7 +517,7 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
     struct task_struct *p;
     struct wrr_rq *wrr_rq = &rq->wrr;
     
-    pr_err("pick_next_task");
+    pr_err("pick_next_task_wrr");
 
     /* 
      * We may dequeue prev's wrr_rq in put_prev_task().
@@ -729,7 +728,7 @@ void load_balance_wrr(struct rq *rq)
         }
 
     double_rq_unlock(busiest, freest);
-    pr_err("load_balance_complete. move %d, task %d, busiest cpu %d, freest cpu %d, task weight %d", find_movable_task, task->pid, busiest->cpu, freest->cpu, task->wrr.weight);
+    pr_err("load_balance_wrr complete. move %d, task %d, busiest cpu %d, freest cpu %d, task weight %d", find_movable_task, task->pid, busiest->cpu, freest->cpu, task->wrr.weight);
 }
 
 const struct sched_class wrr_sched_class = {

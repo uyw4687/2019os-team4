@@ -1,3 +1,3 @@
 cd mntdir/root
-cp ~/os/test/* ./
+cp -r ~/os/test/* ./
 exit

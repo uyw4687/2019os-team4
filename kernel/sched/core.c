@@ -6837,6 +6837,7 @@ long sched_setweight(pid_t pid, int weight)
             task->wrr.time_slice = weight * sched_wrr_timeslice;
         
         write_unlock(&tasklist_lock);
+        pr_err("setweight complite. task %d, weight %d", pid, weight);
         return 0;
     }
     else

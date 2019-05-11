@@ -625,7 +625,9 @@ static void task_fork_wrr(struct task_struct *p)
     p->wrr.weight = 10;
     */// TODO fair.c 9064L
 
-    sched_setweight(p->pid, p->parent->wrr.weight);
+    //struct task_struct *child = list_entry(&p->children, struct task_struct, sibling);
+
+    //sched_setweight(child->pid, child->parent->wrr.weight);
 
     pr_err("task_fork_wrr");
 }
@@ -658,7 +660,7 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
 
     rcu_read_lock();
 
-    for_each_possible_cpu(cpu) {
+    for_each_present_cpu(cpu) {
         weight = 0;
         rq = cpu_rq(cpu);
         

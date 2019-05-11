@@ -13,6 +13,8 @@
 #define WRR_TIMESLICE (10 * HZ / 1000)
 #define WRR_LB_TIMESLICE 2 * HZ
 
+extern raw_spinlock_t wrr_lock;
+
 int sched_wrr_timeslice = WRR_TIMESLICE;
 
 const struct sched_class wrr_sched_class;
@@ -271,6 +273,9 @@ static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
     // TODO fair.c 4879L / rt.c 1321L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
+
+    raw_spin_lock(&wrr_lock);
+
     pr_err("enqueue_task_wrr, p->comm %s, p->pid %d, wrr_rq_of_se(wrr_se)->curr : %p, task_cpu(p) %d", p->comm, p->pid, wrr_rq_of_se(wrr_se)->curr, task_cpu(p));
 
 	if (flags & ENQUEUE_WAKEUP)
@@ -281,6 +286,8 @@ static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 	    enqueue_wrr_entity(wrr_se, flags);
     enqueue_top_wrr_rq(&rq->wrr);
     
+    raw_spin_unlock(&wrr_lock);
+
 /*
 	//if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
 	//	enqueue_pushable_task(rq, p);
@@ -334,12 +341,17 @@ static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
     // TODO fair.c 4935L / rt.c 1334L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
 
+    raw_spin_lock(&wrr_lock);
+
     pr_err("dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq, task_cpu(p), wrr_rq_of_se(wrr_se)->curr);
 	update_curr_wrr(rq);
 	dequeue_wrr_entity(wrr_se, flags);
 
     //pr_err("after dequeue_task_wrr, p->comm %s, p->pid %d, wrr_se->timeout %lu, wrr_se->time_slice : %d, wrr_se->weight : %d, wrr_se->on_rq : %d, task_cpu(p) %d, wrr_rq_of_se(wrr_se)->curr %p", p->comm, p->pid, wrr_se->timeout, wrr_se->time_slice, wrr_se->weight, wrr_se->on_rq, task_cpu(p), wrr_rq_of_se(wrr_se)->curr);
 	//dequeue_pushable_task(rq, p);
+
+    raw_spin_unlock(&wrr_lock);
+
 }
 
 static void yield_task_wrr(struct rq *rq)
@@ -724,8 +736,10 @@ void load_balance_wrr(struct rq *rq)
     
     find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
     
-    if(max_weight == min_weight)
+    if(max_weight == min_weight) {
+        raw_spin_unlock(&wrr_lock);
         return;
+    }
 
     //pr_err("load_balance_wrr start");
 

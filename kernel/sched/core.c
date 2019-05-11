@@ -3027,9 +3027,8 @@ unsigned long long task_sched_runtime(struct task_struct *p)
  * We call it with interrupts disabled.
  */
 
-DEFINE_RAW_SPINLOCK(wrr_lb_lock);
-
 extern void load_balance_wrr(struct rq *rq);
+DEFINE_RAW_SPINLOCK(wrr_lock);
 
 void scheduler_tick(void)
 {
@@ -3049,11 +3048,11 @@ void scheduler_tick(void)
 
 	rq_unlock(rq, &rf);
     
-    raw_spin_lock(&wrr_lb_lock);
+    raw_spin_lock(&wrr_lock);
 
     load_balance_wrr(rq);
 
-    raw_spin_unlock(&wrr_lb_lock);
+    raw_spin_unlock(&wrr_lock);
 
 	perf_event_task_tick();
 
@@ -6789,6 +6788,9 @@ long sched_setweight(pid_t pid, int weight)
     int uid, euid, taskuid;
     int policy;
     int oldweight;
+
+    int cpu;
+    int curr = 0;
     
     if(weight <= 0 || weight > 20)
     {
@@ -6796,6 +6798,8 @@ long sched_setweight(pid_t pid, int weight)
         return -1;
     }
     
+    raw_spin_lock(&wrr_lock);
+
     rcu_read_lock();
 
     if (pid == 0)
@@ -6806,6 +6810,7 @@ long sched_setweight(pid_t pid, int weight)
     if(!task)
     {
         rcu_read_unlock();
+        raw_spin_unlock(&wrr_lock);
         return -EINVAL;
     }
 
@@ -6820,12 +6825,15 @@ long sched_setweight(pid_t pid, int weight)
     if(policy != SCHED_WRR)
     {
         printk(KERN_ERR "not a wrr scheduled process\n");
+        raw_spin_unlock(&wrr_lock);
         return -1;
     }
 
     if(oldweight < weight)
-        if(uid && euid)
+        if(uid && euid) {
+            raw_spin_unlock(&wrr_lock);
             return -EPERM;
+        }
 
     if(!uid || !euid || uid == taskuid || euid == taskuid)
     {
@@ -6833,15 +6841,23 @@ long sched_setweight(pid_t pid, int weight)
         
         task->wrr.weight = weight;
         
-        if(task != current)
-            task->wrr.time_slice = weight * sched_wrr_timeslice;
+        for_each_online_cpu(cpu) {
+            if(task == cpu_rq(cpu)->curr)
+                curr = 1;
+        }
+
+        if(!curr)
+            task->wrr.weight = weight * sched_wrr_timeslice;
         
         write_unlock(&tasklist_lock);
         pr_err("setweight complite. task %d, weight %d", pid, weight);
+        raw_spin_unlock(&wrr_lock);
         return 0;
     }
-    else
+    else {
+        raw_spin_unlock(&wrr_lock);
         return -EPERM;
+    }
 }
 
 long sched_getweight(pid_t pid)

@@ -42,6 +42,8 @@
 
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
+DEFINE_RAW_SPINLOCK(wrr_lock);
+
 /*
  * Debugging: various feature bits
  */
@@ -3028,7 +3030,6 @@ unsigned long long task_sched_runtime(struct task_struct *p)
  */
 
 extern void load_balance_wrr(struct rq *rq);
-DEFINE_RAW_SPINLOCK(wrr_lock);
 
 void scheduler_tick(void)
 {

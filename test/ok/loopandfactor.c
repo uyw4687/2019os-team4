@@ -43,6 +43,55 @@ void print()
     }
 }
 
+void factor3()
+{
+    long long divisor;
+    long long dividend;
+    long long input;
+    clock_t begin, end;
+    int r, w, i= 0;
+
+    printf("what to factor?");
+    scanf("%lld", &input);
+
+    //invalid input
+    if(input<2){
+            printf("wrong");
+        return;
+    }
+
+    while(1){
+            dividend = input;
+            r = i++ % 20 + 1;
+            w = syscall(SETWEIGHT, 0,r);
+            if(w<0)
+                perror("setweight error");
+            printf("policy = %d, weight:%d\n", sched_getscheduler(0),r);
+
+
+    printf("%lld = ", dividend);
+
+    begin = clock();
+    for(divisor=2;divisor<=dividend;divisor++)
+    {
+            while(dividend%divisor==0)
+        {
+            printf("%lld ", divisor);
+
+            dividend /= divisor;
+
+            if(dividend==1)
+                break;
+
+            printf("* ");
+        }
+    }
+    printf("\n");
+    end = clock();
+    printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
+    fflush(stdout);
+    }
+}
 
 void factor2()
 {
@@ -143,7 +192,7 @@ int main()
     
     while(1) {
 
-            printf("1:sleep\n2: loop from 0 to input value without printing\n3: loop from 0 to input value with printing by the input value increment\n4:setweight\n5:getweight\n6:fork\n7:use only 0, 1, 2 cpu\n8:getscheduler\n9:break and factor\n10:finish program return\n11: clear screen\n12: use only one cpu\n13: cpu setting not zeroing mask value\n14: repeat factor\n15: repeat factor with only one value\n16: from 0 to input value loop and print time continuously\n");
+            printf("1:sleep\n2: loop from 0 to input value without printing\n3: loop from 0 to input value with printing by the input value increment\n4:setweight\n5:getweight\n6:fork\n7:use only 0, 1, 2 cpu\n8:getscheduler\n9:break and factor\n10:finish program return\n11: clear screen\n12: use only one cpu\n13: cpu setting not zeroing mask value\n14: repeat factor\n15: repeat factor with only one value\n16: from 0 to input value loop and print time continuously\n17: weight change automatically from 1 to 20 and do the factor repeatedly");
             scanf("%d", &q);
            switch(q)
            {
@@ -272,6 +321,9 @@ int main()
                         continue;
                     case 16:
                         print();
+                        continue;
+                    case 17:
+                        factor3();
                         continue;
             default:
     continue;

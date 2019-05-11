@@ -40,6 +40,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
+#define DEBUG_WRR 0
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
 /*
@@ -6793,7 +6794,7 @@ long sched_setweight(pid_t pid, int weight)
     if(weight <= 0 || weight > 20)
     {
         printk(KERN_ERR "weight out of range\n");
-        return -1;
+        return -EINVAL;
     }
     
     rcu_read_lock();
@@ -6820,7 +6821,7 @@ long sched_setweight(pid_t pid, int weight)
     if(policy != SCHED_WRR)
     {
         printk(KERN_ERR "not a wrr scheduled process\n");
-        return -1;
+        return -EINVAL;
     }
 
     if(oldweight < weight)
@@ -6837,7 +6838,10 @@ long sched_setweight(pid_t pid, int weight)
             task->wrr.time_slice = weight * sched_wrr_timeslice;
         
         write_unlock(&tasklist_lock);
-        pr_err("setweight complite. task %d, weight %d", pid, weight);
+#if DEBUG_WRR
+        pr_err("setweight complete. task %d, weight %d", pid, weight);
+#endif
+
         return 0;
     }
     else
@@ -6866,7 +6870,7 @@ long sched_getweight(pid_t pid)
     if(task->policy != SCHED_WRR)
     {
         printk(KERN_ERR "not a wrr scheduled process\n");
-        return -1;
+        return -EINVAL;
     }
 
     return (long)(task->wrr.weight);

@@ -12,7 +12,9 @@
  */
 #define WRR_TIMESLICE (10 * HZ / 1000)
 #define WRR_LB_TIMESLICE 2 * HZ
-#define DEBUG 1
+#define DEBUG 0
+
+int on_fork_wrr=0;
 
 int sched_wrr_timeslice = WRR_TIMESLICE;
 
@@ -280,9 +282,15 @@ static void enqueue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
 {
     // TODO fair.c 4879L / rt.c 1321L
 	struct sched_wrr_entity *wrr_se = &p->wrr;
+    if(on_fork_wrr){
+        p->wrr.weight = p->parent->wrr.weight;
+        p->wrr.time_slice = p->wrr.weight * sched_wrr_timeslice;
+        on_fork_wrr=0;
+    }
 #if DEBUG
-    pr_err("enqueue_task_wrr, p->comm %s, p->pid %d, wrr_rq_of_se(wrr_se)->curr : %p, task_cpu(p) %d", p->comm, p->pid, wrr_rq_of_se(wrr_se)->curr, task_cpu(p));
+    pr_err("enqueue_task_wrr, p->comm %s, p->pid %d, wrr_rq_of_se(wrr_se)->curr : %p, task_cpu(p) %d, weight %d", p->comm, p->pid, wrr_rq_of_se(wrr_se)->curr, task_cpu(p), p->wrr.weight);
 #endif
+
 
 	if (flags & ENQUEUE_WAKEUP)
 		wrr_se->timeout = 0;
@@ -664,8 +672,17 @@ static void task_fork_wrr(struct task_struct *p)
     //sched_setweight(child->pid, child->parent->wrr.weight);
 
 #if DEBUG
-    pr_err("task_fork_wrr, pid %d, current->pid %d, p->parent->pid %d, current parent pid %d" , p->pid, current->pid, p->parent->pid, current->parent->pid);
+    struct task_struct *task;
+    struct list_head *list;
+
+    pr_err("next %p prev %p",current->children.next, current->children.prev);
+    list_for_each(list, &current->children){
+            task = list_entry(list, struct task_struct, sibling);
+            pr_err("children pid %d parent pid %d real parent pid %d", task->pid, task->parent->pid, task->real_parent->pid);
+    }
+    pr_err("task_fork_wrr, pid %d, current->pid %d, p->parent->pid %d, current parent pid %d, " , p->pid, current->pid, p->parent->pid, current->parent->pid);
 #endif
+    on_fork_wrr = 1;
 }
 
 static void switched_from_wrr(struct rq *rq, struct task_struct *p)

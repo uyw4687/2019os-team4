@@ -737,7 +737,6 @@ void load_balance_wrr(struct rq *rq)
     find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight);
     
     if(max_weight == min_weight) {
-        raw_spin_unlock(&wrr_lock);
         return;
     }
 

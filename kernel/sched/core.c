@@ -42,8 +42,6 @@
 
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
-extern raw_spinlock_t wrr_lock;
-
 /*
  * Debugging: various feature bits
  */
@@ -3028,6 +3026,8 @@ unsigned long long task_sched_runtime(struct task_struct *p)
  * This function gets called by the timer code, with HZ frequency.
  * We call it with interrupts disabled.
  */
+
+extern raw_spinlock_t wrr_lock;
 
 extern void load_balance_wrr(struct rq *rq);
 

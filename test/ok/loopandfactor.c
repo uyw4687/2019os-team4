@@ -82,6 +82,7 @@ void factor2()
     printf("\n");
     end = clock();
     printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
+    fflush(stdout);
     }
 }
 

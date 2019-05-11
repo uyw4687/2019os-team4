@@ -13,7 +13,7 @@
 #define WRR_TIMESLICE (10 * HZ / 1000)
 #define WRR_LB_TIMESLICE 2 * HZ
 
-extern raw_spinlock_t wrr_lock;
+DEFINE_RAW_SPINLOCK(wrr_lock);
 
 int sched_wrr_timeslice = WRR_TIMESLICE;
 

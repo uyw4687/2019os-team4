@@ -42,7 +42,7 @@
 
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
-DEFINE_RAW_SPINLOCK(wrr_lock);
+extern raw_spinlock_t wrr_lock;
 
 /*
  * Debugging: various feature bits

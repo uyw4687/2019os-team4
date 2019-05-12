@@ -4,7 +4,7 @@ OS Spring Team4
 
 ### How to build our kernel
 * project 기본 build 방법으로 하시면 됩니다.
-* 또는 `./onetime.sh`를 실행해도 됩니다.
+* 또는 `./onetime.sh`를 실행해도 됩니다. 이렇게 하면 build 후에 image 파일이 생성되고 압축되는 과정까지 완료됩니다.
 
 ### High-level design and implementation
 #### System call registration
@@ -49,7 +49,7 @@ OS Spring Team4
   * `sched_init` 함수에서 `init_wrr_rq` 함수를 호출하도록 함
 
 * `kernel/sched/rt.c`
-  * RT scheduler보다 우선순위가 낮은 바로 다음 scheduler가 WRR이 되도록 설정
+  * RT scheduler보다 우선순위가 낮은 바로 다음 scheduler가 WRR scheduler가 되도록 설정
 
 * `kernel/sched/sched.h`
   * WRR도 `valid_policy` 중 하나로 인정되도록 함
@@ -58,12 +58,12 @@ OS Spring Team4
 
 * `kernel/sched/wrr.c`
   * `struct sched_class` 타입의 `wrr_sched_class` 정의
-    * WRR scheduler보다 우선순위가 낮은 바로 다음 scheduler가 CFS(fair)가 되도록 설정
+    * WRR scheduler보다 우선순위가 낮은 바로 다음 scheduler가 fair(CFS) scheduler가 되도록 설정
     * 각종 함수 포인터의 값 설정 및 해당 함수 구현
   * run queue를 초기화하는 `init_wrr_rq` 함수 정의
   * `init_sched_wrr_class` 함수 정의
 
-#### Implemented functions in WRR
+#### Necessary functions in WRR
 > 'kernel/sched/wrr.c'에 구현
 
 * `enqueue_task_wrr`
@@ -104,6 +104,23 @@ OS Spring Team4
 
 #### Synchronization
 * `task_struct`를 읽어야 할 때 `rcu_read_lock`과 `rcu_read_unlock` 사용
-* TODO 
+* `sched_setweight` 시스템 콜에서 `task_struct`에 값을 쓸 때 `write_lock(&tasklist_lock)`과 unlock 사용
+* `weight`가 변경될 때, load balance가 수행될 때, round robin이 수행될 때, enqueue가 수행될 때, 그리고 dequeue가 수행될 때 `raw_spin_lock(&wrr_lock)`과 unlock 사용
+* deadlock이 발생하지 않도록 신중하게 lock을 사용하여 구현함
 
+### Investigation
+* **TODO** 테스트 프로그램에 대한 설명
+* **TODO** 아랫줄의 내용
 You should provide a complete set of results that show all your tests. If there are any results that do not yield execution time proportional to weights, explain why. Your results and any explanations should be put in the README.md file in the project branch of your team's repository. Your plot should be named plot.pdf and should be put next to the README.md file.
+
+### Lessons learned
+* 기존에 kernel에서 돌아가던 scheduler인 RT(real-time)와 fair(CFS)의 코드를 읽고, 새 scheduler인 WRR을 구현하기 위해 어떤 함수가 반드시 구현되어야 하는지, 구현하지 않아도 되는 함수는 무엇인지 고민해 보았습니다.
+* 새 scheduler를 추가하려면 무엇을 해야 하는지 알게 되었습니다.
+* round robin이 어떻게 동작하는지 이해하고 직접 구현해 보았습니다.
+* load balance가 어떻게 동작하는지 이해하고 직접 구현해 보았습니다.
+* round robin이나 load balance가 수행되는 도중에 해당 task를 수정하는 경우가 없도록 잘 synchronize하기 위해 많은 고민을 하였습니다.
+* WRR로 돌아가던 task가 fork를 수행할 경우, 자식 task도 WRR로 돌아가도록 구현하였습니다.
+* 최소 하나 이상의 CPU에서 WRR로 돌아가는 task가 없도록 해야 하는 이유를 알았습니다. WRR이 fair(CFS)보다 높은 우선순위를 가지기 때문에 WRR로 돌아가는 task가 하나라도 있으면 그 CPU에서는 fair로 돌아가야 할 task가 절대로 수행되지 않습니다. 이 때문에 kernel thread 중 fair로 돌아가야 할 thread들이 starvation을 겪게 되고 시스템이 다운되는 것입니다.
+* 유저에 따라 실행 권한을 다르게 부여하는 방법을 알았습니다.
+* `pr_err`를 이용하여 상태를 출력하게 한 덕분에 디버깅이 훨씬 수월해졌습니다.
+* QEMU를 설치하고 어떻게 사용해야 하는지 익혔습니다. QEMU를 사용하지 않고 직접 기기에 kernel을 올려서 테스트했다면 시간이 매우 오래 걸렸을 것입니다.

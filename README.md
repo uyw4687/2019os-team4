@@ -13,7 +13,7 @@ OS Spring Team4
 * `sched_setweight`
   * 인자로 프로세스 `pid`와 바꿀 `weight`를 받습니다. 
   * 주어진 `weight`는 1 이상 20 이하여야 합니다. 그렇지 않으면 `-1`을 반환합니다.
-  * 만약 주어진 `pid`가 0이면 이 시스템 콜을 호출한 프로세스의 weight를 조정합니다.
+  * 만약 주어진 `pid`가 0이면 이 시스템 콜을 호출한 프로세스(task)를 다룹니다.
   * 주어진 `pid`의 task가 존재하지 않으면 `-EINVAL`을 반환합니다.
   * 해당 task의 scheduling policy가 WRR이 아니면 `-1`을 반환합니다.
   * root 유저 또는 해당 프로세스를 소유한 유저만 호출할 수 있습니다. 그렇지 않으면 `-EPERM`을 반환합니다.
@@ -22,7 +22,7 @@ OS Spring Team4
   * 실행에 문제가 있어 중간에 반환할 때, lock을 잡고 있는 상태이면 lock을 놓습니다.
 
 * `sched_getweight`
-  * 만약 주어진 `pid`가 0이면 이 시스템 콜을 호출한 프로세스의 weight를 조정합니다.
+  * 만약 주어진 `pid`가 0이면 이 시스템 콜을 호출한 프로세스(task)를 다룹니다.
   * 주어진 `pid`의 task가 존재하지 않으면 `-EINVAL`을 반환합니다.
   * 해당 task의 scheduling policy가 WRR이 아니면 `-1`을 반환합니다.
   * 실행에 문제가 없으면 해당 task의 `weight`를 반환합니다.
@@ -64,7 +64,7 @@ OS Spring Team4
   * `init_sched_wrr_class` 함수 정의
 
 #### Necessary functions in WRR
-> 'kernel/sched/wrr.c'에 구현
+> `kernel/sched/wrr.c`에 구현
 
 * `enqueue_task_wrr`
   * 해당 task를 run queue에서 제거한 후, 이 task를 run queue 맨 뒤에 추가
@@ -110,7 +110,7 @@ OS Spring Team4
 
 ### Investigation
 * **TODO** 테스트 프로그램에 대한 설명
-* **TODO** 아랫줄의 내용
+* **TODO** 다음에서 요구하는 내용 작성:
 You should provide a complete set of results that show all your tests. If there are any results that do not yield execution time proportional to weights, explain why. Your results and any explanations should be put in the README.md file in the project branch of your team's repository. Your plot should be named plot.pdf and should be put next to the README.md file.
 
 ### Lessons learned
@@ -120,7 +120,7 @@ You should provide a complete set of results that show all your tests. If there 
 * load balance가 어떻게 동작하는지 이해하고 직접 구현해 보았습니다.
 * round robin이나 load balance가 수행되는 도중에 해당 task를 수정하는 경우가 없도록 잘 synchronize하기 위해 많은 고민을 하였습니다.
 * WRR로 돌아가던 task가 fork를 수행할 경우, 자식 task도 WRR로 돌아가도록 구현하였습니다.
-* 최소 하나 이상의 CPU에서 WRR로 돌아가는 task가 없도록 해야 하는 이유를 알았습니다. WRR이 fair(CFS)보다 높은 우선순위를 가지기 때문에 WRR로 돌아가는 task가 하나라도 있으면 그 CPU에서는 fair로 돌아가야 할 task가 절대로 수행되지 않습니다. 이 때문에 kernel thread 중 fair로 돌아가야 할 thread들이 starvation을 겪게 되고 시스템이 다운되는 것입니다.
+* 최소 하나 이상의 CPU에서 WRR로 돌아가는 task가 없도록 해야 하는 이유를 알았습니다. WRR이 fair(CFS)보다 높은 우선순위를 가지기 때문에 WRR로 돌아가는 task가 하나라도 있으면 그 CPU에서는 fair로 돌아가야 할 task가 절대로 수행되지 않습니다. 이 때문에 모든 CPU에서 WRR로 돌아가는 task가 있는 경우, kernel thread 중 fair로 돌아가야 할 thread들이 starvation을 겪게 되고 시스템이 다운되는 것입니다.
 * 유저에 따라 실행 권한을 다르게 부여하는 방법을 알았습니다.
 * `pr_err`를 이용하여 상태를 출력하게 한 덕분에 디버깅이 훨씬 수월해졌습니다.
 * QEMU를 설치하고 어떻게 사용해야 하는지 익혔습니다. QEMU를 사용하지 않고 직접 기기에 kernel을 올려서 테스트했다면 시간이 매우 오래 걸렸을 것입니다.

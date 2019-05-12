@@ -134,6 +134,6 @@ You should provide a complete set of results that show all your tests. If there 
      ![](./data.png)
 
 
-- Result:
+- Result: 끝에 non increasing order에서 벗어나는 부분이 있는데 이 부분은 이 cpu에서 real time process 등 더 우선순위가 높은 것이 실행되었을 때 발생할 수 있는 상황입니다.
 
     ![](./result.png)

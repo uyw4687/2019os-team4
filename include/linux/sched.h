@@ -475,6 +475,8 @@ struct sched_wrr_entity {
     int                     weight;
     unsigned short          on_rq;
     unsigned short          on_list;
+    int                     is_rr_task;
+    int                     is_lb_task;
 	struct sched_wrr_entity		*back;
 
     struct wrr_rq            *wrr_rq;

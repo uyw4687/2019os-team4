@@ -125,7 +125,9 @@ You should provide a complete set of results that show all your tests. If there 
 * `pr_err`를 이용하여 상태를 출력하게 한 덕분에 디버깅이 훨씬 수월해졌습니다.
 * QEMU를 설치하고 어떻게 사용해야 하는지 익혔습니다. QEMU를 사용하지 않고 직접 기기에 kernel을 올려서 테스트했다면 시간이 매우 오래 걸렸을 것입니다.
 
-#Analysis *
+#Analysis
+*
      ![](./data.png)
 #Result
+*
      ![](./result.png)

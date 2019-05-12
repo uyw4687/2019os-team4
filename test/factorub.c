@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <sched.h>
 
@@ -9,8 +8,10 @@
 
 /* Select */
 #define SELECT  0 // 0 for PRIME32, 1 for PRIME64
-#define PRIME32 100169
-#define PRIME64 341041
+//#define PRIME32 10000019
+#define PRIME32 179424361
+//#define PRIME32 2147483647
+#define PRIME64 2305843009213693951
 
 #define SCHED_SETWEIGHT     398
 #define SCHED_GETWEIGHT     399
@@ -48,47 +49,19 @@ void factor(long num)
     printf("\n");
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     long i;
     long long num;
     int ret;
     
-    if(argc != 3) {
-        printf("give argument\nfirst number, second weight\n");
-        return -1;
-    }
-
-    num = atoi(argv[1]);
-
-    struct sched_param param;
-
-    param.sched_priority = sched_get_priority_min(SCHED_WRR);
-
-    printf("sched_priority : %d\n", param.sched_priority);
-
-    ret = sched_setscheduler(0, SCHED_WRR, &param);
-    if(ret < 0)
-    {
-        perror("sched_setscheduler failed");
-        return -1;
-    }
+    if(!SELECT)
+        num = PRIME32;
+    else
+        num = PRIME64;
+    
     printf("policy : %d\n", sched_getscheduler(0));
 
-    ret = syscall(SCHED_SETWEIGHT, 0, atoi(argv[2]));
-    if(ret < 0)
-    {
-        perror("sched_setweight failed\n");
-        return -1;
-    }
-
-    ret = syscall(SCHED_GETWEIGHT, 0);
-    if(ret < 0)
-    {
-        perror("sched_getweight failed\n");
-        return -1;
-    }
- 
     factor(num);
 
     return 0;

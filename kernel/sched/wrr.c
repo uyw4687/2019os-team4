@@ -790,7 +790,7 @@ void load_balance_wrr(struct rq *rq)
         wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
         task = wrr_task_of(wrr_se);
 
-        if(wrr_se->weight < diff/2 && !task_current(busiest, task)) {
+        if(wrr_se->weight < (diff+1)/2 && !task_current(busiest, task)) {
             find_movable_task = 1;
             break;
         }

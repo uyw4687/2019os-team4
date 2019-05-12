@@ -2211,6 +2211,7 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
     p->wrr.on_list      = 0;
     p->wrr.is_lb_task   = 0;
     p->wrr.is_rr_task   = 0;
+    p->wrr.is_ss_task   = 0;
     p->wrr.weight       = 10;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
@@ -4031,6 +4032,8 @@ static bool check_same_owner(struct task_struct *p)
 	return match;
 }
 
+extern int set_sched_wrr_by_cpu3;
+
 static int __sched_setscheduler(struct task_struct *p,
 				const struct sched_attr *attr,
 				bool user, bool pi)
@@ -4044,6 +4047,10 @@ static int __sched_setscheduler(struct task_struct *p,
 	int reset_on_fork;
 	int queue_flags = DEQUEUE_SAVE | DEQUEUE_MOVE | DEQUEUE_NOCLOCK;
 	struct rq *rq;
+
+    struct rq *wrr_change_rq;
+    struct task_struct *wrr_next_task;
+    int wrr_task_on_cpu;
 
 	/* The pi code expects interrupts enabled */
 	BUG_ON(pi && in_interrupt());
@@ -4234,26 +4241,99 @@ change:
 
 	queued = task_on_rq_queued(p);
 	running = task_current(rq, p);
-	if (queued)
-		dequeue_task(rq, p, queue_flags);
-	if (running)
-		put_prev_task(rq, p);
 
-	prev_class = p->sched_class;
-	__setscheduler(rq, p, attr, pi);
+    
+    if (attr->sched_policy = SCHED_WRR) {
+        int cpu;
+        
+        raw_spin_lock(&wrr_lock);
 
-	if (queued) {
+        set_sched_wrr_running = 1;
+        p->wrr.is_ss_task = 1;
+
+        
+        for_each_cpu(cpu, &p->cpus_allowed) {
+            
+            if(cpu != 3)
+                break;
+
+            set_sched_wrr_running = 1;
+            p->wrr.is_ss_task = 1;
+            task_rq_unlock(rq, p, &rf);
+            raw_spin_unlock(&wrr_lock);
+
+            return -1;
+        }
+
+        wrr_task_on_cpu = p->on_cpu;
+
+        if (queue)
+            dequeue_task(rq, p, queue_flags);
+
+        if (wrr_task_on_cpu == 3) {
+            if (running)
+                wrr_next_task = pick_next_task(rq, p, &rf);
+        }
+        else 
+            if (running)
+                put_prev_task(rq, p);
+
+        prev_class = p->sched_class;
+        __setscheduler(rq, p, attr, pi);
+
+        wrr_change_rq = select_task_rq_wrr(p, 3, 0, 0);
+        }
+    }
+    else {
+	    if (queued)
+		    dequeue_task(rq, p, queue_flags);
+
+        if (running)
+		    put_prev_task(rq, p);
+
+	    prev_class = p->sched_class;
+    	__setscheduler(rq, p, attr, pi);
+    }
+
+    if (set_sched_wrr_running) {
+        if(wrr_task_on_cpu == 3) {
+            
+            if (queued)
+                enqueue_task(change_rq, p, queue_flags);
+            
+            if (running)
+                set_curr_task(rq, next_task);
+        }
+        else {
+
+            if (queued)
+                enqueue_task(rq, p, queue_flags);
+
+            if (running)
+                set_curr_task(rq, p);
+    }
+    
+        set_sched_wrr_running = 0;
+        p->wrr.is_ss_task = 0;
+     
+        raw_spin_unlock(&wrr_lock);
+    
+    }
+    else {
+	    if (queued) {
 		/*
 		 * We enqueue to tail when the priority of a task is
 		 * increased (user space view).
 		 */
-		if (oldprio < p->prio)
-			queue_flags |= ENQUEUE_HEAD;
+		    if (oldprio < p->prio)
+			    queue_flags |= ENQUEUE_HEAD;
 
-		enqueue_task(rq, p, queue_flags);
-	}
-	if (running)
-		set_curr_task(rq, p);
+		    enqueue_task(rq, p, queue_flags);
+	    }
+
+        if (running)
+		    set_curr_task(rq, p);
+    }
 
 	check_class_changed(rq, p, prev_class, oldprio);
 

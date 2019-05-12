@@ -793,6 +793,7 @@ void load_balance_wrr(struct rq *rq)
     struct sched_wrr_entity *wrr_se;
     struct list_head *list;
     struct task_struct *task = rq->curr;
+    struct task_struct *movable_highest_weight_task;
     int max_weight;
     int min_weight;
     int find_movable_task = 0;
@@ -824,7 +825,13 @@ void load_balance_wrr(struct rq *rq)
 
         if(wrr_se->weight < diff/2 && !task_current(busiest, task)) {
             find_movable_task = 1;
-            break;
+            if(!movable_highest_weight_task)
+                movable_highest_weight_task = task;
+
+            else if(movable_highest_weight_task->wrr.weight < task->wrr.weight)
+                movable_highest_weight_task = task;
+
+            continue;
         }
     }
     if(find_movable_task){

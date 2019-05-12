@@ -6834,7 +6834,7 @@ long sched_setweight(pid_t pid, int weight)
         return -EINVAL;
     }
 
-    if(oldweight == weight)
+    if(oldweight < weight)
         if(uid && euid) {
             raw_spin_unlock(&wrr_lock);
             return -EPERM;

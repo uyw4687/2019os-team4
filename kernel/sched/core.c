@@ -2211,7 +2211,6 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
     p->wrr.on_list      = 0;
     p->wrr.is_lb_task   = 0;
     p->wrr.is_rr_task   = 0;
-    p->wrr.is_ss_task   = 0;
     p->wrr.weight       = 10;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
@@ -4032,7 +4031,7 @@ static bool check_same_owner(struct task_struct *p)
 	return match;
 }
 
-extern int set_sched_wrr_by_cpu3;
+//extern int wrr_set_sched_running;
 
 static int __sched_setscheduler(struct task_struct *p,
 				const struct sched_attr *attr,
@@ -4048,9 +4047,9 @@ static int __sched_setscheduler(struct task_struct *p,
 	int queue_flags = DEQUEUE_SAVE | DEQUEUE_MOVE | DEQUEUE_NOCLOCK;
 	struct rq *rq;
 
-    struct rq *wrr_change_rq;
+    /*struct rq *wrr_change_rq;
     struct task_struct *wrr_next_task;
-    int wrr_task_on_cpu;
+    int wrr_task_on_cpu;*/
 
 	/* The pi code expects interrupts enabled */
 	BUG_ON(pi && in_interrupt());
@@ -4243,12 +4242,12 @@ change:
 	running = task_current(rq, p);
 
     
-    if (attr->sched_policy = SCHED_WRR) {
+    /*if (attr->sched_policy = SCHED_WRR) {
         int cpu;
         
         raw_spin_lock(&wrr_lock);
 
-        set_sched_wrr_running = 1;
+        wrr_set_sched_running = 1;
         p->wrr.is_ss_task = 1;
 
         
@@ -4257,7 +4256,7 @@ change:
             if(cpu != 3)
                 break;
 
-            set_sched_wrr_running = 1;
+            wrr_set_sched_running = 1;
             p->wrr.is_ss_task = 1;
             task_rq_unlock(rq, p, &rf);
             raw_spin_unlock(&wrr_lock);
@@ -4281,10 +4280,10 @@ change:
         prev_class = p->sched_class;
         __setscheduler(rq, p, attr, pi);
 
-        wrr_change_rq = select_task_rq_wrr(p, 3, 0, 0);
+        wrr_change_rq = select_task_rq(p, 3, 0, 0);
         }
     }
-    else {
+    else {*/
 	    if (queued)
 		    dequeue_task(rq, p, queue_flags);
 
@@ -4293,13 +4292,13 @@ change:
 
 	    prev_class = p->sched_class;
     	__setscheduler(rq, p, attr, pi);
-    }
+    /*}
 
-    if (set_sched_wrr_running) {
+    if (wrr_set_sched_running) {
         if(wrr_task_on_cpu == 3) {
             
             if (queued)
-                enqueue_task(change_rq, p, queue_flags);
+                enqueue_task(wrr_change_rq, p, queue_flags);
             
             if (running)
                 set_curr_task(rq, next_task);
@@ -4311,15 +4310,15 @@ change:
 
             if (running)
                 set_curr_task(rq, p);
-    }
+        }
     
-        set_sched_wrr_running = 0;
+        wrr_set_sched_wrr_running = 0;
         p->wrr.is_ss_task = 0;
      
         raw_spin_unlock(&wrr_lock);
     
     }
-    else {
+    else {*/
 	    if (queued) {
 		/*
 		 * We enqueue to tail when the priority of a task is
@@ -4333,7 +4332,7 @@ change:
 
         if (running)
 		    set_curr_task(rq, p);
-    }
+    //}
 
 	check_class_changed(rq, p, prev_class, oldprio);
 

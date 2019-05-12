@@ -642,10 +642,8 @@ static int select_task_rq_wrr(struct task_struct *p, int prev_cpu, int sd_flag, 
 
     for_each_cpu(cpu,&p->cpus_allowed) {
         
-        if(cpu == 3 && !min_rq) {
-            rcu_read_unlock();
-            return -1;
-        }
+        if(cpu == 3)
+            break;
         
         weight = 0;
 
@@ -663,6 +661,9 @@ static int select_task_rq_wrr(struct task_struct *p, int prev_cpu, int sd_flag, 
     }
 
     rcu_read_unlock();
+
+    if(!min_rq)
+        return -1;
     // TODO fair.c 5942L / rt.c 1382L
 
     return min_rq->cpu;

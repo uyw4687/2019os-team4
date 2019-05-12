@@ -639,6 +639,7 @@ static void switched_from_wrr(struct rq *rq, struct task_struct *p)
 
 static void switched_to_wrr(struct rq *rq, struct task_struct *p)
 {
+    /*
     if (task_on_rq_queued(p)) {
         if (rq->curr == p) {
             // TODO
@@ -646,7 +647,7 @@ static void switched_to_wrr(struct rq *rq, struct task_struct *p)
             // TODO
         }
     }
-
+    */
     // TODO fair.c 9232L / rt.c 2209L
 }
 

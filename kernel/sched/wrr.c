@@ -722,6 +722,7 @@ static void switched_from_wrr(struct rq *rq, struct task_struct *p)
 
 static void switched_to_wrr(struct rq *rq, struct task_struct *p)
 {
+    /*
     if (task_on_rq_queued(p)) {
         if (rq->curr == p) {
             // TODO
@@ -729,7 +730,7 @@ static void switched_to_wrr(struct rq *rq, struct task_struct *p)
             // TODO
         }
     }
-
+    */
     // TODO fair.c 9232L / rt.c 2209L
 }
 
@@ -823,7 +824,7 @@ void load_balance_wrr(struct rq *rq)
         wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
         task = wrr_task_of(wrr_se);
 
-        if(wrr_se->weight < diff/2 && !task_current(busiest, task)) {
+        if(wrr_se->weight < (diff+1)/2 && !task_current(busiest, task)) {
             find_movable_task = 1;
             if(!movable_highest_weight_task)
                 movable_highest_weight_task = task;

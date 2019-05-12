@@ -12,7 +12,7 @@
  */
 #define WRR_TIMESLICE (10 * HZ / 1000)
 #define WRR_LB_TIMESLICE 2 * HZ
-#define DEBUG 1
+#define DEBUG 0
 
 int on_fork_wrr=0;
 
@@ -809,7 +809,7 @@ void load_balance_wrr(struct rq *rq)
     reset_lb_timeslice();
     
     find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight); 
-    if(max_weight == min_weight) {
+    if(max_weight - min_weight <= 2) {
         wrr_load_balance_running = 0;
         return;
     }

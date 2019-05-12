@@ -126,6 +126,7 @@ You should provide a complete set of results that show all your tests. If there 
 * QEMU를 설치하고 어떻게 사용해야 하는지 익혔습니다. QEMU를 사용하지 않고 직접 기기에 kernel을 올려서 테스트했다면 시간이 매우 오래 걸렸을 것입니다.
 
 #Result
+`
 WORKS ON ONE CPU					
 인수분해   / 다른 프로세스    /  인수분해 프로세스의 비율 / weight 1차이 때 비율 /  걸린 시간 비 /  weight 1차이 때 비율
 weight(a) / total weight(b)	/ percentage(c = a/b*100) /	ratio(next/curr)	/ time spent(1/c)	/ ratio(next/curr)
@@ -149,4 +150,4 @@ weight(a) / total weight(b)	/ percentage(c = a/b*100) /	ratio(next/curr)	/ time 
 18	              58	           31.03448276              	1.037664783        		0.032222222   	0.963702359
 19	              59	           32.20338983              	1.035087719	        	0.031052632   	0.966101695
 20	              60           	33.33333333              		                    0.03	
-
+`

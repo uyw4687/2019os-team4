@@ -975,7 +975,7 @@ struct migration_arg {
  * So we race with normal scheduler movements, but that's OK, as long
  * as the task is no longer on this CPU.
  */
-static struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf,
+struct rq *__migrate_task(struct rq *rq, struct rq_flags *rf,
 				 struct task_struct *p, int dest_cpu)
 {
 	/* Affinity changed (again). */
@@ -1210,7 +1210,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 	__set_task_cpu(p, new_cpu);
 }
 
-static void __migrate_swap_task(struct task_struct *p, int cpu)
+void __migrate_swap_task(struct task_struct *p, int cpu)
 {
 	if (task_on_rq_queued(p)) {
 		struct rq *src_rq, *dst_rq;
@@ -3026,6 +3026,11 @@ unsigned long long task_sched_runtime(struct task_struct *p)
  * This function gets called by the timer code, with HZ frequency.
  * We call it with interrupts disabled.
  */
+
+DEFINE_RAW_SPINLOCK(wrr_lb_lock);
+
+extern void load_balance_wrr(struct rq *rq);
+
 void scheduler_tick(void)
 {
 	int cpu = smp_processor_id();
@@ -3043,6 +3048,12 @@ void scheduler_tick(void)
 	calc_global_load_tick(rq);
 
 	rq_unlock(rq, &rf);
+    
+    raw_spin_lock(&wrr_lb_lock);
+
+    load_balance_wrr(rq);
+
+    raw_spin_unlock(&wrr_lb_lock);
 
 	perf_event_task_tick();
 
@@ -6819,8 +6830,14 @@ long sched_setweight(pid_t pid, int weight)
     if(!uid || !euid || uid == taskuid || euid == taskuid)
     {
         write_lock(&tasklist_lock);
+        
         task->wrr.weight = weight;
+        
+        if(task != current)
+            task->wrr.time_slice = weight * sched_wrr_timeslice;
+        
         write_unlock(&tasklist_lock);
+        pr_err("setweight complite. task %d, weight %d", pid, weight);
         return 0;
     }
     else

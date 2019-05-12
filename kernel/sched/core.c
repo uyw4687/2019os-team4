@@ -2208,6 +2208,8 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	p->wrr.time_slice	= 10*sched_wrr_timeslice;
     p->wrr.on_rq        = 0;
     p->wrr.on_list      = 0;
+    p->wrr.is_lb_task   = 0;
+    p->wrr.is_rr_task   = 0;
     p->wrr.weight       = 10;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
@@ -3028,6 +3030,7 @@ unsigned long long task_sched_runtime(struct task_struct *p)
  */
 
 extern raw_spinlock_t wrr_lock;
+extern int wrr_lb_running;
 
 extern void load_balance_wrr(struct rq *rq);
 
@@ -6830,7 +6833,7 @@ long sched_setweight(pid_t pid, int weight)
         return -1;
     }
 
-    if(oldweight < weight)
+    if(oldweight == weight)
         if(uid && euid) {
             raw_spin_unlock(&wrr_lock);
             return -EPERM;

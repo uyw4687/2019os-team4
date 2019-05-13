@@ -109,9 +109,43 @@ OS Spring Team4
 * deadlock이 발생하지 않도록 신중하게 lock을 사용하여 구현함
 
 ### Investigation
-* **TODO** 테스트 프로그램에 대한 설명
-* **TODO** 다음에서 요구하는 내용 작성:
-You should provide a complete set of results that show all your tests. If there are any results that do not yield execution time proportional to weights, explain why. Your results and any explanations should be put in the README.md file in the project branch of your team's repository. Your plot should be named plot.pdf and should be put next to the README.md file.
+#### Test program
+* [./test/ok/loopandfactor](./test/ok/loopandfactor) 로 테스트를 진행하였습니다.
+  * 실행하면 이 프로세스를 WRR로 돌립니다. (WRR이 구현된 환경에서만 돌릴 수 있습니다.)
+  * 그리고 1부터 17 사이의 숫자를 입력하여 원하는 명령을 수행할 수 있습니다.
+    * 1을 입력하면 sleep할 시간을 추가로 입력받습니다. 그리고 이 시간만큼 sleep합니다.
+    * 2를 입력하면 반복문을 돌릴 횟수를 추가로 입력받습니다. 그리고 아무 일도 하지 않고 정해진 횟수 동안 반복문을 돕니다.
+    * 3을 입력하면 반복문을 돌릴 횟수와 출력 주기를 입력받습니다. 그리고 반복문을 돈 횟수가 출력 주기로 나누어 떨어질 때마다 상태를 출력하면서 정해진 횟수 동안 반복문을 돕니다.
+    * 4를 입력하면 weight를 변경할 프로세스의 pid와 변경할 weight를 입력받습니다. 그리고 `sched_setweight` 시스템 콜을 호출하여 해당 프로세스의 weight를 변경합니다.
+    * 5를 입력하면 weight를 알고 싶은 프로세스의 pid를 입력받습니다. 그리고 `sched_getweight` 시스템 콜을 호출하여 해당 프로세스의 weight 값을 출력합니다.
+    * 6을 입력하면 이 프로세스를 한 번 fork한 후, 부모 프로세스와 자식 프로세스의 weight 값을 각각 출력하고 자식 프로세스를 종료합니다.
+    * 7을 입력하면 이 프로세스가 0번, 1번, 2번 CPU에서만 돌아갈 수 있도록 합니다.
+    * 8을 입력하면 어떤 scheduler로 돌아가는지 알고 싶은 프로세스의 pid를 입력받습니다. 그리고 `sched_getscheduler` 시스템 콜을 호출하여 해당 프로세스가 돌아가는 scheduler policy 번호를 출력합니다. (WRR의 경우 7)
+    * 9를 입력하면 3을 소인수분해하는 작업을 1번 수행하고 이 프로세스를 종료합니다.
+    * 10을 입력하면 이 프로세스를 종료합니다.
+    * 11을 입력하면 줄 바꿈 문자를 여러 번 출력하여 화면을 깔끔하게 비웁니다.
+    * 12를 입력하면 0 이상 3 이하의 값을 추가로 입력받습니다. 이 프로세스는 방금 입력받은 번호의 CPU에서만 돌아가게 됩니다.
+    * 13을 입력하면 0 이상 3 이하의 값을 추가로 입력받습니다. 이 프로세스는 방금 입력받은 번호의 CPU에서도 돌아갈 수 있게 됩니다.
+    * 14를 입력하면 3을 소인수분해하면서 소인수분해가 완료될 때마다 소인수분해에 걸린 시간을 출력하는 작업을 무한히 반복 수행합니다.
+    * 15를 입력하면 소인수분해할 수를 추가로 입력받습니다. 그리고 방금 입력받은 수를 소인수분해하면서 소인수분해가 완료될 때마다 소인수분해에 걸린 시간을 출력하는 작업을 무한히 반복 수행합니다.
+    * 16을 입력하면 반복문을 돌릴 횟수를 추가로 입력받습니다. 그리고 방금 입력받은 수만큼 반복문을 돌리면서 반복문을 완료할 때마다 반복에 걸린 시간을 출력하는 작업을 무한히 반복 수행합니다.
+    * 17을 입력하면 소인수분해할 수를 추가로 입력받습니다. 그리고 이 프로세스의 weight를 1부터 20까지 차례로 바꾸면서 각각으로 방금 입력받은 수를 소인수분해하고 소인수분해에 걸린 시간을 출력하는 작업을 무한히 반복 수행합니다.
+  * Demo 영상에서는 다음의 명령들을 입력한 프로세스들을 동시에 돌렸습니다.
+    * 프로세스 1: `12 0 4 0 20 16 200000000` -> 0번 CPU에서 weight를 20으로 하여 200000000번 아무 일도 하지 않는 반복문을 돌고 수행 시간을 출력하는 작업을 무한히 반복 수행
+    * 프로세스 2: `12 0 4 0 20 16 200000000` -> 프로세스 1과 같은 작업을 무한히 반복 수행
+    * 프로세스 3: `12 0 17 10000019` -> 0번 CPU에서 weight를 1부터 20까지 바꾸면서 각각으로 10000019를 소인수분해하고 수행 시간을 출력하는 작업을 무한히 반복 수행
+
+#### Analysis & Result
+
+* Prior Analysis:
+
+     ![](./data.png)
+
+* Result: 끝에 non increasing order에서 벗어나는 부분이 있는데 이 부분은 이 cpu에서 real time process 등 더 우선순위가 높은 것이 실행되었을 때 발생할 수 있는 상황입니다.
+
+    ![](./result.png)
+
+* Plot: [plot.pdf](./plot.pdf) 를 참조하십시오.
 
 ### Lessons learned
 * 기존에 kernel에서 돌아가던 scheduler인 RT(real-time)와 fair(CFS)의 코드를 읽고, 새 scheduler인 WRR을 구현하기 위해 어떤 함수가 반드시 구현되어야 하는지, 구현하지 않아도 되는 함수는 무엇인지 고민해 보았습니다.
@@ -125,15 +159,3 @@ You should provide a complete set of results that show all your tests. If there 
 * `pr_err`를 이용하여 상태를 출력하게 한 덕분에 디버깅이 훨씬 수월해졌습니다.
 * QEMU를 설치하고 어떻게 사용해야 하는지 익혔습니다. QEMU를 사용하지 않고 직접 기기에 kernel을 올려서 테스트했다면 시간이 매우 오래 걸렸을 것입니다.
 
-#Analysis & Result
-
-
-- Prior Analysis:
-
-    
-     ![](./data.png)
-
-
-- Result: 끝에 non increasing order에서 벗어나는 부분이 있는데 이 부분은 이 cpu에서 real time process 등 더 우선순위가 높은 것이 실행되었을 때 발생할 수 있는 상황입니다.
-
-    ![](./result.png)

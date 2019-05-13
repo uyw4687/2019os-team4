@@ -37,8 +37,8 @@ void print()
     	{
             ;
     	}
-        printf("\n");
         end = clock();
+        printf("\n");
         printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
     }
 }
@@ -51,7 +51,7 @@ void factor3()
     clock_t begin, end;
     int r, w, i= 0;
 
-    printf("what to factor?");
+    printf("what to factor? ");
     scanf("%lld", &input);
 
     //invalid input
@@ -86,8 +86,8 @@ void factor3()
                 printf("* ");
             }
         }
-        printf("\n");
         end = clock();
+        printf("\n");
         printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
         fflush(stdout);
     }
@@ -100,7 +100,7 @@ void factor2()
     long long input;
     clock_t begin, end;
 
-    printf("what to factor?");
+    printf("what to factor? ");
     scanf("%lld", &input);
 
     //invalid input
@@ -128,8 +128,8 @@ void factor2()
                 printf("* ");
             }
         }
-        printf("\n");
         end = clock();
+        printf("\n");
         printf("time spent(second) : %lf\n", (double)(end-begin)/CLOCKS_PER_SEC);
         fflush(stdout);
     }
@@ -141,9 +141,6 @@ void factor(long long num)
     long long divisor;
     long long dividend = num;
     clock_t begin, end;
-
-    printf("what to factor?");
-    scanf("%lld", &dividend);
 
     //invalid input
     if(dividend<2)
@@ -191,11 +188,12 @@ int main()
     
     while(1) {
 
-        printf("1:sleep\n");
-        printf("2: loop from 0 to input value without printing\n");
-        printf("3: loop from 0 to input value with printing by the input value increment\n");
-        printf("4:setweight\n5:getweight\n6:fork\n7:use only 0, 1, 2 cpu\n8:getscheduler\n");
-        printf("9:break and factor\n10:finish program return\n11: clear screen\n");
+        printf("1 : sleep\n");
+        printf("2 : loop from 0 to input value without printing\n");
+        printf("3 : loop from 0 to input value with printing by the input value increment\n");
+        printf("4 : setweight\n5 : getweight\n6 : fork\n7 : use only 0, 1, 2 cpu\n");
+        printf("8 : getscheduler\n");
+        printf("9 : break and factor\n10: finish program return\n11: clear screen\n");
         printf("12: use only one cpu\n13: cpu setting not zeroing mask value\n");
         printf("14: repeat factor\n15: repeat factor with only one value\n");
         printf("16: from 0 to input value loop and print time continuously\n");
@@ -215,7 +213,7 @@ int main()
                 ;
             continue;
         case 3:
-            printf("input two ex)1 2\n");
+            printf("input two : ex) 1 2\n");
             scanf("%d %d", &q, &r);
             for(i=0;i<q;i++) 
                 if(i%r==0)
@@ -223,9 +221,9 @@ int main()
             continue;
 
         case 4:
-            printf("input pid :  (0 for myself)");
+            printf("input pid : (0 for myself)\n");
             scanf("%d", &q);
-            printf("input weight :  (1~20)");
+            printf("input weight :  (1~20)\n");
             scanf("%d", &r);
             r = syscall(SETWEIGHT, q,r);
             if(r<0)
@@ -234,7 +232,7 @@ int main()
 
             continue;
         case 5:
-            printf("input pid :  (0 for myself)");
+            printf("input pid : (0 for myself)");
             scanf("%d", &q);
             r = syscall(GETWEIGHT, q);
             if(r<0)
@@ -337,6 +335,7 @@ int main()
             continue;
         }
         factor(3);
+        break;
 
     }
     return 0;

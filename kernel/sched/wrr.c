@@ -404,7 +404,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
     // TODO fair.c 6396L / rt.c 1373L
     struct sched_wrr_entity *wrr_se = &p->wrr;
 
-    //TODO make updata_curr_wrr
+    //TODO make update_curr_wrr
 
     update_curr_wrr(rq);
 
@@ -637,7 +637,7 @@ static void put_prev_task_wrr(struct rq *rq, struct task_struct *prev)
 
 static int select_task_rq_wrr(struct task_struct *p, int prev_cpu, int sd_flag, int wake_flags)
 {
-    /*
+    
     int cpu;
     struct rq *rq;
     struct list_head *list;
@@ -678,8 +678,6 @@ static int select_task_rq_wrr(struct task_struct *p, int prev_cpu, int sd_flag, 
     pr_err("select task rq. task %d cpu %d",p->pid, find_rq);
 #endif
     return find_rq;
-    */
-    return 0;
     // TODO fair.c 5942L / rt.c 1382L
 }
 
@@ -785,6 +783,72 @@ static void switched_to_wrr(struct rq *rq, struct task_struct *p)
     // TODO fair.c 9232L / rt.c 2209L
 }
 
+static struct rq *find_busiest_rq_wrr(int *max_weight) {
+    int weight, cpu;
+    struct rq *rq, *busiest;
+    int max = -1;
+    struct sched_wrr_entity *wrr_se;
+    struct list_head *list;
+
+    rcu_read_lock();
+
+    for_each_online_cpu(cpu) {
+
+        if(cpu == 3)
+            break;
+
+        weight = 0;
+        rq = cpu_rq(cpu);
+        
+        list_for_each(list, &rq->wrr.queue) {
+            wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
+            weight += wrr_se->weight;
+        }
+
+        if(weight > max) {
+            busiest = rq;
+            max = weight;
+        }
+    }
+    rcu_read_unlock();
+    
+    *max_weight = max;
+    return busiest;
+}
+
+static struct rq *find_freest_rq_wrr(int *min_weight) {
+    int weight, cpu;
+    struct rq *rq, *freest;
+    int min = 0x7fffffff;
+    struct sched_wrr_entity *wrr_se;
+    struct list_head *list;
+
+    rcu_read_lock();
+
+    for_each_online_cpu(cpu) {
+
+        if(cpu == 3)
+            break;
+
+        weight = 0;
+        rq = cpu_rq(cpu);
+        
+        list_for_each(list, &rq->wrr.queue) {
+            wrr_se = list_entry(list, struct sched_wrr_entity, run_list);
+            weight += wrr_se->weight;
+        }
+
+        if(weight < min) {
+            freest = rq;
+            min = weight;
+        }
+    }
+    rcu_read_unlock();
+    
+    *min_weight = min;
+    return freest;
+}
+/*
 static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, int *max_weight, int *min_weight)
 {
     int weight, cpu;
@@ -817,6 +881,8 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
             min = weight;
             min_rq = rq;
         }
+
+        pr_err("lb calculate cpu %d complete. max %d, min %d", cpu, max, min);
     }
 
     rcu_read_unlock();
@@ -825,8 +891,9 @@ static void find_busiest_freest_queue_wrr(struct rq *max_rq, struct rq *min_rq, 
     *min_weight = min;
     if(min == 0x7fffffff)
         *min_weight = 0;
+    
 }
-
+*/
 static void reset_lb_timeslice(void) {
     int cpu;
     struct rq *rq;
@@ -843,12 +910,12 @@ extern void __migrate_swap_task(struct task_struct *p, int cpu);
 
 void load_balance_wrr(struct rq *rq)
 {
-    struct rq *busiest = cpu_rq(0);
-    struct rq *freest = cpu_rq(1);
+    struct rq *busiest;
+    struct rq *freest;
     //struct rq *lock_rq;
     struct sched_wrr_entity *wrr_se;
     struct list_head *list;
-    struct task_struct *task = rq->curr;
+    struct task_struct *task;
     struct task_struct *movable_highest_weight_task;
     int max_weight;
     int min_weight;
@@ -864,14 +931,17 @@ void load_balance_wrr(struct rq *rq)
 
     raw_spin_lock(&wrr_lock);
     wrr_load_balance_running = 1;
+    
+    busiest = find_busiest_rq_wrr(&max_weight);
+    freest = find_freest_rq_wrr(&min_weight);
 
-    find_busiest_freest_queue_wrr(busiest, freest, &max_weight, &min_weight); 
     if(max_weight - min_weight <= 2) {
         wrr_load_balance_running = 0;
         raw_spin_unlock(&wrr_lock);
         return;
     }
 
+    pr_err("load balance find. busiest %d, freest %d, max %d, min %d",busiest->cpu, freest->cpu, max_weight, min_weight);
     //pr_err("load_balance_wrr");
 
     diff = max_weight - min_weight;
@@ -889,16 +959,20 @@ void load_balance_wrr(struct rq *rq)
             else if(movable_highest_weight_task->wrr.weight < task->wrr.weight)
                 movable_highest_weight_task = task;
 
+            pr_err("find movable task %d, weight %d", task->pid, task->wrr.weight);
+
         }
     }
+
     if(find_movable_task){
-        
+        pr_err("highest_task is %d, weight is %d", movable_highest_weight_task->pid, movable_highest_weight_task->weight);
+
         movable_highest_weight_task->wrr.is_lb_task = 1;
         __migrate_swap_task(movable_highest_weight_task, freest->cpu);
         movable_highest_weight_task->wrr.is_lb_task = 0;
 
 #if DEBUG
-        pr_err("load balance task %d, busiest cpu %d weight %d, freest cpu %d weight %d, task weight %d", task->pid, busiest->cpu, max_weight, freest->cpu, min_weight, task->wrr.weight);
+        pr_err("load balance task %d, busiest cpu %d weight %d, freest cpu %d weight %d, task weight %d", movable_highest_weight_task->pid, busiest->cpu, max_weight, freest->cpu, min_weight, movable_highest_weight_task->wrr.weight);
 #endif
     }
 

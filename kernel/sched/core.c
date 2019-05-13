@@ -40,7 +40,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
-#define DEBUG_WRR 1
+#define DEBUG_WRR 0
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
 /*

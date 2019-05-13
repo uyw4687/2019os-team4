@@ -124,3 +124,16 @@ You should provide a complete set of results that show all your tests. If there 
 * 유저에 따라 실행 권한을 다르게 부여하는 방법을 알았습니다.
 * `pr_err`를 이용하여 상태를 출력하게 한 덕분에 디버깅이 훨씬 수월해졌습니다.
 * QEMU를 설치하고 어떻게 사용해야 하는지 익혔습니다. QEMU를 사용하지 않고 직접 기기에 kernel을 올려서 테스트했다면 시간이 매우 오래 걸렸을 것입니다.
+
+#Analysis & Result
+
+
+- Prior Analysis:
+
+    
+     ![](./data.png)
+
+
+- Result: 끝에 non increasing order에서 벗어나는 부분이 있는데 이 부분은 이 cpu에서 real time process 등 더 우선순위가 높은 것이 실행되었을 때 발생할 수 있는 상황입니다.
+
+    ![](./result.png)

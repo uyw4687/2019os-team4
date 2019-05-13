@@ -40,7 +40,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
-#define DEBUG_WRR 0
+#define DEBUG_WRR 1
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
 /*
@@ -2211,7 +2211,9 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
     p->wrr.on_list      = 0;
     p->wrr.is_lb_task   = 0;
     p->wrr.is_rr_task   = 0;
+    p->wrr.is_ss_task   = 0;
     p->wrr.weight       = 10;
+    p->wrr.on_fork      = 0;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	INIT_HLIST_HEAD(&p->preempt_notifiers);
@@ -3033,6 +3035,8 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 extern raw_spinlock_t wrr_lock;
 extern int wrr_lb_running;
 
+DEFINE_RAW_SPINLOCK(wrr_lb_lock);
+
 extern void load_balance_wrr(struct rq *rq);
 
 void scheduler_tick(void)
@@ -3053,11 +3057,11 @@ void scheduler_tick(void)
 
 	rq_unlock(rq, &rf);
     
-    raw_spin_lock(&wrr_lock);
+    raw_spin_lock(&wrr_lb_lock);
 
     load_balance_wrr(rq);
 
-    raw_spin_unlock(&wrr_lock);
+    raw_spin_unlock(&wrr_lb_lock);
 
 	perf_event_task_tick();
 
@@ -4272,6 +4276,8 @@ change:
         if (wrr_task_on_cpu == 3) {
             if (running)
                 wrr_next_task = pick_next_task(rq, p, &rf);
+                if(wrr_next_task)
+                    wrr_next_task->wrr.is_ss_task = 1;
         }
         else 
             if (running)
@@ -4280,7 +4286,7 @@ change:
         prev_class = p->sched_class;
         __setscheduler(rq, p, attr, pi);
 
-        wrr_change_rq = select_task_rq(p, 3, 0, 0);
+        wrr_change_rq = cpu_rq(select_task_rq(p, 3, 0, 0));
         }
     }
     else {*/
@@ -4300,8 +4306,12 @@ change:
             if (queued)
                 enqueue_task(wrr_change_rq, p, queue_flags);
             
-            if (running)
-                set_curr_task(rq, next_task);
+            if (running) {
+                if(wrr_next_task)
+                    set_curr_task(rq, wrr_next_task);
+                else
+                    resched_curr(rq);
+            }
         }
         else {
 
@@ -4314,6 +4324,7 @@ change:
     
         wrr_set_sched_wrr_running = 0;
         p->wrr.is_ss_task = 0;
+        wrr_next_task->wrr.is_ss_task = 0;
      
         raw_spin_unlock(&wrr_lock);
     
@@ -6912,6 +6923,8 @@ long sched_setweight(pid_t pid, int weight)
         raw_spin_unlock(&wrr_lock);
         return -EINVAL;
     }
+
+    pr_err("check polcy");
 
     if(oldweight < weight)
         if(uid && euid) {

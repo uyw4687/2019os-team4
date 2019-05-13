@@ -19,7 +19,7 @@ void print()
     long long input;
     clock_t begin, end;
 
-    printf("what to factor?");
+    printf("what to factor? ");
     scanf("%lld", &input);
 
     //invalid input
@@ -192,7 +192,7 @@ int main()
     
     while(1) {
 
-            printf("1:sleep\n2: loop from 0 to input value without printing\n3: loop from 0 to input value with printing by the input value increment\n4:setweight\n5:getweight\n6:fork\n7:use only 0, 1, 2 cpu\n8:getscheduler\n9:break and factor\n10:finish program return\n11: clear screen\n12: use only one cpu\n13: cpu setting not zeroing mask value\n14: repeat factor\n15: repeat factor with only one value\n16: from 0 to input value loop and print time continuously\n17: weight change automatically from 1 to 20 and do the factor repeatedly");
+            printf("1:sleep\n2: loop from 0 to input value without printing\n3: loop from 0 to input value with printing by the input value increment\n4:setweight\n5:getweight\n6:fork\n7:use only 0, 1, 2 cpu\n8:getscheduler\n9:break and factor\n10:finish program return\n11: clear screen\n12: use only one cpu\n13: cpu setting not zeroing mask value\n14: repeat factor\n15: repeat factor with only one value\n16: from 0 to input value loop and print time continuously\n17: weight change automatically from 1 to 20 and do the factor repeatedly\n");
             scanf("%d", &q);
            switch(q)
            {

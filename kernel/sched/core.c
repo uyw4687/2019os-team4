@@ -40,7 +40,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
-#define DEBUG_WRR 0
+#define DEBUG_WRR 1
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
 /*
@@ -4409,6 +4409,7 @@ int sched_setscheduler(struct task_struct *p, int policy,
     struct rq *this_rq, *change_rq;
     struct task_struct *next;
     struct rq_flags rf;
+    struct cpumask set_cpu, mask;
     int change_cpu, queued, running;
     int queue_flags = DEQUEUE_SAVE | DEQUEUE_MOVE | DEQUEUE_NOCLOCK;
 
@@ -4445,33 +4446,28 @@ int sched_setscheduler(struct task_struct *p, int policy,
 
             pr_err("dequeue complete");
 
-            if(running) { 
-                set_tsk_need_resched(p);
-                next = pick_next_task(this_rq, p, &rf);
-                set_tsk_need_resched(next);
-                set_preempt_need_resched();
-            }
-
-            pr_err("set resched");
 
             if(queued) {
                 enqueue_task(change_rq, p, queue_flags);
             }
 
             pr_err("enqueue");
-
-            if(running)
-                schedule();
-
-            pr_err("schedule complete");
             
+            mask = p->cpus_allowed;
+            cpumask_clear(&set_cpu);
+            cpumask_set_cpu(change_cpu, &set_cpu);
+            
+            sched_setaffinity(p->pid, &set_cpu);
+
+            sched_setaffinity(p->pid, &mask);
+
             pr_err("change rq complete. cpu 3 to cpu %d", change_cpu);
             p->wrr.is_ss_task = 0;
             wrr_set_sched_running = 0;
             raw_spin_unlock(&wrr_lock);
         }
-    }*/
-    
+    }
+    */
 	return _sched_setscheduler(p, policy, param, true);
 }
 EXPORT_SYMBOL_GPL(sched_setscheduler);
@@ -7028,7 +7024,7 @@ long sched_setweight(pid_t pid, int weight)
         
         write_unlock(&tasklist_lock);
 #if DEBUG_WRR
-        pr_err("setweight complete. task %d, weight %d", pid, weight);
+        pr_err("setweight complete. task %d, weight %d", task->pid, weight);
 #endif
         raw_spin_unlock(&wrr_lock);
 

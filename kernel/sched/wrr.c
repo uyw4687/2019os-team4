@@ -984,7 +984,7 @@ void load_balance_wrr(struct rq *rq)
         task = wrr_task_of(wrr_se);
 
         if(wrr_se->weight < (diff+1)/2 && !task_current(busiest, task)) {
-            if(cpu_mask_test(freest->cpu, task->cpus_allowed)) {
+            if(cpumask_test_cpu(freest->cpu, &task->cpus_allowed)) {
                 find_movable_task = 1;
                 if(!movable_highest_weight_task)
                     movable_highest_weight_task = task;

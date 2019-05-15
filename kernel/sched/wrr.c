@@ -12,7 +12,7 @@
  */
 #define WRR_TIMESLICE (10 * HZ / 1000)
 #define WRR_LB_TIMESLICE 2 * HZ
-#define DEBUG 1
+#define DEBUG 0
 
 DEFINE_RAW_SPINLOCK(wrr_lock);
 

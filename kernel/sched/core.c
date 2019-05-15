@@ -40,7 +40,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
-#define DEBUG_WRR 1
+#define DEBUG_WRR 0
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
 /*
@@ -4050,11 +4050,11 @@ static int __sched_setscheduler(struct task_struct *p,
 	int reset_on_fork;
 	int queue_flags = DEQUEUE_SAVE | DEQUEUE_MOVE | DEQUEUE_NOCLOCK;
 	struct rq *rq;
-
+    /*
     struct rq *wrr_change_rq;
     struct task_struct *next_task;
     int wrr_task_on_cpu;
-
+*/
 	/* The pi code expects interrupts enabled */
 	BUG_ON(pi && in_interrupt());
 recheck:
@@ -4350,12 +4350,12 @@ change:
 
         if (running)
 		    set_curr_task(rq, p);
-    //}
+    /*}
 
     if(wrr_task_on_cpu == 3)
 	    check_class_changed(wrr_change_rq, p, prev_class, oldprio);
     
-    else
+    else*/
 	    check_class_changed(rq, p, prev_class, oldprio);
 
 	/* Avoid rq from going away on us: */
@@ -4413,59 +4413,65 @@ int sched_setscheduler(struct task_struct *p, int policy,
     int queue_flags = DEQUEUE_SAVE | DEQUEUE_MOVE | DEQUEUE_NOCLOCK;
 
     if(policy == SCHED_WRR && p->policy != policy) {
+        
+        pr_err("set scheduler wrr start pid %d", p->pid);
 
-        pr_err("set scheduler wrr start");
-
-        if(p->cpu != 3) 
+        if(task_cpu(p) != 3) 
             pr_err("cpu isn't 3. need not to change");
         else {
+
+            this_rq = cpu_rq(3);
         
             raw_spin_lock(&wrr_lock);
             wrr_set_sched_running = 1;
             p->wrr.is_ss_task = 1;
-        
-            this_rq = cpu_rq(3);
 
             change_cpu = select_task_rq_wrr(p, 3, 0, 0);
-            change_rq = cpu_rq(change_cpu);
+
+            pr_err("find change cpu %d", change_cpu);
         
             if(change_cpu == -1)
                 return -1;
 
-            queued = task_on_rq_queued(p);
-            running = task_current(this_rq, p);
+            change_rq = cpu_rq(change_cpu);
 
-            double_rq_lock(this_rq, change_rq);
+            queued = task_on_rq_queued(p);
+            pr_err("find queued");
+            running = task_current(this_rq, p);
+            pr_err("find running");
+
+            if(queued) 
+                dequeue_task(this_rq, p, queue_flags);
+
+            pr_err("dequeue complete");
+
+            if(running) { 
+                set_tsk_need_resched(p);
+                next = pick_next_task(this_rq, p, &rf);
+                set_tsk_need_resched(next);
+                set_preempt_need_resched();
+            }
+
+            pr_err("set resched");
 
             if(queued) {
-                dequeue_task(this_rq, p, queue_flags);
-                next = pick_next_task(this_rq, p, &rf);
                 enqueue_task(change_rq, p, queue_flags);
             }
 
-            if(running) {
-                context_switch(this_rq, p, next, &rf);
-                set_curr_task(this_rq, next);
-            }
-/*
-            if(running) {
-                put_prev_task(this_rq, p);
-                pick_next_task(this_rq, p, &rf);
-            }
+            pr_err("enqueue");
 
-            if (queued)
-                activate_task(change_rq, p, queue_flags);
+            if(running)
+                schedule();
 
-            double_rq_unlock(this_rq, change_rq);
-
+            pr_err("schedule complete");
+            
             pr_err("change rq complete. cpu 3 to cpu %d", change_cpu);
             p->wrr.is_ss_task = 0;
             wrr_set_sched_running = 0;
             raw_spin_unlock(&wrr_lock);
         }
-    }
-
-*/
+    }*/
+    
 	return _sched_setscheduler(p, policy, param, true);
 }
 EXPORT_SYMBOL_GPL(sched_setscheduler);

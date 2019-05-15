@@ -12,7 +12,7 @@
  */
 #define WRR_TIMESLICE (10 * HZ / 1000)
 #define WRR_LB_TIMESLICE 2 * HZ
-#define DEBUG 1
+#define DEBUG 0
 
 DEFINE_RAW_SPINLOCK(wrr_lock);
 
@@ -378,7 +378,7 @@ static void dequeue_task_wrr(struct rq *rq, struct task_struct *p, int flags)
     }
 
 #if DEBUG
-    pr_err("dequeue task wrr. pid %d, time slice %d, weight %d, cpu %d", p->pid, wrr_se->time_slice, wrr_se->weight, task_cpu(p));
+    //pr_err("dequeue task wrr. pid %d, time slice %d, weight %d, cpu %d", p->pid, wrr_se->time_slice, wrr_se->weight, task_cpu(p));
 #endif
 	update_curr_wrr(rq);
 	dequeue_wrr_entity(wrr_se, flags);
@@ -435,7 +435,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
             resched_curr(rq);
             
 #if DEBUG
-            pr_err("round robin complete. task %d, cpu %d, timeslice %d weight %d", p->pid, task_cpu(p), p->wrr.time_slice, p->wrr.weight);
+            //pr_err("round robin complete. task %d, cpu %d, timeslice %d weight %d", p->pid, task_cpu(p), p->wrr.time_slice, p->wrr.weight);
             
 #endif
             
@@ -452,7 +452,7 @@ static void task_tick_wrr(struct rq *rq, struct task_struct *p, int queued)
     raw_spin_unlock(&wrr_lock);
 
 #if DEBUG
-    pr_err("need not round robin cpu %d, present task %d", rq->cpu, p->pid);
+    //pr_err("need not round robin cpu %d, present task %d", rq->cpu, p->pid);
 #endif
 
 /*
@@ -617,7 +617,7 @@ static struct task_struct *pick_next_task_wrr(struct rq *rq, struct task_struct 
     p = _pick_next_task_wrr(rq);
 
 #if DEBUG
-    pr_err("pick next task %d cpu %d", p->pid, rq->cpu);
+    //pr_err("pick next task %d cpu %d", p->pid, rq->cpu);
 #endif
 
     //dequeue_pushable_task(rq, p);
@@ -632,7 +632,7 @@ static void put_prev_task_wrr(struct rq *rq, struct task_struct *prev)
     // TODO fair.c 6380L / rt.c 1577L
 
 #if DEBUG
-    pr_err("put_prev_task_wrr. pid %d", prev->pid);
+    //pr_err("put_prev_task_wrr. pid %d", prev->pid);
 #endif
 }
 
@@ -973,7 +973,7 @@ void load_balance_wrr(struct rq *rq)
         return;
     }
 #if DEBUG
-    pr_err("load balance find. busiest %d, freest %d, max %d, min %d",busiest->cpu, freest->cpu, max_weight, min_weight);
+    //pr_err("load balance find. busiest %d, freest %d, max %d, min %d",busiest->cpu, freest->cpu, max_weight, min_weight);
     //pr_err("load_balance_wrr");
 #endif
     diff = max_weight - min_weight;
@@ -985,16 +985,13 @@ void load_balance_wrr(struct rq *rq)
 
         if(wrr_se->weight < (diff+1)/2 && !task_current(busiest, task)) {
             if(cpumask_test_cpu(freest->cpu, &task->cpus_allowed)) {
-                find_movable_task = 1;
-                if(!movable_highest_weight_task)
+                if(find_movable_task == 0){
                     movable_highest_weight_task = task;
-
+                    find_movable_task = 1;
+                }
                 else if(movable_highest_weight_task->wrr.weight < task->wrr.weight)
                     movable_highest_weight_task = task;
             }
-
-            //pr_err("find movable task %d, weight %d", task->pid, task->wrr.weight);
-
         }
     }
 
@@ -1007,7 +1004,7 @@ void load_balance_wrr(struct rq *rq)
         movable_highest_weight_task->wrr.is_lb_task = 0;
 
 #if DEBUG
-        pr_err("load balance task %d, busiest cpu %d weight %d, freest cpu %d weight %d, task weight %d", movable_highest_weight_task->pid, busiest->cpu, max_weight, freest->cpu, min_weight, movable_highest_weight_task->wrr.weight);
+        pr_err("\n\nload balance task %d, busiest cpu %d weight %d, freest cpu %d weight %d, task weight %d\n\n", movable_highest_weight_task->pid, busiest->cpu, max_weight, freest->cpu, min_weight, movable_highest_weight_task->wrr.weight);
 #endif
     }
 

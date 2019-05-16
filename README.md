@@ -68,6 +68,7 @@ OS Spring Team4
 
 * `enqueue_task_wrr`
   * 해당 task를 run queue에서 제거한 후, 이 task를 run queue 맨 뒤에 추가
+  * 해당 task가 fork된 task이면 부모의 weight를 물려받음
 
 * `dequeue_task_wrr`
   * 해당 task를 run queue에서 제거

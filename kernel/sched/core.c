@@ -4036,6 +4036,7 @@ static bool check_same_owner(struct task_struct *p)
 }
 
 extern int wrr_set_sched_running;
+extern int select_task_rq_wrr(struct task_struct *p, int prev_cpu, int sd_flag, int wake_flags);
 
 static int __sched_setscheduler(struct task_struct *p,
 				const struct sched_attr *attr,
@@ -4050,11 +4051,15 @@ static int __sched_setscheduler(struct task_struct *p,
 	int reset_on_fork;
 	int queue_flags = DEQUEUE_SAVE | DEQUEUE_MOVE | DEQUEUE_NOCLOCK;
 	struct rq *rq;
+    
     /*
     struct rq *wrr_change_rq;
-    struct task_struct *next_task;
-    int wrr_task_on_cpu;
-*/
+    int change_cpu = -1;
+    int prev_policy;
+    //struct task_struct *next_task;
+    //int wrr_task_on_cpu;
+    */
+
 	/* The pi code expects interrupts enabled */
 	BUG_ON(pi && in_interrupt());
 recheck:
@@ -4258,7 +4263,7 @@ change:
 
         
         for_each_cpu(cpu, &p->cpus_allowed) {
-            /*
+            
             wrr_check_rq = cpu_rq(cpu);
 
             if(p == wrr_check_rq->curr)
@@ -4303,9 +4308,45 @@ change:
         if (running)
 		    put_prev_task(rq, p);
 
+        //prev_policy = p->policy;
+
 	    prev_class = p->sched_class;
     	__setscheduler(rq, p, attr, pi);
-    /*}
+    
+    /*if(prev_policy != SCHED_WRR && p->policy == SCHED_WRR && task_cpu(p) == 3)
+    {
+        struct cpumask set_cpu, mask;
+            raw_spin_lock(&wrr_lock);
+            wrr_set_sched_running = 1;
+            p->wrr.is_ss_task = 1;
+
+            change_cpu = select_task_rq_wrr(p, 3, 0, 0);
+            wrr_change_rq = cpu_rq(change_cpu);
+
+            pr_err("find change cpu %d", change_cpu);
+        
+            if(change_cpu == -1) {
+                raw_spin_unlock(&wrr_lock);
+                return -1;
+            }
+
+            mask = p->cpus_allowed;
+            cpumask_clear(&set_cpu);
+            cpumask_set_cpu(change_cpu, &set_cpu);
+            
+            sched_setaffinity(p->pid, &set_cpu);
+
+            sched_setaffinity(p->pid, &mask);
+
+            pr_err("change rq complete. cpu 3 to cpu %d", change_cpu);
+            p->wrr.is_ss_task = 0;
+            wrr_set_sched_running = 0;
+            raw_spin_unlock(&wrr_lock);
+        
+    }
+        
+        
+        }
 
     if (wrr_set_sched_running) {
         if(wrr_task_on_cpu == 3) {
@@ -4344,8 +4385,10 @@ change:
 		 */
 		    if (oldprio < p->prio)
 			    queue_flags |= ENQUEUE_HEAD;
-
-		    enqueue_task(rq, p, queue_flags);
+            //if(!change_cpu)
+		      //  enqueue_task(rq, p, queue_flags);
+            //else
+            enqueue_task(rq, p, queue_flags);
 	    }
 
         if (running)
@@ -4400,11 +4443,15 @@ static int _sched_setscheduler(struct task_struct *p, int policy,
  *
  * NOTE that the task may be already dead.
  */
-extern int select_task_rq_wrr(struct task_struct *p, int prev_cpu, int sd_flag, int wake_flags);
 
 int sched_setscheduler(struct task_struct *p, int policy,
 		       const struct sched_param *param)
 {
+    if(p->policy != SCHED_WRR && policy == SCHED_WRR) {
+        int check_cpumask = select_task_rq_wrr(p, 3, 0, 0);//make return -1 when process only use cpu3
+        if(check_cpumask == -1)
+            return -EINVAL;
+    }
     /*
     struct rq *this_rq, *change_rq;
     struct task_struct *next;
@@ -4422,7 +4469,7 @@ int sched_setscheduler(struct task_struct *p, int policy,
         else {
 
             this_rq = cpu_rq(3);
-        
+            
             raw_spin_lock(&wrr_lock);
             wrr_set_sched_running = 1;
             p->wrr.is_ss_task = 1;

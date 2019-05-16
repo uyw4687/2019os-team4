@@ -68,6 +68,7 @@ OS Spring Team4
 
 * `enqueue_task_wrr`
   * 해당 task를 run queue에서 제거한 후, 이 task를 run queue 맨 뒤에 추가
+  * 해당 task가 fork된 task이면 부모의 weight를 물려받음
 
 * `dequeue_task_wrr`
   * 해당 task를 run queue에서 제거
@@ -158,6 +159,7 @@ OS Spring Team4
 * round robin이나 load balance가 수행되는 도중에 해당 task를 수정하는 경우가 없도록 잘 synchronize하기 위해 많은 고민을 하였습니다.
 * WRR로 돌아가던 task가 fork를 수행할 경우, 자식 task도 WRR로 돌아가도록 구현하였습니다.
 * 최소 하나 이상의 CPU에서 WRR로 돌아가는 task가 없도록 해야 하는 이유를 알았습니다. WRR이 fair(CFS)보다 높은 우선순위를 가지기 때문에 WRR로 돌아가는 task가 하나라도 있으면 그 CPU에서는 fair로 돌아가야 할 task가 절대로 수행되지 않습니다. 이 때문에 모든 CPU에서 WRR로 돌아가는 task가 있는 경우, kernel thread 중 fair로 돌아가야 할 thread들이 starvation을 겪게 되고 시스템이 다운되는 것입니다.
+* WRR이 CFS보다 높은 우선순위를 가지고 돌아가야 하는 이유를 생각해 보았습니다. 대부분의 task가 CFS에서 돌아가기 때문에 WRR의 우선순위가 CFS보다 낮을 경우 CPU가 CFS task를 우선적으로 수행합니다. 그러면 우리가 만든 WRR scheduler가 제대로 동작하는지 계속해서 관찰하는 것이 어렵습니다. 따라서 WRR의 우선순위를 CFS보다 높게 준 것입니다.
 * 유저에 따라 실행 권한을 다르게 부여하는 방법을 알았습니다.
 * `pr_err`를 이용하여 상태를 출력하게 한 덕분에 디버깅이 훨씬 수월해졌습니다.
 * QEMU를 설치하고 어떻게 사용해야 하는지 익혔습니다. QEMU를 사용하지 않고 직접 기기에 kernel을 올려서 테스트했다면 시간이 매우 오래 걸렸을 것입니다.

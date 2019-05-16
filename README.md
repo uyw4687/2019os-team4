@@ -63,7 +63,7 @@ OS Spring Team4
   * run queue를 초기화하는 `init_wrr_rq` 함수 정의
   * `init_sched_wrr_class` 함수 정의
 
-#### Necessary functions in WRR
+#### Implemented functions in WRR
 > `kernel/sched/wrr.c`에 구현
 
 * `enqueue_task_wrr`
@@ -83,6 +83,9 @@ OS Spring Team4
     * `time_slice`를 `weight * 10ms`로 설정
     * 해당 task가 run queue에 혼자 들어 있으면 round robin을 수행할 필요가 없으므로 반환
     * 해당 task가 run queue에 혼자 들어 있지 않으면 이 task를 run queue의 맨 뒤로 옮기고 해당 run queue의 맨 앞의 task를 수행하도록 함
+
+* `select_task_rq_wrr`
+  * online CPU 중에서 3번 CPU를 제외하고, 가장 weight 합이 적은 run queue가 있는 CPU를 반환
 
 * `update_curr_wrr`
   * 현재 run queue 안에서 수행되고 있는 task의 수행 시간 등 통계량 업데이트

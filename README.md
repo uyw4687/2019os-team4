@@ -1,6 +1,6 @@
 # os-team4
 OS Spring Team4
-## Project 2
+## Project 4
 
 ### How to build our kernel
 project 기본 build 방법으로 하시면 됩니다.

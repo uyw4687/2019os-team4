@@ -311,7 +311,7 @@ struct ext2_inode {
 	__le16	i_links_count;	/* Links count */
 	__le32	i_blocks;	/* Blocks count */
 	__le32	i_flags;	/* File flags */
-	union {
+    union {
 		struct {
 			__le32  l_i_reserved1;
 		} linux1;
@@ -351,6 +351,11 @@ struct ext2_inode {
 			__u32	m_i_reserved2[2];
 		} masix2;
 	} osd2;				/* OS dependent 2 */
+	__le32	i_lat_integer;      /* Latitude (integer part) */
+	__le32	i_lat_fractional;   /* Latitude (fractional part) */
+	__le32	i_lng_integer;      /* Longitude(integer part) */
+	__le32	i_lng_fractional;   /* Longitude(fractional part) */
+	__le32	i_accuracy;         /* Accuracy of GPS information */
 };
 
 #define i_size_high	i_dir_acl
@@ -665,8 +670,7 @@ struct ext2_inode_info {
 	__u32	i_file_acl;
 	__u32	i_dir_acl;
 	__u32	i_dtime;
-
-	/*
+    /*
 	 * i_block_group is the number of the block group which contains
 	 * this file's inode.  Constant across the lifetime of the inode,
 	 * it is used for making block allocation decisions - we try to
@@ -706,6 +710,11 @@ struct ext2_inode_info {
 #ifdef CONFIG_QUOTA
 	struct dquot *i_dquot[MAXQUOTAS];
 #endif
+	__u32	i_lat_integer;      /* Latitude (integer part) */
+	__u32	i_lat_fractional;   /* Latitude (fractional part) */
+	__u32	i_lng_integer;      /* Longitude(integer part) */
+	__u32	i_lng_fractional;   /* Longitude(fractional part) */
+	__u32	i_accuracy;         /* Accuracy of GPS information */
 };
 
 #ifdef CONFIG_FS_DAX

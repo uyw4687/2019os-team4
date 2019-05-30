@@ -5,10 +5,10 @@
 #include <linux/rwlock_types.h>
 
 struct gps_location curr_loc;
+DEFINE_RWLOCK(curr_loc_lock);
 
 EXPORT_SYMBOL(curr_loc);
-
-DEFINE_RWLOCK(lock);
+EXPORT_SYMBOL(curr_loc_lock);
 
 long sys_set_gps_location(struct gps_location __user *loc)
 {
@@ -49,9 +49,9 @@ long sys_set_gps_location(struct gps_location __user *loc)
     if (temp_loc.accuracy < 0)
         return -EINVAL;
 
-    write_lock(&lock);
+    write_lock(&curr_loc_lock);
     curr_loc = temp_loc;
-    write_unlock(&lock);
+    write_unlock(&curr_loc_lock);
 
     return 0;
 }

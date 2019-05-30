@@ -41,7 +41,8 @@
 #include "xattr.h"
 
 extern struct gps_location curr_loc;
-    
+extern rwlock_t curr_loc_lock;
+
 static int __ext2_write_inode(struct inode *inode, int do_sync);
 
 /*
@@ -1687,11 +1688,13 @@ int ext2_set_gps_location(struct inode *inode)
     if(IS_ERR(raw_inode))
         return -EIO;
 
+	read_lock(&curr_loc_lock);
     raw_inode->i_lat_integer = cpu_to_le32(curr_loc.lat_integer);
     raw_inode->i_lat_fractional = cpu_to_le32(curr_loc.lat_fractional);
     raw_inode->i_lng_integer = cpu_to_le32(curr_loc.lng_integer);
     raw_inode->i_lng_fractional = cpu_to_le32(curr_loc.lng_fractional);
     raw_inode->i_accuracy = cpu_to_le32(curr_loc.accuracy);
+	read_unlock(&curr_loc_lock);
 
     return 0;
 }

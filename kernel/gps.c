@@ -6,6 +6,8 @@
 
 struct gps_location curr_loc;
 
+EXPORT_SYMBOL(curr_loc);
+
 DEFINE_RWLOCK(lock);
 
 long sys_set_gps_location(struct gps_location __user *loc)

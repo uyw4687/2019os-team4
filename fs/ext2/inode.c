@@ -40,6 +40,8 @@
 #include "acl.h"
 #include "xattr.h"
 
+extern struct gps_location curr_loc;
+    
 static int __ext2_write_inode(struct inode *inode, int do_sync);
 
 /*
@@ -1658,4 +1660,42 @@ int ext2_setattr(struct dentry *dentry, struct iattr *iattr)
 	mark_inode_dirty(inode);
 
 	return error;
+}
+
+int ext2_set_gps_location(struct inode *inode)
+{
+    struct super_block *sb = inode->i_sb;
+    ino_t ino = inode->i_ino;
+    struct buffer_head * bh;
+    struct ext2_inode * raw_inode = ext2_get_inode(sb, ino, &bh);
+
+    if(IS_ERR(raw_inode))
+        return -EIO;
+
+    raw_inode->i_lat_integer = cpu_to_le32(curr_loc.lat_integer);
+    raw_inode->i_lat_fractional = cpu_to_le32(curr_loc.lat_fractional);
+    raw_inode->i_lng_integer = cpu_to_le32(curr_loc.lng_integer);
+    raw_inode->i_lng_fractional = cpu_to_le32(curr_loc.lng_fractional);
+    raw_inode->i_accuracy = cpu_to_le32(curr_loc.accuracy);
+
+    return 0;
+}
+
+int ext2_get_gps_location(struct inode *inode, struct gps_location *gps_loc)
+{
+    struct super_block *sb = inode->i_sb;
+    ino_t ino = inode->i_ino;
+    struct buffer_head * bh;
+    struct ext2_inode * raw_inode = ext2_get_inode(sb, ino, &bh);
+
+    if(IS_ERR(raw_inode))
+        return -EIO;
+
+    gps_loc->lat_integer = le32_to_cpu(raw_inode->i_lat_integer);
+    gps_loc->lat_fractional = le32_to_cpu(raw_inode->i_lat_fractional);
+    gps_loc->lng_integer = le32_to_cpu(raw_inode->i_lng_integer);
+    gps_loc->lng_fractional = le32_to_cpu(raw_inode->i_lng_fractional);
+    gps_loc->accuracy = le32_to_cpu(raw_inode->i_accuracy);
+
+    return 0;
 }

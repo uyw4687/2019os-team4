@@ -1720,7 +1720,10 @@ int ext2_get_gps_location(struct inode *inode, struct gps_location *gps_loc)
 
 int ext2_update_time(struct inode *inode, struct timespec *time, int flags)
 {
-	int ret = ext2_set_gps_location(inode);
+	int ret = 0;
+
+	if(flags & S_CTIME || flags & S_MTIME)
+		ret = ext2_set_gps_location(inode);
 
 	if(ret < 0)
 		return ret;

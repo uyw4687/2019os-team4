@@ -1580,7 +1580,7 @@ static int __ext2_write_inode(struct inode *inode, int do_sync)
 	raw_inode->i_fsize = ei->i_frag_size;
 	raw_inode->i_file_acl = cpu_to_le32(ei->i_file_acl);
 
-    raw_inode->l_lat_integer = cpu_to_le32(ei->i_lat_integer);
+    raw_inode->i_lat_integer = cpu_to_le32(ei->i_lat_integer);
     raw_inode->i_lat_fractional = cpu_to_le32(ei->i_lat_fractional);
     raw_inode->i_lng_integer = cpu_to_le32(ei->i_lng_integer);
     raw_inode->i_lng_fractional = cpu_to_le32(ei->i_lng_fractional);

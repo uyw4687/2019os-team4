@@ -420,6 +420,25 @@ out:
 	return err;
 }
 
+static int check_distance(struct inode *inode)
+{
+    //TODO
+    return 1;
+}
+
+int ext2_permission(struct inode *inode, int mask)
+{
+	int ret = generic_permission(inode, mask);
+
+    if(ret < 0)
+        return ret;
+
+    if(!check_distance(inode))
+        return -EACCES;
+
+    return 0;
+}
+
 const struct inode_operations ext2_dir_inode_operations = {
 	.create		= ext2_create,
 	.lookup		= ext2_lookup,

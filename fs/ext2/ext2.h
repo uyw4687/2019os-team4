@@ -802,6 +802,7 @@ extern long ext2_compat_ioctl(struct file *, unsigned int, unsigned long);
 
 /* namei.c */
 struct dentry *ext2_get_parent(struct dentry *child);
+extern int ext2_permission(struct inode *, int);
 
 /* super.c */
 extern __printf(3, 4)

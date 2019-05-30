@@ -1717,3 +1717,13 @@ int ext2_get_gps_location(struct inode *inode, struct gps_location *gps_loc)
 
     return 0;
 }
+
+int ext2_update_time(struct inode *inode, struct timespec *time, int flags)
+{
+	int ret = ext2_set_gps_location(inode);
+
+	if(ret < 0)
+		return ret;
+
+	return generic_update_time(inode, time, flags);
+}

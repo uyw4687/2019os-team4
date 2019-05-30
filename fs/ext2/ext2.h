@@ -793,7 +793,8 @@ extern void ext2_set_inode_flags(struct inode *inode);
 extern int ext2_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 		       u64 start, u64 len);
 extern int ext2_set_gps_location(struct inode *);
-extern int ext2_get_gps_location(struct inode *, struct gps_location *gps_loc);
+extern int ext2_get_gps_location(struct inode *, struct gps_location *);
+extern int ext2_update_time(struct inode *, struct timespec *, int);
 
 /* ioctl.c */
 extern long ext2_ioctl(struct file *, unsigned int, unsigned long);

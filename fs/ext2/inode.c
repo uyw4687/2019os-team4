@@ -1684,6 +1684,7 @@ int ext2_set_gps_location(struct inode *inode)
     ino_t ino = inode->i_ino;
     struct buffer_head * bh;
     struct ext2_inode * raw_inode = ext2_get_inode(sb, ino, &bh);
+	struct ext2_inode_info * ei = EXT2_I(inode);
 
     if(IS_ERR(raw_inode))
         return -EIO;
@@ -1694,6 +1695,12 @@ int ext2_set_gps_location(struct inode *inode)
     raw_inode->i_lng_integer = cpu_to_le32(curr_loc.lng_integer);
     raw_inode->i_lng_fractional = cpu_to_le32(curr_loc.lng_fractional);
     raw_inode->i_accuracy = cpu_to_le32(curr_loc.accuracy);
+
+    ei->i_lat_integer = curr_loc.lat_integer;
+    ei->i_lat_fractional = curr_loc.lat_fractional;
+    ei->i_lng_integer = curr_loc.lng_integer;
+    ei->i_lng_fractional = curr_loc.lng_fractional;
+    ei->i_accuracy = curr_loc.accuracy;
 	read_unlock(&curr_loc_lock);
 
     return 0;

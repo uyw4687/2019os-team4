@@ -710,7 +710,7 @@ struct ext2_inode_info {
 #ifdef CONFIG_QUOTA
 	struct dquot *i_dquot[MAXQUOTAS];
 #endif
-	__u32	i_lat_integer;      /* Latitude (integer part) */
+	__u32   i_lat_integer;      /* Latitude (integer part) */
 	__u32	i_lat_fractional;   /* Latitude (fractional part) */
 	__u32	i_lng_integer;      /* Longitude(integer part) */
 	__u32	i_lng_fractional;   /* Longitude(fractional part) */
@@ -792,6 +792,9 @@ extern int ext2_setattr (struct dentry *, struct iattr *);
 extern void ext2_set_inode_flags(struct inode *inode);
 extern int ext2_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 		       u64 start, u64 len);
+extern int ext2_set_gps_location(struct inode *);
+extern int ext2_get_gps_location(struct inode *, struct gps_location *);
+extern int ext2_update_time(struct inode *, struct timespec *, int);
 
 /* ioctl.c */
 extern long ext2_ioctl(struct file *, unsigned int, unsigned long);
@@ -799,6 +802,7 @@ extern long ext2_compat_ioctl(struct file *, unsigned int, unsigned long);
 
 /* namei.c */
 struct dentry *ext2_get_parent(struct dentry *child);
+extern int ext2_permission(struct inode *, int);
 
 /* super.c */
 extern __printf(3, 4)

@@ -1318,7 +1318,7 @@ static int ext2_setsize(struct inode *inode, loff_t newsize)
 	return 0;
 }
 
-static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
+struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 					struct buffer_head **p)
 {
 	struct buffer_head * bh;

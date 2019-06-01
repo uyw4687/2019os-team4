@@ -40,6 +40,9 @@
 static inline int ext2_add_nondir(struct dentry *dentry, struct inode *inode)
 {
 	int err = ext2_add_link(dentry, inode);
+
+    pr_err("ext2_add_nondir");
+
 	if (!err) {
 		d_instantiate_new(dentry, inode);
 		return 0;
@@ -98,6 +101,8 @@ static int ext2_create (struct inode * dir, struct dentry * dentry, umode_t mode
 	struct inode *inode;
 	int err;
 
+    pr_err("ext2_create");
+
 	err = dquot_initialize(dir);
 	if (err)
 		return err;
@@ -121,6 +126,9 @@ static int ext2_create (struct inode * dir, struct dentry * dentry, umode_t mode
 static int ext2_tmpfile(struct inode *dir, struct dentry *dentry, umode_t mode)
 {
 	struct inode *inode = ext2_new_inode(dir, mode, NULL);
+
+    pr_err("ext2_tmpfile");
+
 	if (IS_ERR(inode))
 		return PTR_ERR(inode);
 
@@ -142,6 +150,8 @@ static int ext2_mknod (struct inode * dir, struct dentry *dentry, umode_t mode, 
 {
 	struct inode * inode;
 	int err;
+
+    pr_err("ext2_mknod");
 
 	err = dquot_initialize(dir);
 	if (err)
@@ -167,6 +177,8 @@ static int ext2_symlink (struct inode * dir, struct dentry * dentry,
 	int err = -ENAMETOOLONG;
 	unsigned l = strlen(symname)+1;
 	struct inode * inode;
+
+    pr_err("ext2_symlink");
 
 	if (l > sb->s_blocksize)
 		goto out;
@@ -217,6 +229,8 @@ static int ext2_link (struct dentry * old_dentry, struct inode * dir,
 	struct inode *inode = d_inode(old_dentry);
 	int err;
 
+    pr_err("ext2_link");
+
 	err = dquot_initialize(dir);
 	if (err)
 		return err;
@@ -239,6 +253,8 @@ static int ext2_mkdir(struct inode * dir, struct dentry * dentry, umode_t mode)
 {
 	struct inode * inode;
 	int err;
+
+    pr_err("ext2_mkdir");
 
 	err = dquot_initialize(dir);
 	if (err)
@@ -289,6 +305,8 @@ static int ext2_unlink(struct inode * dir, struct dentry *dentry)
 	struct page * page;
 	int err;
 
+    pr_err("ext2_unlink");
+
 	err = dquot_initialize(dir);
 	if (err)
 		goto out;
@@ -315,6 +333,8 @@ static int ext2_rmdir (struct inode * dir, struct dentry *dentry)
 	struct inode * inode = d_inode(dentry);
 	int err = -ENOTEMPTY;
 
+    pr_err("ext2_rmdir");
+
 	if (ext2_empty_dir(inode)) {
 		err = ext2_unlink(dir, dentry);
 		if (!err) {
@@ -337,6 +357,8 @@ static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
 	struct page * old_page;
 	struct ext2_dir_entry_2 * old_de;
 	int err;
+
+    pr_err("ext2_raname");
 
 	if (flags & ~RENAME_NOREPLACE)
 		return -EINVAL;
@@ -428,15 +450,25 @@ static int check_distance(struct inode *inode)
     return 1; // nonzero is true
 }
 
+extern struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino, struct buffer_head **p);
+
+struct ext2_inode *get_ext2_inode(struct inode *inode) {
+    struct buffer_head *bh;
+    return ext2_get_inode(inode->i_sb, inode->i_ino, &bh);
+}
+
 int ext2_permission(struct inode *inode, int mask)
 {
 	int ret = generic_permission(inode, mask);
+    struct ext2_inode *i = get_ext2_inode(inode);
 
     if(ret < 0)
         return ret;
 
     if(!check_distance(inode))
         return -EACCES;
+
+    pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy);
 
     return 0;
 }

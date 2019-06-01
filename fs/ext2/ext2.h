@@ -27,6 +27,8 @@ typedef unsigned long ext2_fsblk_t;
 
 #define E2FSBLK "%lu"
 
+extern struct ext2_inode *get_ext2_inode(struct inode *inode);
+
 struct ext2_reserve_window {
 	ext2_fsblk_t		_rsv_start;	/* First byte reserved */
 	ext2_fsblk_t		_rsv_end;	/* Last byte reserved or 0 */

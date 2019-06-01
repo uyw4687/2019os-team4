@@ -422,8 +422,10 @@ out:
 
 static int check_distance(struct inode *inode)
 {
+
     //TODO
-    return 1;
+
+    return 1; // nonzero is true
 }
 
 int ext2_permission(struct inode *inode, int mask)

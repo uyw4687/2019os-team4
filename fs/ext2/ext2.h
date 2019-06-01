@@ -711,10 +711,10 @@ struct ext2_inode_info {
 	struct dquot *i_dquot[MAXQUOTAS];
 #endif
 	__u32   i_lat_integer;      /* Latitude (integer part) */
-	__u32	i_lat_fractional;   /* Latitude (fractional part) */
-	__u32	i_lng_integer;      /* Longitude(integer part) */
-	__u32	i_lng_fractional;   /* Longitude(fractional part) */
-	__u32	i_accuracy;         /* Accuracy of GPS information */
+	__u32   i_lat_fractional;   /* Latitude (fractional part) */
+	__u32   i_lng_integer;      /* Longitude(integer part) */
+	__u32   i_lng_fractional;   /* Longitude(fractional part) */
+	__u32   i_accuracy;         /* Accuracy of GPS information */
 };
 
 #ifdef CONFIG_FS_DAX

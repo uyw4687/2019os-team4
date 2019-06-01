@@ -442,10 +442,48 @@ out:
 	return err;
 }
 
-static int check_distance(struct inode *inode)
+void cordic(int theta, int *sin, int *cos, int n)
+{
+    // int mul = 1073741824;
+    // int half_pi = 0x6487ED51;
+    int cordic_ctab[] = {
+        0x3243F6A8, 0x1DAC6705, 0x0FADBAFC, 0x07F56EA6,
+        0x03FEAB76, 0x01FFD55B, 0x00FFFAAA, 0x007FFF55,
+        0x003FFFEA, 0x001FFFFD, 0x000FFFFF, 0x0007FFFF,
+        0x0003FFFF, 0x0001FFFF, 0x0000FFFF, 0x00007FFF,
+        0x00003FFF, 0x00001FFF, 0x00000FFF, 0x000007FF,
+        0x000003FF, 0x000001FF, 0x000000FF, 0x0000007F,
+        0x0000003F, 0x0000001F, 0x0000000F, 0x00000008,
+        0x00000004, 0x00000002, 0x00000001, 0x00000000, };
+    int cordic_1K = 0x26DD3B6A;
+    int k, d, tx, ty, tz;
+    int x = cordic_1K, y = 0, z = theta;
+    n = (n > 32) ? 32 : n;
+
+    for (k = 0; k < n; k++) {
+        d = z >> 31;
+        tx = x - (((y >> k) ^ d) - d);
+        ty = y + (((x >> k) ^ d) - d);
+        tz = z - ((cordic_ctab[k] ^ d) - d);
+        x = tx;
+        y = ty;
+        z = tz;
+    }
+    *cos = x;
+    *sin = y;
+}
+
+static int check_distance(struct ext2_inode *inode)
 {
 
     //TODO
+    __u32 i_lat_int = le32_to_cpu(inode->i_lat_integer);
+    __u32 i_lat_fr = le32_to_cpu(inode->i_lat_fractional);
+    __u32 i_lng_int = le32_to_cpu(inode->i_lng_integer);
+    __u32 i_lng_fr = le32_to_cpu(inode->i_lng_fractional);
+    __u32 i_accuracy = le32_to_cpu(inode->i_accuracy);
+
+    
 
     return 1; // nonzero is true
 }
@@ -465,7 +503,7 @@ int ext2_permission(struct inode *inode, int mask)
     if(ret < 0)
         return ret;
 
-    if(!check_distance(inode))
+    if(!check_distance(i))
         return -EACCES;
 
     pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy);

@@ -664,10 +664,10 @@ static int check_distance(struct ext2_inode *inode)
 
     allowed_distance = ((long long)i_accuracy + (long long)c_accuracy) << 30;
 
-    if ((long long)central_angle <= allowed_distance / 6400)
-        return 1;
+    if ((long long)central_angle <= allowed_distance / 640000)
+        return 1;   // true
     else
-        return 0;
+        return 0;   // false
 }
 
 extern struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino, struct buffer_head **p);

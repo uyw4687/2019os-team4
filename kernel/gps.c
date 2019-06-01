@@ -74,10 +74,7 @@ long sys_get_gps_location(const char __user *pathname, struct gps_location __use
     kern_path(path_kern, LOOKUP_FOLLOW, &path);
     inode = path.dentry->d_inode;
 
-    if(inode->i_op->permission)
-        ret = inode->i_op->permission(inode, MAY_READ);
-    else
-        ret = generic_permission(inode, MAY_READ);
+    ret = generic_permission(inode, MAY_READ);
 
     if(ret < 0)
         return -EACCES;

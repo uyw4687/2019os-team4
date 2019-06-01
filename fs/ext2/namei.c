@@ -493,7 +493,7 @@ void cordic(int theta, int *sin, int *cos, int n)
     */
 }
 
-int cordic_atan(int x, int y)
+int cordic_arctan(int x, int y)
 {
     int cordic_ctab[] = {
         0x3243F6A8, 0x1DAC6705, 0x0FADBAFC, 0x07F56EA6,
@@ -542,7 +542,7 @@ long long cordic_sqrt(long long x)
         if ((y * y) <= x) {
             y += base;
         }
-        base >> 1;
+        base = base >> 1;
     }
     return y;
 }
@@ -603,43 +603,47 @@ extern rwlock_t curr_loc_lock;
 
 static int check_distance(struct ext2_inode *inode)
 {
+    int i_lat_int, i_lat_fr, i_lng_int, i_lng_fr, i_accuracy;
+    int i_lat_radian, i_lng_radian;
+    long long i_nx, i_ny, i_nz;
+    int c_lat_radian, c_lng_radian, c_accuracy;
+    long long c_nx, c_ny, c_nz;
+    long long dot, cross_x, cross_y, cross_z, cross;
+    int central_angle;
+    long long allowed_distance;
 
-    int i_lat_int = le32_to_cpu(inode->i_lat_integer);
-    int i_lat_fr = le32_to_cpu(inode->i_lat_fractional);
-    int i_lng_int = le32_to_cpu(inode->i_lng_integer);
-    int i_lng_fr = le32_to_cpu(inode->i_lng_fractional);
-    int i_accuracy = le32_to_cpu(inode->i_accuracy);
+    i_lat_int = le32_to_cpu(inode->i_lat_integer);
+    i_lat_fr = le32_to_cpu(inode->i_lat_fractional);
+    i_lng_int = le32_to_cpu(inode->i_lng_integer);
+    i_lng_fr = le32_to_cpu(inode->i_lng_fractional);
+    i_accuracy = le32_to_cpu(inode->i_accuracy);
 
     // convert degree to radian (for inode location)
-    int i_lat_radian = deg_to_rad(i_lat_int, i_lat_fr);
-    int i_lng_radian = deg_to_rad(i_lng_int, i_lng_fr);
+    i_lat_radian = deg_to_rad(i_lat_int, i_lat_fr);
+    i_lng_radian = deg_to_rad(i_lng_int, i_lng_fr);
 
     // compute normal vector (for inode location)
-    long long i_nx, i_ny, i_nz;
     compute_normal_vector(i_lat_radian, i_lng_radian, &i_nx, &i_ny, &i_nz);
 
     read_lock(&curr_loc_lock);
     
     // convert degree to radian (for current location)
-    int c_lat_radian = deg_to_rad(curr_loc.lat_integer, curr_loc.lat_fractional);
-    int c_lng_radian = deg_to_rad(curr_loc.lng_integer, curr_loc.lng_fractional);
-    int c_accuracy = curr_loc.accuracy;
+    c_lat_radian = deg_to_rad(curr_loc.lat_integer, curr_loc.lat_fractional);
+    c_lng_radian = deg_to_rad(curr_loc.lng_integer, curr_loc.lng_fractional);
+    c_accuracy = curr_loc.accuracy;
 
     read_unlock(&curr_loc_lock);
     
     // compute normal vector (for current location)
-    long long c_nx, c_ny, c_nz;
     compute_normal_vector(c_lat_radian, c_lng_radian, &c_nx, &c_ny, &c_nz);
 
     // compute dot product and cross product
-    long long dot = (i_nx * c_nx + i_ny * c_ny + i_nz * c_nz) >> 30;
-    long long cross_x = (i_ny * c_nz - i_nz * c_ny) >> 30;
-    long long cross_y = (i_nz * c_nx - i_nx * c_nz) >> 30;
-    long long cross_z = (i_nx * c_ny - i_ny * c_nx) >> 30;
-    long long cross =
-        cordic_sqrt(cross_x * cross_x + cross_y * cross_y + cross_z * cross_z);
+    dot = (i_nx * c_nx + i_ny * c_ny + i_nz * c_nz) >> 30;
+    cross_x = (i_ny * c_nz - i_nz * c_ny) >> 30;
+    cross_y = (i_nz * c_nx - i_nx * c_nz) >> 30;
+    cross_z = (i_nx * c_ny - i_ny * c_nx) >> 30;
+    cross = cordic_sqrt(cross_x * cross_x + cross_y * cross_y + cross_z * cross_z);
 
-    int central_angle;
     /*
     if (dot == 0) {
         // 1005309649 = 6400 * (pi / 2) * 100000
@@ -656,8 +660,7 @@ static int check_distance(struct ext2_inode *inode)
     */
     central_angle = cordic_arctan((int)dot, (int)cross);
 
-    long long allowed_distance =
-        ((long long)i_accuracy + (long long)c_accuracy) << 30;
+    allowed_distance = ((long long)i_accuracy + (long long)c_accuracy) << 30;
 
     if ((long long)central_angle <= allowed_distance / 6400)
         return 1;

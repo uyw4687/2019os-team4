@@ -35,6 +35,8 @@ static ssize_t ext2_dax_read_iter(struct kiocb *iocb, struct iov_iter *to)
 	struct inode *inode = iocb->ki_filp->f_mapping->host;
 	ssize_t ret;
 
+    pr_err("ext2_dax_read_iter");
+
 	if (!iov_iter_count(to))
 		return 0; /* skip atime */
 
@@ -51,6 +53,8 @@ static ssize_t ext2_dax_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	struct file *file = iocb->ki_filp;
 	struct inode *inode = file->f_mapping->host;
 	ssize_t ret;
+
+    pr_err("ext2_dax_write_iter");
 
 	inode_lock(inode);
 	ret = generic_write_checks(iocb, from);
@@ -121,12 +125,19 @@ static const struct vm_operations_struct ext2_dax_vm_ops = {
 
 static int ext2_file_mmap(struct file *file, struct vm_area_struct *vma)
 {
+
+    pr_err("ext2_file_mmap");
+
 	if (!IS_DAX(file_inode(file)))
 		return generic_file_mmap(file, vma);
 
 	file_accessed(file);
 	vma->vm_ops = &ext2_dax_vm_ops;
 	vma->vm_flags |= VM_MIXEDMAP;
+    /*
+    struct inode *inode = file_inode(file);
+    struct ext2_inode_info *ei = EXT2_I(inode);
+    */
 	return 0;
 }
 #else
@@ -150,6 +161,9 @@ static int ext2_release_file (struct inode * inode, struct file * filp)
 
 int ext2_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 {
+
+    pr_err("ext2_fsync");
+
 	int ret;
 	struct super_block *sb = file->f_mapping->host->i_sb;
 
@@ -163,6 +177,9 @@ int ext2_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 
 static ssize_t ext2_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 {
+
+    pr_err("ext2_file_read_iter");
+
 #ifdef CONFIG_FS_DAX
 	if (IS_DAX(iocb->ki_filp->f_mapping->host))
 		return ext2_dax_read_iter(iocb, to);
@@ -172,6 +189,9 @@ static ssize_t ext2_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 
 static ssize_t ext2_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
+
+    pr_err("ext2_file_write_iter");
+
 #ifdef CONFIG_FS_DAX
 	if (IS_DAX(iocb->ki_filp->f_mapping->host))
 		return ext2_dax_write_iter(iocb, from);

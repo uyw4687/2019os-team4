@@ -42,7 +42,7 @@
 static inline int ext2_add_nondir(struct dentry *dentry, struct inode *inode)
 {
 	int err = ext2_add_link(dentry, inode);
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_add_nondir");
 #endif
 	if (!err) {
@@ -102,7 +102,7 @@ static int ext2_create (struct inode * dir, struct dentry * dentry, umode_t mode
 {
 	struct inode *inode;
 	int err;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_create");
 #endif
 	err = dquot_initialize(dir);
@@ -128,7 +128,7 @@ static int ext2_create (struct inode * dir, struct dentry * dentry, umode_t mode
 static int ext2_tmpfile(struct inode *dir, struct dentry *dentry, umode_t mode)
 {
 	struct inode *inode = ext2_new_inode(dir, mode, NULL);
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_tmpfile");
 #endif
 	if (IS_ERR(inode))
@@ -152,7 +152,7 @@ static int ext2_mknod (struct inode * dir, struct dentry *dentry, umode_t mode, 
 {
 	struct inode * inode;
 	int err;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_mknod");
 #endif
 	err = dquot_initialize(dir);
@@ -179,7 +179,7 @@ static int ext2_symlink (struct inode * dir, struct dentry * dentry,
 	int err = -ENAMETOOLONG;
 	unsigned l = strlen(symname)+1;
 	struct inode * inode;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_symlink");
 #endif
 	if (l > sb->s_blocksize)
@@ -230,7 +230,7 @@ static int ext2_link (struct dentry * old_dentry, struct inode * dir,
 {
 	struct inode *inode = d_inode(old_dentry);
 	int err;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_link");
 #endif
 	err = dquot_initialize(dir);
@@ -255,7 +255,7 @@ static int ext2_mkdir(struct inode * dir, struct dentry * dentry, umode_t mode)
 {
 	struct inode * inode;
 	int err;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_mkdir");
 #endif
 	err = dquot_initialize(dir);
@@ -306,7 +306,7 @@ static int ext2_unlink(struct inode * dir, struct dentry *dentry)
 	struct ext2_dir_entry_2 * de;
 	struct page * page;
 	int err;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_unlink");
 #endif
 	err = dquot_initialize(dir);
@@ -334,7 +334,7 @@ static int ext2_rmdir (struct inode * dir, struct dentry *dentry)
 {
 	struct inode * inode = d_inode(dentry);
 	int err = -ENOTEMPTY;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_rmdir");
 #endif
 	if (ext2_empty_dir(inode)) {
@@ -359,7 +359,7 @@ static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
 	struct page * old_page;
 	struct ext2_dir_entry_2 * old_de;
 	int err;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("ext2_raname");
 #endif
 	if (flags & ~RENAME_NOREPLACE)
@@ -444,10 +444,230 @@ out:
 	return err;
 }
 
-static int check_distance(struct inode *inode)
+/*
+ * Compute sin, cos for 32-bit int theta
+ *
+ * Input
+ * theta:    in range of [-pi/2 * (1<<30), pi/2 * (1<<30)]
+ * n:        # of iteration (32 is recommended)
+ *
+ * Output
+ * sin, cos: in range of [-1 * (1<<30), 1 * (1<<30)]
+*/
+void cordic(int theta, int *sin, int *cos, int n)
 {
-    //TODO
-    return 1;
+    // int mul = 1073741824;
+    // int half_pi = 0x6487ED51;
+    int cordic_ctab[] = {
+        0x3243F6A8, 0x1DAC6705, 0x0FADBAFC, 0x07F56EA6,
+        0x03FEAB76, 0x01FFD55B, 0x00FFFAAA, 0x007FFF55,
+        0x003FFFEA, 0x001FFFFD, 0x000FFFFF, 0x0007FFFF,
+        0x0003FFFF, 0x0001FFFF, 0x0000FFFF, 0x00007FFF,
+        0x00003FFF, 0x00001FFF, 0x00000FFF, 0x000007FF,
+        0x000003FF, 0x000001FF, 0x000000FF, 0x0000007F,
+        0x0000003F, 0x0000001F, 0x0000000F, 0x00000008,
+        0x00000004, 0x00000002, 0x00000001, 0x00000000, };
+    // cordic_ctab[i] is computed by (atan(pow(2, -i)) * mul);
+
+    int cordic_1K = 0x26DD3B6A;
+    int k, d, tx, ty, tz;
+    int x = cordic_1K, y = 0, z = theta;
+    n = (n > 32) ? 32 : n;
+
+    for (k = 0; k < n; k++) {
+        d = z >> 31;
+        tx = x - (((y >> k) ^ d) - d);
+        ty = y + (((x >> k) ^ d) - d);
+        tz = z - ((cordic_ctab[k] ^ d) - d);
+        x = tx;
+        y = ty;
+        z = tz;
+    }
+    *cos = x;
+    *sin = y;
+
+    /* usage:
+        double theta = 3.1415926535897932384626 / 2;
+        int mul = 1073741824;
+        int sin, cos;
+        cordic(theta * mul, &sin, &cos, 32);
+        printf("%f\n", sin / mul);
+    */
+}
+
+int cordic_arctan(int x, int y)
+{
+    int cordic_ctab[] = {
+        0x3243F6A8, 0x1DAC6705, 0x0FADBAFC, 0x07F56EA6,
+        0x03FEAB76, 0x01FFD55B, 0x00FFFAAA, 0x007FFF55,
+        0x003FFFEA, 0x001FFFFD, 0x000FFFFF, 0x0007FFFF,
+        0x0003FFFF, 0x0001FFFF, 0x0000FFFF, 0x00007FFF,
+        0x00003FFF, 0x00001FFF, 0x00000FFF, 0x000007FF,
+        0x000003FF, 0x000001FF, 0x000000FF, 0x0000007F,
+        0x0000003F, 0x0000001F, 0x0000000F, 0x00000008,
+        0x00000004, 0x00000002, 0x00000001, 0x00000000, };
+    // cordic_ctab[i] is computed by (atan(pow(2, -i)) << 30);
+
+    int sum_angle = 0;
+    int k = 0;
+    int tx, ty;
+    for (k = 0; k < 32; k++) {
+        if (y > 0) {
+            tx = x + (y >> k);
+            ty = y - (x >> k);
+            sum_angle = sum_angle + cordic_ctab[k];
+        }
+        else {
+            tx = x - (y >> k);
+            ty = y + (x >> k);
+            sum_angle = sum_angle - cordic_ctab[k];
+        }
+        x = tx;
+        y = ty;
+    }
+
+    return sum_angle;
+}
+
+/*
+ * Compute square root for numbers between 0 and 1<<60
+ */
+long long cordic_sqrt(long long x)
+{
+    long long base, y;
+    int i;
+
+    base = 1 << 30;
+    y = 0;
+    
+    for (i = 0; i < 30; i++) {
+        if ((y * y) <= x) {
+            y += base;
+        }
+        base = base >> 1;
+    }
+    return y;
+}
+
+// Output: rad * (1<<29) in range of [-pi * (1<<29), pi * (1<<29)]
+int deg_to_rad(int deg_integer, int deg_fractional)
+{
+    // 9370165 = pi * ((1<<29) / 180)
+    return (deg_integer * 9370165) + ((deg_fractional * 937) / 100);
+}
+
+/*
+ * Input:   the result of deg_to_rad()
+ *
+ * Output
+ * n_x, n_y, n_z: in range of [-1 * (1<<30), 1 * (1<<30)]
+ */
+
+void compute_normal_vector(int lat_radian, int lng_radian,
+                          long long *n_x, long long *n_y, long long *n_z)
+{
+    // compute sin(latitude), cos(latitude), sin(longitude), cos(longitude)
+    int sin_lat, cos_lat, sin_lng, cos_lng;
+    int sign = 1;
+
+    cordic(lat_radian * 2, &sin_lat, &cos_lat, 32);
+
+    // 843314856 = pi * ((1<<29) / 2)
+    // 1686629713 = pi * (1<<29)
+    if (lng_radian > 843314856) {       // longitude > pi/2
+        lng_radian -= 1686629713;
+        sign = -1;
+    }
+    else if (lng_radian < -843314856) { // longitude < -pi/2
+        lng_radian += 1686629713;
+        sign = -1;
+    }
+    cordic(lng_radian * 2, &sin_lng, &cos_lng, 32);
+    sin_lng = sin_lng * sign;
+    cos_lng = cos_lng * sign;
+
+    /* TODO more precise
+     *
+     * Assume that there is no overflow,
+     *  (cos_lat * cos_lng) / (1<<30)
+     * is differ from
+     *  (int)(cos_lat / (1<<15)) * (int)(cos_lng / (1<<15))
+     */
+    // *n_x = (cos_lat / 32768) * (cos_lng / 32768);
+    // *n_y = (cos_lat / 32768) * (sin_lng / 32768);
+    *n_x = ((long long)cos_lat * (long long)cos_lng) >> 30;
+    *n_y = ((long long)cos_lat * (long long)sin_lng) >> 30;
+    *n_z = (long long)sin_lat;
+}
+
+extern struct gps_location curr_loc;
+extern rwlock_t curr_loc_lock;
+
+static int check_distance(struct ext2_inode *inode)
+{
+    int i_lat_int, i_lat_fr, i_lng_int, i_lng_fr, i_accuracy;
+    int i_lat_radian, i_lng_radian;
+    long long i_nx, i_ny, i_nz;
+    int c_lat_radian, c_lng_radian, c_accuracy;
+    long long c_nx, c_ny, c_nz;
+    long long dot, cross_x, cross_y, cross_z, cross;
+    int central_angle;
+    long long allowed_distance;
+
+    i_lat_int = le32_to_cpu(inode->i_lat_integer);
+    i_lat_fr = le32_to_cpu(inode->i_lat_fractional);
+    i_lng_int = le32_to_cpu(inode->i_lng_integer);
+    i_lng_fr = le32_to_cpu(inode->i_lng_fractional);
+    i_accuracy = le32_to_cpu(inode->i_accuracy);
+
+    // convert degree to radian (for inode location)
+    i_lat_radian = deg_to_rad(i_lat_int, i_lat_fr);
+    i_lng_radian = deg_to_rad(i_lng_int, i_lng_fr);
+
+    // compute normal vector (for inode location)
+    compute_normal_vector(i_lat_radian, i_lng_radian, &i_nx, &i_ny, &i_nz);
+
+    read_lock(&curr_loc_lock);
+    
+    // convert degree to radian (for current location)
+    c_lat_radian = deg_to_rad(curr_loc.lat_integer, curr_loc.lat_fractional);
+    c_lng_radian = deg_to_rad(curr_loc.lng_integer, curr_loc.lng_fractional);
+    c_accuracy = curr_loc.accuracy;
+
+    read_unlock(&curr_loc_lock);
+    
+    // compute normal vector (for current location)
+    compute_normal_vector(c_lat_radian, c_lng_radian, &c_nx, &c_ny, &c_nz);
+
+    // compute dot product and cross product
+    dot = (i_nx * c_nx + i_ny * c_ny + i_nz * c_nz) >> 30;
+    cross_x = (i_ny * c_nz - i_nz * c_ny) >> 30;
+    cross_y = (i_nz * c_nx - i_nx * c_nz) >> 30;
+    cross_z = (i_nx * c_ny - i_ny * c_nx) >> 30;
+    cross = cordic_sqrt(cross_x * cross_x + cross_y * cross_y + cross_z * cross_z);
+
+    /*
+    if (dot == 0) {
+        // 1005309649 = 6400 * (pi / 2) * 100000
+        distance = 1005309649;
+    }
+    else if (dot == 1 && (cross > 1>>30 || cross < -(1>>30))) {
+        // no difference with above case
+        distance = 1005309649;
+    }
+    else {
+        // now ((cross << 30) / dot) is in range of [-1 * (1<<30), 1 * (1<<30)]
+        cordic_arctan((int)dot, (int)cross);
+    }
+    */
+    central_angle = cordic_arctan((int)dot, (int)cross);
+
+    allowed_distance = ((long long)i_accuracy + (long long)c_accuracy) << 30;
+
+    if ((long long)central_angle <= allowed_distance / 640000)
+        return 1;   // true
+    else
+        return 0;   // false
 }
 
 extern struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino, struct buffer_head **p);
@@ -462,12 +682,12 @@ int ext2_permission(struct inode *inode, int mask)
 	int ret = generic_permission(inode, mask);
     struct ext2_inode *i = get_ext2_inode(inode);
 
-    if(ret < 0)
+    if (ret < 0)
         return ret;
 
-    if(!check_distance(inode))
+    if (!check_distance(i))
         return -EACCES;
-#if debug_proj4
+#ifdef debug_proj4
     pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy);
 #endif
     return 0;

@@ -539,8 +539,9 @@ long long cordic_sqrt(long long x)
     y = 0;
     
     for (i = 0; i < 30; i++) {
-        if ((y * y) <= x) {
-            y += base;
+        y += base;
+        if ((y * y) > x) {
+            y -= base;
         }
         base = base >> 1;
     }

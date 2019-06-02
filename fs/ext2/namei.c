@@ -660,11 +660,13 @@ static int check_distance(struct ext2_inode *inode)
     }
     */
     central_angle = cordic_arctan((int)dot, (int)cross);
+    if (central_angle < 0) central_angle *= -1;
 
     allowed_distance = ((long long)i_accuracy + (long long)c_accuracy) << 30;
 #if debug_proj4
     pr_err("check distance.\nfile location : %d.%d, %d.%d, accuracy : %d\npresent location : %d.%d, %d.%d, accuracy : %d\ndistance is %lld, allowed_distance is %lld",i_lat_int, i_lat_fr, i_lng_int, i_lng_fr, i_accuracy, curr_loc.lat_integer, curr_loc.lat_fractional, curr_loc.lng_integer, curr_loc.lng_fractional, c_accuracy, ((long long)(central_angle)*6400000) >> 30, allowed_distance >> 30);
 #endif
+
     if ((long long)central_angle <= allowed_distance / 6400000)
         return 1;   // true
     else
@@ -689,7 +691,7 @@ int ext2_permission(struct inode *inode, int mask)
     if (!check_distance(i))
         return -EACCES;
 #if debug_proj4
-    pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy);
+    pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d, ctime = %d, mtime = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy, inode->i_ctime, inode->i_mtime);
 #endif
     return 0;
 }

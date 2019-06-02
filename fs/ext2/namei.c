@@ -446,7 +446,7 @@ out:
  * Compute sin, cos for 32-bit int theta
  *
  * Input
- * theta:    in range of [-pi/2 * (1<<30), pi/2 * (1<<30)]
+ * theta:    in radian, in range of [-pi/2 * (1<<30), pi/2 * (1<<30)]
  * n:        # of iteration (32 is recommended)
  *
  * Output
@@ -493,6 +493,13 @@ void cordic(int theta, int *sin, int *cos, int n)
     */
 }
 
+/*
+ * The result of cordic_arctan(a * (2<<30), b * (2<<30)) is
+ * equivalent to atan2(b, a) in math.h
+ * where a and b is in range of (-2, 2).
+ *
+ * a is the value of x cooridinate, and b is the value of y cooridinate.
+ */
 int cordic_arctan(int x, int y)
 {
     int cordic_ctab[] = {
@@ -529,6 +536,8 @@ int cordic_arctan(int x, int y)
 
 /*
  * Compute square root for numbers between 0 and 1<<60
+ * Input: x = a * (1<<60), where 0 < a <= 1
+ * Output: y = sqrt(a) * (1<<30)
  */
 long long cordic_sqrt(long long x)
 {
@@ -548,7 +557,10 @@ long long cordic_sqrt(long long x)
     return y;
 }
 
-// Output: rad * (1<<29) in range of [-pi * (1<<29), pi * (1<<29)]
+/*
+ * Input: (deg_integer + deg_fractional / 1000000) in degree
+ * Output: rad * (1<<29) in range of [-pi * (1<<29), pi * (1<<29)]
+ */
 int deg_to_rad(int deg_integer, int deg_fractional)
 {
     // 9370165 = pi * ((1<<29) / 180)
@@ -556,12 +568,11 @@ int deg_to_rad(int deg_integer, int deg_fractional)
 }
 
 /*
- * Input:   the result of deg_to_rad()
+ * Input:   the result of deg_to_rad() in range of [-pi * (1<<29), pi * (1<<29)]
  *
  * Output
  * n_x, n_y, n_z: in range of [-1 * (1<<30), 1 * (1<<30)]
  */
-
 void compute_normal_vector(int lat_radian, int lng_radian,
                           long long *n_x, long long *n_y, long long *n_z)
 {
@@ -585,15 +596,6 @@ void compute_normal_vector(int lat_radian, int lng_radian,
     sin_lng = sin_lng * sign;
     cos_lng = cos_lng * sign;
 
-    /* TODO more precise
-     *
-     * Assume that there is no overflow,
-     *  (cos_lat * cos_lng) / (1<<30)
-     * is differ from
-     *  (int)(cos_lat / (1<<15)) * (int)(cos_lng / (1<<15))
-     */
-    // *n_x = (cos_lat / 32768) * (cos_lng / 32768);
-    // *n_y = (cos_lat / 32768) * (sin_lng / 32768);
     *n_x = ((long long)cos_lat * (long long)cos_lng) >> 30;
     *n_y = ((long long)cos_lat * (long long)sin_lng) >> 30;
     *n_z = (long long)sin_lat;
@@ -645,20 +647,6 @@ static int check_distance(struct ext2_inode *inode)
     cross_z = (i_nx * c_ny - i_ny * c_nx) >> 30;
     cross = cordic_sqrt(cross_x * cross_x + cross_y * cross_y + cross_z * cross_z);
 
-    /*
-    if (dot == 0) {
-        // 1005309649 = 6400 * (pi / 2) * 100000
-        distance = 1005309649;
-    }
-    else if (dot == 1 && (cross > 1>>30 || cross < -(1>>30))) {
-        // no difference with above case
-        distance = 1005309649;
-    }
-    else {
-        // now ((cross << 30) / dot) is in range of [-1 * (1<<30), 1 * (1<<30)]
-        cordic_arctan((int)dot, (int)cross);
-    }
-    */
     central_angle = cordic_arctan((int)dot, (int)cross);
     if (central_angle < 0) central_angle *= -1;
 

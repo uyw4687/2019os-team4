@@ -3,15 +3,34 @@ OS Spring Team4
 ## Project 4
 
 ### How to build our kernel
-project 기본 build 방법으로 하시면 됩니다.
+* Same as before.
 
 ### High-level design and implementation
-#### System call registration
-* kernel/rotation.c 에 시스템 콜 함수를 구현합니다.
-* arch/arm64/include/asm/unistd.h 에서 시스템 콜 개수를 5 늘려줍니다. 398 -> 403
-* arch/arm64/include/asm/unistd32.h 에서 각 시스템 콜을 스펙에 등록해 줍니다.
-* include/linux/syscalls.h 에서 각 system call의 prototype을 적어 줍니다.
-* kernel/Makefile에서 rotation.o를 추가해 줍니다.
+#### Inserting location info
+* Inserted i_lat_integer, i_lat_fractional, i_lng_integer, i_lng_fractional, accuracy info as `__le32` format into struct ext2_inode in tizen/fs/ext2/ext2.h
+* Inserted i_lat_integer, i_lat_fractional, i_lng_integer, i_lng_fractional, accuracy info as `__u32` format into struct ext2_inode_info in tizen/fs/ext2/ext2.h
+
+#### Implementing set_gps_location/get_gps_location
+* First, add two elements in struct inode_operations in tizen/include/linux/fs.h
+  * `int (*set_gps_location)(struct inode *)`
+  * `int (*get_gps_location)(struct inode *, struct gps_location *)
+* Then, match two corresponding functions(ext2_set_gps_location/ext2_get_gps_location) in `ext2_file_inode_operations` in tizen/fs/ext2/file.c
+* Function prototypes of the two functions are in tizen/fs/ext2/ext2.h
+* Functions are defined in tizen/fs/ext2/inode.c
+##### ext2_set_gps_location
+* First find corresponding ext2_inode and ext2_inode_info using inode parameter
+* Update the location information after read_lock since it's reading current location information
+* use cpu_to_le32 when updating ext2_inode information since it will be stored in disk
+* read_unlock after finishing the update
+
+#### ext2_get_gps_location
+* First find corresponding ext2_inode using inode parameter
+* Get the location information using le32_to_cpu since the information is stored in disk
+
+#### Change location info(on modifying ctime/mtime)
+* `ext2_update_time` in tizen/fs/ext2/inode.c 
+* Function prototypes of the two functions are in tizen/fs/ext2/ext2.h
+* If ctime or mtime is going to be modified, location info is also modified.
 
 #### Terminating routine
 * kernel/exit.c의 do_exit() 함수에 kernel/rotation.c에서 정의된 exit_rotlock을 호출하는 코드를 넣습니다.
@@ -108,20 +127,17 @@ DECLARE_WAIT_QUEUE_HEAD(wait_queue_head); // wait_queue의 head를 선언해 줍
 
 > 다음은 test 프로그램에 대한 설명입니다.
 
-#### selector
-* input으로 정수 하나를 받습니다.
-* 아래 과정을 반복합니다.
-* degree = 90, range = 90으로 rotlock_write를 잡아준 후 integer라는 파일에 input으로 받은 정수를 넣습니다.
-* 정수값을 1 늘려줍니다.
-* syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
+#### gpsupdate
+* Get latitude, longitude and accuracy info as input.
+* Divide integer part and remaining fractional part.
+* call SYS_GET_GPS_LOCATION with an updated gps_location struct information
+* On failure, print a detailed error message.
 
-#### trial
-* input으로 정수 하나를 받습니다.
-* 이를 출력할 때 trial- 다음에 출력하여 index로 역할을 하게 합니다.
-* 아래 과정을 반복합니다.
-* rotlock_read를 degree=90, range=90으로 잡아준 후 integer 파일에서 정수 하나를 읽습니다.
-* 그 정수를 소인수분해해서 출력해 줍니다.
-* syscall과 fopen에서 실패한 경우 프로그램을 종료합니다.
+#### file_loc
+* get a path as command line argument
+* then call SYS_GET_GPS_LOCATION with the pathname and get location info through the pointer given as a parameter
+* On failure, print a detailed error message.
+* Otherwise, print the location info and google maps URL.
 
 ### Lessons learned
 * lock을 이용하여 새로운 lock을 구현한다는 것이 처음에는 이상하게 느껴졌지만, concurrency를 보장하기 위해 rotation lock 내부적으로도 lock이 필요하다는 것을 깨닫게 되었습니다.

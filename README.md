@@ -13,7 +13,7 @@ OS Spring Team4
 #### Implementing set_gps_location/get_gps_location
 * First, add two elements in struct inode_operations in tizen/include/linux/fs.h
   * `int (*set_gps_location)(struct inode *)`
-  * `int (*get_gps_location)(struct inode *, struct gps_location *)
+  * `int (*get_gps_location)(struct inode *, struct gps_location *)`
 * Then, match two corresponding functions(ext2_set_gps_location/ext2_get_gps_location) in `ext2_file_inode_operations` in tizen/fs/ext2/file.c
 * Function prototypes of the two functions are in tizen/fs/ext2/ext2.h
 * Functions are defined in tizen/fs/ext2/inode.c

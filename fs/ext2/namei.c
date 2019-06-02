@@ -662,10 +662,11 @@ static int check_distance(struct ext2_inode *inode)
     }
     */
     central_angle = cordic_arctan((int)dot, (int)cross);
+    if (central_angle < 0) central_angle *= -1;
 
     allowed_distance = ((long long)i_accuracy + (long long)c_accuracy) << 30;
 
-    if ((long long)central_angle <= allowed_distance / 640000)
+    if ((long long)central_angle <= allowed_distance / 6400000)
         return 1;   // true
     else
         return 0;   // false

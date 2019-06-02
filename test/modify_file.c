@@ -1,3 +1,4 @@
+
 #include<stdio.h>
 
 int main(int argc, char **argv){
@@ -8,7 +9,7 @@ int main(int argc, char **argv){
         printf("input file name argument");
         return -1;
     }
-    f = fopen(argv[1], "w");
+    f = fopen(argv[1], "a");
 
     printf("input contents : ");
     scanf("%s", arr);

@@ -161,7 +161,7 @@ static int ext2_mknod (struct inode * dir, struct dentry *dentry, umode_t mode, 
 	err = PTR_ERR(inode);
 	if (!IS_ERR(inode)) {
 		init_special_inode(inode, inode->i_mode, rdev);
-#if CONFIG_EXT2_FS_XATTR
+#ifdef CONFIG_EXT2_FS_XATTR
 		inode->i_op = &ext2_special_inode_operations;
 #endif
 		mark_inode_dirty(inode);
@@ -662,10 +662,10 @@ static int check_distance(struct ext2_inode *inode)
     central_angle = cordic_arctan((int)dot, (int)cross);
 
     allowed_distance = ((long long)i_accuracy + (long long)c_accuracy) << 30;
-#if proj4_debug
-    pr_err("check distance.\nfile location : %d.%d, %d.%d, accuracy : %d\npresent location : %d.%d, %d.%d, accuracy : %d\ndistance is %d, allowed_distance is %lld",i_lat_int, i_lat_fr, i_lng_int, i_lng_fr, i_accuracy, curr_loc.lat_integer, curr_loc.lat_fractional, curr_loc.lng_integer, curr_loc.lng_fractional, c_accuracy,central_angle, allowed_distance / 640000);
+#if debug_proj4
+    pr_err("check distance.\nfile location : %d.%d, %d.%d, accuracy : %d\npresent location : %d.%d, %d.%d, accuracy : %d\ndistance is %lld, allowed_distance is %lld",i_lat_int, i_lat_fr, i_lng_int, i_lng_fr, i_accuracy, curr_loc.lat_integer, curr_loc.lat_fractional, curr_loc.lng_integer, curr_loc.lng_fractional, c_accuracy, ((long long)(central_angle)*6400000) >> 30, allowed_distance >> 30);
 #endif
-    if ((long long)central_angle <= allowed_distance / 640000)
+    if ((long long)central_angle <= allowed_distance / 6400000)
         return 1;   // true
     else
         return 0;   // false

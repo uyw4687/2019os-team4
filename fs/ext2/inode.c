@@ -1702,7 +1702,9 @@ int ext2_set_gps_location(struct inode *inode)
     ei->i_lng_fractional = curr_loc.lng_fractional;
     ei->i_accuracy = curr_loc.accuracy;
 	read_unlock(&curr_loc_lock);
-
+#if debug_proj4
+    pr_err("set gps location. iat %d.%d, lng %d.%d, accuracy %d",ei->i_lat_integer, ei->i_lat_fractional, ei->i_lng_integer, ei->i_lng_fractional, ei->i_accuracy);
+#endif
     return 0;
 }
 
@@ -1728,7 +1730,9 @@ int ext2_get_gps_location(struct inode *inode, struct gps_location *gps_loc)
 int ext2_update_time(struct inode *inode, struct timespec *time, int flags)
 {
 	int ret = 0;
-
+#if debug_proj4
+    pr_err("ext2_update_time.");
+#endif
 	if(flags & S_CTIME || flags & S_MTIME)
 		ret = ext2_set_gps_location(inode);
 

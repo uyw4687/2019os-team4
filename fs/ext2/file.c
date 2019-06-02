@@ -29,8 +29,6 @@
 #include "xattr.h"
 #include "acl.h"
 
-#define debug_proj4 1
-
 #ifdef CONFIG_FS_DAX
 static ssize_t ext2_dax_read_iter(struct kiocb *iocb, struct iov_iter *to)
 {

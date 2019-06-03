@@ -679,7 +679,7 @@ int ext2_permission(struct inode *inode, int mask)
     if (!check_distance(i))
         return -EACCES;
 #if debug_proj4
-    pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d, ctime = %d, mtime = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy, inode->i_ctime, inode->i_mtime);
+    pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy);
 #endif
     return 0;
 }

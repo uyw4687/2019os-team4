@@ -71,7 +71,7 @@ long sys_get_gps_location(const char __user *pathname, struct gps_location __use
     if (ret != 0)
         return -EFAULT;
 
-    if (kern_path(path_kern, LOOKUP_FOLLOW, &path) < 0) {
+    if (kern_path(path_kern, LOOKUP_FOLLOW, &path) < 0)
         return -ENOENT;
     
     inode = path.dentry->d_inode;

@@ -10,9 +10,6 @@ int main(int argc, char **argv){
     }
     f = fopen(argv[1], "w");
 
-    printf("input contents : ");
-    scanf("%s", arr);
-    
-    fprintf(f, "%s\n", arr);
+    fprintf(f, "Hello, proj4!\n");
     fclose(f);
 }

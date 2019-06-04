@@ -80,7 +80,7 @@ DEFINE_RWLOCK(curr_loc_lock);       // read-write lock for curr_loc
 * Otherwise, print the location info and google maps URL.
 
 #### proj4.fs
-* test 과정을 통해서 만든 들이 저장되어있는 파일시스템입니다.
+* test 과정을 통해서 만든 파일들이 저장되어있는 파일시스템입니다.
 * 모든 파일들은 'Hello, proj4!'라는 문구가 저장되어있습니다.
 * test를 하면서 `301_1`, `301_1000`, `301_2000`, `301_200000`, `301_500000`, `301_5000000`, `301_1000000`, `maingate_1`, `maingate_1000`, `busan_1`, `busan_300000`, `eiffel_1`, `eiffel_5000000` 이라는 파일을 만들었습니다.
 * 각 파일명의 앞부분은 위치를 가리킵니다. (301은 301동 공학관, maingate는 서울대학교 정문, busan은 부산역, eiffel은 프랑스 에펠탑을 가리킵니다.)

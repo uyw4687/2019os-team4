@@ -27,6 +27,8 @@ typedef unsigned long ext2_fsblk_t;
 
 #define E2FSBLK "%lu"
 
+#define debug_proj4 0
+
 extern struct ext2_inode *get_ext2_inode(struct inode *inode);
 
 struct ext2_reserve_window {

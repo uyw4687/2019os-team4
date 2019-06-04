@@ -37,12 +37,10 @@
 #include "xattr.h"
 #include "acl.h"
 
-#define debug_proj4 = 1;
-
 static inline int ext2_add_nondir(struct dentry *dentry, struct inode *inode)
 {
 	int err = ext2_add_link(dentry, inode);
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_add_nondir");
 #endif
 	if (!err) {
@@ -102,7 +100,7 @@ static int ext2_create (struct inode * dir, struct dentry * dentry, umode_t mode
 {
 	struct inode *inode;
 	int err;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_create");
 #endif
 	err = dquot_initialize(dir);
@@ -128,7 +126,7 @@ static int ext2_create (struct inode * dir, struct dentry * dentry, umode_t mode
 static int ext2_tmpfile(struct inode *dir, struct dentry *dentry, umode_t mode)
 {
 	struct inode *inode = ext2_new_inode(dir, mode, NULL);
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_tmpfile");
 #endif
 	if (IS_ERR(inode))
@@ -152,7 +150,7 @@ static int ext2_mknod (struct inode * dir, struct dentry *dentry, umode_t mode, 
 {
 	struct inode * inode;
 	int err;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_mknod");
 #endif
 	err = dquot_initialize(dir);
@@ -179,7 +177,7 @@ static int ext2_symlink (struct inode * dir, struct dentry * dentry,
 	int err = -ENAMETOOLONG;
 	unsigned l = strlen(symname)+1;
 	struct inode * inode;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_symlink");
 #endif
 	if (l > sb->s_blocksize)
@@ -230,7 +228,7 @@ static int ext2_link (struct dentry * old_dentry, struct inode * dir,
 {
 	struct inode *inode = d_inode(old_dentry);
 	int err;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_link");
 #endif
 	err = dquot_initialize(dir);
@@ -255,7 +253,7 @@ static int ext2_mkdir(struct inode * dir, struct dentry * dentry, umode_t mode)
 {
 	struct inode * inode;
 	int err;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_mkdir");
 #endif
 	err = dquot_initialize(dir);
@@ -306,7 +304,7 @@ static int ext2_unlink(struct inode * dir, struct dentry *dentry)
 	struct ext2_dir_entry_2 * de;
 	struct page * page;
 	int err;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_unlink");
 #endif
 	err = dquot_initialize(dir);
@@ -334,7 +332,7 @@ static int ext2_rmdir (struct inode * dir, struct dentry *dentry)
 {
 	struct inode * inode = d_inode(dentry);
 	int err = -ENOTEMPTY;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_rmdir");
 #endif
 	if (ext2_empty_dir(inode)) {
@@ -359,7 +357,7 @@ static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
 	struct page * old_page;
 	struct ext2_dir_entry_2 * old_de;
 	int err;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("ext2_raname");
 #endif
 	if (flags & ~RENAME_NOREPLACE)
@@ -653,6 +651,9 @@ static int check_distance(struct ext2_inode *inode)
     if (central_angle < 0) central_angle *= -1;
 
     allowed_distance = ((long long)i_accuracy + (long long)c_accuracy) << 30;
+#if debug_proj4
+    pr_err("check distance.\nfile location : %d.%d, %d.%d, accuracy : %d\npresent location : %d.%d, %d.%d, accuracy : %d\ndistance is %lld, allowed_distance is %lld",i_lat_int, i_lat_fr, i_lng_int, i_lng_fr, i_accuracy, curr_loc.lat_integer, curr_loc.lat_fractional, curr_loc.lng_integer, curr_loc.lng_fractional, c_accuracy, ((long long)(central_angle)*6400000) >> 30, allowed_distance >> 30);
+#endif
 
     if ((long long)central_angle <= allowed_distance / 6400000)
         return 1;   // true
@@ -677,7 +678,7 @@ int ext2_permission(struct inode *inode, int mask)
 
     if (!check_distance(i))
         return -EACCES;
-#ifdef debug_proj4
+#if debug_proj4
     pr_err("check permission. ino = %lu, lat = %d.%d, lng = %d.%d, accuracy = %d",inode->i_ino, i->i_lat_integer, i->i_lat_fractional, i->i_lng_integer, i->i_lng_fractional, i->i_accuracy);
 #endif
     return 0;

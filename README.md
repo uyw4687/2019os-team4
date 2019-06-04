@@ -79,6 +79,79 @@ DEFINE_RWLOCK(curr_loc_lock);       // read-write lock for curr_loc
 * On failure, print a detailed error message.
 * Otherwise, print the location info and google maps URL.
 
+#### proj4.fs
+* test 과정을 통해서 만든 파일들이 저장되어있는 파일시스템입니다.
+* 모든 파일들은 'Hello, proj4!'라는 문구가 저장되어있습니다.
+* test를 하면서 `301_1`, `301_1000`, `301_2000`, `301_200000`, `301_500000`, `301_5000000`, `301_1000000`, `maingate_1`, `maingate_1000`, `busan_1`, `busan_300000`, `eiffel_1`, `eiffel_5000000` 이라는 파일을 만들었습니다.
+* 각 파일명의 앞부분은 위치를 가리킵니다. (301은 301동 공학관, maingate는 서울대학교 정문, busan은 부산역, eiffel은 프랑스 에펠탑을 가리킵니다.)
+* 각 파일명의 뒷부분은 accuracy를 가리킵니다.
+* 각 파일의 file_loc 값은 다음과 같습니다.
+  <pre>root:~> ./file_loc ./proj4/301_1
+  latitude    : 37.449722
+  longitude   : 126.952222
+  accuracy    : 1(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.449722,126.952222
+  root:~> ./file_loc ./proj4/301_1000
+  latitude    : 37.449722
+  longitude   : 126.952222
+  accuracy    : 1000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.449722,126.952222
+  root:~> ./file_loc ./proj4/301_10000000
+  latitude    : 37.449722
+  longitude   : 126.952222
+  accuracy    : 10000000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.449722,126.952222
+  root:~> ./file_loc ./proj4/301_2000
+  latitude    : 37.449722
+  longitude   : 126.952222
+  accuracy    : 2000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.449722,126.952222
+  root:~> ./file_loc ./proj4/301_200000
+  latitude    : 37.449722
+  longitude   : 126.952222
+  accuracy    : 200000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.449722,126.952222
+  root:~> ./file_loc ./proj4/301_500000
+  latitude    : 37.449722
+  longitude   : 126.952222
+  accuracy    : 500000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.449722,126.952222
+  root:~> ./file_loc ./proj4/301_5000000
+  latitude    : 37.449722
+  longitude   : 126.952222
+  accuracy    : 5000000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.449722,126.952222
+  root:~> ./file_loc ./proj4/busan_1
+  latitude    : 35.115000
+  longitude   : 129.422222
+  accuracy    : 1(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=35.115000,129.422222
+  root:~> ./file_loc ./proj4/busan_300000
+  latitude    : 35.115000
+  longitude   : 129.422222
+  accuracy    : 300000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=35.115000,129.422222
+  root:~> ./file_loc ./proj4/eiffel_1
+  latitude    : 48.858056
+  longitude   : 2.294444
+  accuracy    : 1(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=48.858056,2.294444
+  root:~> ./file_loc ./proj4/eiffel_5000000
+  latitude    : 48.858056
+  longitude   : 2.294444
+  accuracy    : 5000000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=48.858056,2.294444
+  root:~> ./file_loc ./proj4/maingate_1
+  latitude    : 37.466111
+  longitude   : 126.948333
+  accuracy    : 1(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.466111,126.948333
+  root:~> ./file_loc ./proj4/maingate_1000
+  latitude    : 37.466111
+  longitude   : 126.948333
+  accuracy    : 1000(m)
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.466111,126.948333</pre>
+
 ### Lessons learned
 * ext2 파일 시스템이 어떻게 구성되고 관리되는지 알게 되었습니다.
 * 같은 inode에 대해 두 가지 구조체가 존재한다는 것을 알게 되었습니다.

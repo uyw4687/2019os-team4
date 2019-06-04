@@ -45,9 +45,6 @@ OS Spring Team4
 * 커널 안에서는 floating point operation이 제공되지 않기 때문에, 대부분의 연산에서 원래 float 값에 2^30(`1<<30`)만큼 곱해 int로 변환하여 계산합니다. 즉, 이진법으로 소숫점 아래 29자리(십진법으로 소숫점 아래 8자리)까지 유효숫자가 유지됩니다.
 * 커널 안에서는 math.h의 각종 수학 함수가 제공되지 않습니다. 계산 과정에서 필요한 sin, cos, atan2, sqrt를 계산하기 위해 [CORDIC](https://en.wikipedia.org/wiki/CORDIC)이라는 알고리즘을 사용하였습니다. 이 알고리즘을 사용하면 shift, 덧셈, 뺄셈, 곱셈 연산만 사용하여, 삼각함수의 계산값을 이진법으로 소숫점 아래 30자리(십진법으로 소숫점 아래 9자리)까지 정확하게 계산해 낼 수 있습니다.
 
-###### Testing `check_distance`
-* **TODO**
-
 ---
 
 > 다음은 kernel/gps.c에 대한 설명입니다.
@@ -83,4 +80,15 @@ DEFINE_RWLOCK(curr_loc_lock);       // read-write lock for curr_loc
 * Otherwise, print the location info and google maps URL.
 
 ### Lessons learned
-
+* ext2 파일 시스템이 어떻게 구성되고 관리되는지 알게 되었습니다.
+* 같은 inode에 대해 두 가지 구조체가 존재한다는 것을 알게 되었습니다.
+  * `struct ext2_inode`는 디스크에서 쓰이고 `struct ext2_inode_info`는 메모리에서 쓰입니다.
+  * 디스크의 `ext2_inode`에서는 little endian(`__le32`)이 사용되고, 메모리의 `ext2_inode_info`에서는 big endian(`__u32`)이 사용됩니다.
+  * 따라서 `le32_to_cpu()` 또는 `cpu_to_le32()` 등의 매크로를 사용하여 둘 사이를 변환해 주어야 합니다.
+* 새 시스템 콜을 등록하고, 전역 변수에 대해 lock을 잡는 것은 쉽게 할 수 있었습니다.
+* ext2 파일 시스템 안에서 새 파일이 생성되거나 수정될 때 ctime 또는 mtime이 바뀐다는 것을 알게 되었습니다.
+* 지구 위 두 지점의 위도와 경도가 주어질 때, 두 지점 사이의 거리를 구하는 방법을 알게 되었습니다.
+* floating point operation이 제공되지 않는 환경에서 유효숫자를 소숫점 아래 6자리 이상으로 유지하면서 계산하는 방법을 알게 되었습니다.
+* shift, 덧셈, 뺄셈 연산만으로도 sin, cos, arctan 함수의 값을 원하는 정밀도까지 구하는 방법을 알게 되었습니다.
+  * 곱셈 연산이 지원되지 않거나, floating point가 지원되지 않거나, 메모리가 매우 작은 마이크로프로세서 환경에서 유용하게 사용할 수 있을 것입니다.
+* 학교 301동 건물과 학교 정문 사이의 거리가 1861m라는 것을 알게 되었습니다.

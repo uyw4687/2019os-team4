@@ -86,7 +86,7 @@ DEFINE_RWLOCK(curr_loc_lock);       // read-write lock for curr_loc
 * 각 파일명의 앞부분은 위치를 가리킵니다. (301은 301동 공학관, maingate는 서울대학교 정문, busan은 부산역, eiffel은 프랑스 에펠탑을 가리킵니다.)
 * 각 파일명의 뒷부분은 accuracy를 가리킵니다.
 * 각 파일의 file_loc 값은 다음과 같습니다.
-  root:~> ./file_loc ./proj4/301_1
+  <pre>root:~> ./file_loc ./proj4/301_1
   latitude    : 37.449722
   longitude   : 126.952222
   accuracy    : 1(m)
@@ -150,7 +150,7 @@ DEFINE_RWLOCK(curr_loc_lock);       // read-write lock for curr_loc
   latitude    : 37.466111
   longitude   : 126.948333
   accuracy    : 1000(m)
-  (LINK) https://www.google.com/maps/search/?api=1&query=37.466111,126.948333
+  (LINK) https://www.google.com/maps/search/?api=1&query=37.466111,126.948333</pre>
 
 ### Lessons learned
 * ext2 파일 시스템이 어떻게 구성되고 관리되는지 알게 되었습니다.

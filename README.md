@@ -84,8 +84,9 @@ DEFINE_RWLOCK(curr_loc_lock);       // read-write lock for curr_loc
 * 같은 inode에 대해 두 가지 구조체가 존재한다는 것을 알게 되었습니다.
   * `struct ext2_inode`는 디스크에서 쓰이고 `struct ext2_inode_info`는 메모리에서 쓰입니다.
   * 디스크의 `ext2_inode`에서는 little endian(`__le32`)이 사용되고, 메모리의 `ext2_inode_info`에서는 big endian(`__u32`)이 사용됩니다.
-  * 따라서 `le32_to_cpu()` 또는 `cpu_to_le32()` 등의 매크로를 사용하여 둘 사이를 변환해 주어야 합니다.
-* 새 시스템 콜을 등록하고, 전역 변수에 대해 lock을 잡는 것은 쉽게 할 수 있었습니다.
+  * 따라서 `le32_to_cpu()`와 `cpu_to_le32()` 매크로를 사용하여 둘 사이를 변환해 주어야 합니다.
+* 저희가 수정한 ext2 파일 시스템으로 구성된 폴더를 생성하는 방법을 알게 되었습니다.
+* 새 시스템 콜을 등록하고, 전역 변수에 대해 lock을 잡는 것은 이제 수월하게 할 수 있습니다.
 * ext2 파일 시스템 안에서 새 파일이 생성되거나 수정될 때 ctime 또는 mtime이 바뀐다는 것을 알게 되었습니다.
 * 지구 위 두 지점의 위도와 경도가 주어질 때, 두 지점 사이의 거리를 구하는 방법을 알게 되었습니다.
 * floating point operation이 제공되지 않는 환경에서 유효숫자를 소숫점 아래 6자리 이상으로 유지하면서 계산하는 방법을 알게 되었습니다.

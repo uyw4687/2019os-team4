@@ -1,3 +1,14 @@
+1. 점수 : 54/55
+2. 감점 사유:
+* Passed Test Code: 20/21
+* syscall의 invalid arg (e.g. range = 0, degree < 0 등) 처리 미비
+3. 통계:
+* 평균 : 49.5
+* 표준편차 : 5.16
+* Q1 (하위 25%) : 46.25
+* Q2 (중간값) : 50.5
+* Q3 (상위 25%) : 54.75
+
 # os-team4
 OS Spring Team4
 ## Project 2

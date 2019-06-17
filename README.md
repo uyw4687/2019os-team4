@@ -1,3 +1,15 @@
+1. 점수 : 35/70 (보너스 문제 포함: 45/80)
+2. 감점 사유:
+* Run queue 하나가 empty 상태로 유지되지 않음 (-25)
+* 새 task가 smallest total weight를 가진 run queue로 가지 않음 (-5)
+* WRR인 task에 weight을 정상적으로 set할 수 없음 (sched_setweight 결함) (-5)
+3. 통계 (괄호 안의 숫자는 보너스 문제 포함한 경우):
+* 평균 : 43.11 (50.89)
+* 표준편차 : 23.48 (27.47)
+* Q1 (하위 25%) : 36.25 (46.25)
+* Q2 (중간값) : 55 (65)
+* Q3 (상위 25%) : 58.75 (68.75)
+
 # os-team4
 OS Spring Team4
 ## Project 3

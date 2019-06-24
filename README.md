@@ -1,6 +1,4 @@
-# os-team4
-OS Spring Team4
-## [Project 1](https://github.com/uyw4687/2019os-team4/blob/proj1/README.md)
-## [Project 2](https://github.com/uyw4687/2019os-team4/blob/proj2/README.md)
-## [Project 3](https://github.com/uyw4687/2019os-team4/blob/proj3/README.md)
-## [Project 4](https://github.com/uyw4687/2019os-team4/blob/proj4/README.md)
+## [1](https://github.com/uyw4687/os/blob/proj1/README.md)
+## [2](https://github.com/uyw4687/os/blob/proj2/README.md)
+## [3](https://github.com/uyw4687/os/blob/proj3/README.md)
+## [4](https://github.com/uyw4687/os/blob/proj4/README.md)

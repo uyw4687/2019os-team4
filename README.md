@@ -10,8 +10,6 @@
 * Q2 (중간값) : 55 (65)
 * Q3 (상위 25%) : 58.75 (68.75)
 
-# os-team4
-OS Spring Team4
 ## Project 3
 
 ### How to build our kernel
